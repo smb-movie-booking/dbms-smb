@@ -48,28 +48,4 @@ A web application that allows users to browse movies and book tickets online, in
 ```bash
 mysql -u root -p < backend/smb.sql
 
-
-## Folder Structure
-
-```
-dbms-smb/
-├── public/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── utils/
-├── package.json
-├── README.md
-```
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## License
-
-[MIT](LICENSE)
-
----
-
 *This project is for educational purposes and is not affiliated with BookMyShow.*
