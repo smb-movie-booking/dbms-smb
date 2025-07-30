@@ -41,6 +41,14 @@ A web application that allows users to browse movies and book tickets online, in
 5. **Access the app**
    - Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## 🔧 Database Setup
+
+1. Start your MySQL/MariaDB server
+2. Run the SQL schema file:
+```bash
+mysql -u root -p < backend/smb.sql
+
+
 ## Folder Structure
 
 ```
