@@ -47,5 +47,6 @@ A web application that allows users to browse movies and book tickets online, in
 2. Run the SQL schema file:
 ```bash
 mysql -u root -p < backend/smb.sql
+```
 
 *This project is for educational purposes and is not affiliated with BookMyShow.*
