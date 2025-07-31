@@ -1,4 +1,4 @@
-# BookMyShow Clone – dbms-smb
+# SMB Movie Booking
 
 A web application that allows users to browse movies and book tickets online, inspired by BookMyShow.
 
@@ -41,12 +41,17 @@ A web application that allows users to browse movies and book tickets online, in
 5. **Access the app**
    - Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 🔧 Database Setup
+##  Database Setup
 
 1. Start your MySQL/MariaDB server
 2. Run the SQL schema file:
 ```bash
 mysql -u root -p < backend/smb.sql
 ```
+###
+##
+![Alt text](/database/ER.svg)
+##
+###
 
 *This project is for educational purposes and is not affiliated with BookMyShow.*
