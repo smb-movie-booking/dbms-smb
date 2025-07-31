@@ -14,7 +14,7 @@ A web application that allows users to browse movies and book tickets online, in
 ## Tech Stack
 
 - JavaScript (Frontend & Backend)
-- [Add your frameworks/libraries, e.g. React, Node.js, Express, MongoDB, etc.]
+- React, Node.js, Express, MySQL, HTML, CSS
 
 ## Getting Started
 
@@ -35,7 +35,7 @@ A web application that allows users to browse movies and book tickets online, in
 
 4. **Run the application**
    ```bash
-   npm start
+   node app.js
    ```
 
 5. **Access the app**
@@ -43,10 +43,10 @@ A web application that allows users to browse movies and book tickets online, in
 
 ##  Database Setup
 
-1. Start your MySQL/MariaDB server
+1. Start your MySQL server
 2. Run the SQL schema file:
 ```bash
-mysql -u root -p < backend/smb.sql
+mysql -u root -p < database/smb.sql
 ```
 ###
 ##
