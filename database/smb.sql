@@ -1,8 +1,99 @@
 CREATE DATABASE IF NOT EXISTS smb;
 USE smb;
 
-create table movies(
-    id int,
-    name varchar(20),
-    primary key (id)
-) ;
+CREATE TABLE User (
+    UserID INT PRIMARY KEY,
+    User_Name VARCHAR(64),
+    User_Password VARCHAR(20),
+    Email VARCHAR(64),
+    Phone VARCHAR(16)
+);
+
+CREATE TABLE City (
+    CityID INT PRIMARY KEY,
+    City_Name VARCHAR(64),
+    City_State VARCHAR(64),
+    ZipCode VARCHAR(16)
+);
+
+CREATE TABLE Cinema (
+    CinemaID INT PRIMARY KEY,
+    Cinema_Name VARCHAR(64),
+    TotalCinemaHalls INT,
+    CityID INT,
+    FOREIGN KEY (CityID) REFERENCES City(CityID)
+);
+
+CREATE TABLE Cinema_Hall (
+    CinemaHallID INT PRIMARY KEY,
+    Hall_Name VARCHAR(64),
+    TotalSeats INT,
+    CinemaID INT,
+    FOREIGN KEY (CinemaID) REFERENCES Cinema(CinemaID)
+);
+
+CREATE TABLE Cinema_Seat (
+    CinemaSeatID INT PRIMARY KEY,
+    SeatNumber INT,
+    Seat_Type INT,  -- You can change this to ENUM if needed
+    CinemaHallID INT,
+    FOREIGN KEY (CinemaHallID) REFERENCES Cinema_Hall(CinemaHallID)
+);
+
+CREATE TABLE Movie (
+    MovieID INT PRIMARY KEY,
+    Title VARCHAR(256),
+    Movie_Description VARCHAR(512),
+    Duration DATETIME,
+    Movie_Language VARCHAR(16),
+    ReleaseDate DATETIME,
+    Country VARCHAR(64),
+    Genre VARCHAR(20)
+);
+
+CREATE TABLE Movie_Show (
+    ShowID INT PRIMARY KEY,
+    Show_Date DATETIME,
+    StartTime DATETIME,
+    EndTime DATETIME,
+    CinemaHallID INT,
+    MovieID INT,
+    FOREIGN KEY (CinemaHallID) REFERENCES Cinema_Hall(CinemaHallID),
+    FOREIGN KEY (MovieID) REFERENCES Movie(MovieID)
+);
+
+CREATE TABLE Booking (
+    BookingID INT PRIMARY KEY,
+    NumberOfSeats INT,
+    Booking_Timestamp DATETIME,
+    Booking_Status INT,
+    UserID INT,
+    ShowID INT,
+    FOREIGN KEY (UserID) REFERENCES User(UserID),
+    FOREIGN KEY (ShowID) REFERENCES Movie_Show(ShowID)
+);
+
+
+CREATE TABLE Show_Seat (
+    ShowSeatID INT PRIMARY KEY,
+    Seat_Status INT,
+    Price DECIMAL(10,2),
+    CinemaSeatID INT,
+    ShowID INT,
+    BookingID INT,
+    FOREIGN KEY (CinemaSeatID) REFERENCES Cinema_Seat(CinemaSeatID),
+    FOREIGN KEY (ShowID) REFERENCES Movie_Show(ShowID),
+    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID)
+);
+
+
+CREATE TABLE Payment (
+    PaymentID INT PRIMARY KEY,
+    Amount DECIMAL(10,2),
+    Payment_Timestamp DATETIME,
+    DiscountCouponID INT,
+    RemoteTransactionID INT,
+    PaymentMethod INT,  -- ENUM recommended for method
+    BookingID INT,
+    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID)
+);
