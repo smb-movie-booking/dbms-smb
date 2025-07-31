@@ -46,7 +46,7 @@ A web application that allows users to browse movies and book tickets online, in
 1. Start your MySQL/MariaDB server
 2. Run the SQL schema file:
 ```bash
-mysql -u root -p < backend/smb.sql
+mysql -u root -p < database/smb.sql
 ```
 ###
 ##
