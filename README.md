@@ -54,4 +54,16 @@ mysql -u root -p < database/smb.sql
 ##
 ###
 
+## Level 0 DFD
+###
+![Alt text](/database/level0.svg)
+##
+###
+
+## Level 1 DFD
+###
+![Alt text](/database/level1.svg)
+##
+###
+
 *This project is for educational purposes and is not affiliated with BookMyShow.*
