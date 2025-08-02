@@ -1,12 +1,16 @@
 const mysql = require('mysql2');
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 require('dotenv').config();
 
-const db = mysql.createConnection({
+const dbOptions = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-});
+  database: process.env.DB_NAME
+};
+
+const db = mysql.createConnection(dbOptions);
 
 db.connect((err) => {
   if (err) {
@@ -16,4 +20,9 @@ db.connect((err) => {
   console.log('✅ Connected to MySQL');
 });
 
-module.exports = db;
+const sessionStore = new MySQLStore(dbOptions);
+
+module.exports = {
+  db,
+  sessionStore
+};
