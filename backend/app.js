@@ -2,9 +2,11 @@ const express = require('express');
 require('dotenv').config();
 
 const session = require('express-session');
-const { sessionStore } = require('./config/db');
+const { db , sessionStore } = require('./config/db');
 
 const movieRoutes = require('./routes/movies');
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
 const app = express();
 
 app.use(session({
@@ -19,7 +21,9 @@ app.use(session({
 }));
 
 app.use(express.json());
-app.use('/movies', movieRoutes);
+app.use('/api/movies', movieRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -180,4 +180,4 @@ router.use('/api/admin', isAuthenticated, isAdmin);
 - `.env` / `.env.example`: Store secret credentials and configs
 
 ---
- #### *Payment and image upload modules will be implemented later*
+ #### *Payment, image upload, review modules will be implemented later*

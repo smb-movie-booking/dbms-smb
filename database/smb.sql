@@ -3,10 +3,11 @@ USE smb;
 
 CREATE TABLE User (
     UserID INT PRIMARY KEY,
-    User_Name VARCHAR(64),
-    User_Password VARCHAR(20),
-    Email VARCHAR(64),
-    Phone VARCHAR(16)
+    User_Name VARCHAR(64) NOT NULL,
+    User_Password VARCHAR(255) NOT NULL,
+    Email VARCHAR(64) NOT NULL UNIQUE,
+    Phone VARCHAR(16) NOT NULL UNIQUE,
+    IsAdmin BOOLEAN DEFAULT 0
 );
 
 CREATE TABLE City (
