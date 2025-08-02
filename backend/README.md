@@ -53,6 +53,7 @@ Handles user authentication and profile management.
 - `controllers/authController.js` – Authentication logic
 - `routes/authRoutes.js` – Auth-related API routes
 - `models/userModel.js` – User schema/model
+- `middlewares/isAutenticated.js` - Login Check
 
 **Endpoints:**
 ```

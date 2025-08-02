@@ -5,5 +5,8 @@ const isAuthenticated = require('../middlewares/isAuthenticated'); // import you
 
 router.get('/me', isAuthenticated, userController.getProfile);
 router.put('/me', isAuthenticated, userController.updateProfile);
+router.delete('/me', isAuthenticated, userController.deleteProfile);
+router.put('/me/password', isAuthenticated, userController.changePassword);
+router.post('/reset-password', userController.resetPassword); // No session needed
 
 module.exports = router;
