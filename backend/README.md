@@ -2,154 +2,176 @@
 
 ```
 backend/
-├── config/
+├── config/                 # Configuration (e.g. DB, sessions)
 │   └── db.js
-├── controllers/
-│   ├── bookingController.js
+│
+├── controllers/           # Route logic (business layer)
+│   ├── authController.js
 │   ├── movieController.js
-│   └── userController.js
-├── models/
-│   ├── bookingModel.js
+│   ├── theaterController.js
+│   ├── showController.js
+│   ├── bookingController.js
+│   └── seatController.js
+│
+├── middlewares/           # Auth, logging, error handlers
+│   ├── isAuthenticated.js
+│   └── isAdmin.js
+│
+├── models/                # DB models/queries
+│   ├── userModel.js
 │   ├── movieModel.js
-│   └── userModel.js
-├── routes/
-│   ├── bookings.js
-│   ├── movies.js
-│   └── users.js
-├── utils/
-├── app.js
-├── .env
-└── .env.example
+│   ├── theaterModel.js
+│   ├── showModel.js
+│   ├── bookingModel.js
+│   └── seatModel.js
+│
+├── routes/                # Route definitions
+│   ├── authRoutes.js
+│   ├── movieRoutes.js
+│   ├── theaterRoutes.js
+│   ├── showRoutes.js
+│   ├── bookingRoutes.js
+│   └── adminRoutes.js
+│
+├── .env                   # Environment variables
+├── app.js                 # Entry point
+└── package.json           # NPM metadata & scripts
 ```
+---
 
 ## 🔐 Auth Module
 
-Handles registration, login, session management, and user profiles.
+Handles registration, login, logout, and user profile.
 
 **Key Files:**
-- `controllers/userController.js`: Auth logic, user management
-- `routes/users.js`: Auth and user routes
+- `controllers/authController.js`: Auth logic
+- `routes/authRoutes.js`: Auth routes
 - `models/userModel.js`: User schema/model
 
 **Routes:**
 ```
-POST /register  
-POST /login  
-GET /logout  
-GET /profile 
+POST /api/auth/register  
+POST /api/auth/login  
+GET /api/auth/logout  
+GET /api/auth/profile        // current user info
 ```
 
 ---
 
 ## 🎬 Movies
 
-Manage movies: list, details, admin CRUD.
+Manage movie listings, details, and admin controls.
 
 **Key Files:**
-- `controllers/movieController.js`: Movie logic
-- `routes/movies.js`: Movie routes
-- `models/movieModel.js`: Movie schema/model
+- `controllers/movieController.js`
+- `routes/movieRoutes.js`
+- `models/movieModel.js`
 
 **Routes:**
 ```
-GET /movies  
-GET /movies/:id  
-POST /movies        // admin only  
-PUT /movies/:id     // admin only  
-DELETE /movies/:id  // admin only
+GET /api/movies  
+GET /api/movies/:id  
+POST /api/movies              // admin only  
+PUT /api/movies/:id           // admin only  
+DELETE /api/movies/:id        // admin only
 ```
 
 ---
 
-## 🏢 Theaters & Screens
+## 🏢 Theaters
 
-**Sample Routes:**
+Create and manage theaters.
+
+**Key Files:**
+- `controllers/theaterController.js`
+- `routes/theaterRoutes.js`
+- `models/theaterModel.js`
+
+**Routes:**
 ```
-GET /theaters  
-GET /theaters/:id  
-POST /theaters       // admin  
-PUT /theaters/:id    // admin  
-DELETE /theaters/:id // admin
+GET /api/theaters  
+GET /api/theaters/:id  
+POST /api/theaters            // admin only  
+PUT /api/theaters/:id         // admin only  
+DELETE /api/theaters/:id      // admin only
 ```
 
 ---
 
 ## ⏰ Shows
 
-**Sample Routes:**
+Showtime scheduling and retrieval.
+
+**Key Files:**
+- `controllers/showController.js`
+- `routes/showRoutes.js`
+- `models/showModel.js`
+
+**Routes:**
 ```
-GET /shows?movieId=...&date=...  
-POST /shows          // admin  
-PUT /shows/:id       // admin  
-DELETE /shows/:id    // admin
+GET /api/shows?movieId=...&date=...  
+POST /api/shows               // admin only  
+PUT /api/shows/:id            // admin only  
+DELETE /api/shows/:id         // admin only
 ```
 
 ---
 
 ## 🪑 Seats & Booking
 
-Live seat view and booking logic.
+Live seat view, seat management, and booking.
 
 **Key Files:**
-- `controllers/bookingController.js`: Booking logic
-- `routes/bookings.js`: Booking routes
-- `models/bookingModel.js`: Booking schema/model
+- `controllers/seatController.js`
+- `controllers/bookingController.js`
+- `routes/bookingRoutes.js`
+- `models/seatModel.js`, `bookingModel.js`
 
 **Routes:**
 ```
-GET /seats/:showId  
-POST /book           // Book seat(s)
-```
-
----
-
-## 📜 Bookings
-
-User's booking history and booking details.
-
-**Routes:**
-```
-GET /bookings/user/:userId  
-GET /bookings/:id
+GET /api/seats/:showId              // view available seats  
+POST /api/bookings                  // user booking
+GET /api/bookings/user/:userId      // user booking history  
+GET /api/bookings/:id               // booking detail (user/admin)
 ```
 
 ---
 
 ## ⚙️ Admin
 
-Special protected routes for dashboard features.
+Admin-only features like dashboard, user data, analytics, etc.
+
+**Key Files:**
+- `routes/adminRoutes.js`
+- `middlewares/isAdmin.js`
 
 **Sample Routes:**
 ```
-GET /admin/users  
-GET /admin/bookings  
-GET /admin/dashboard
+GET /api/admin/users  
+GET /api/admin/bookings  
+GET /api/admin/dashboard
 ```
 
 ---
 
 ## 🛡️ Middleware Protection
 
-- `isAuthenticated`: Protects any route that needs login
-- `isAdmin`: Protects admin routes
+Custom middleware for route-level protection.
+
+- `isAuthenticated.js`: Validates login/auth tokens
+- `isAdmin.js`: Ensures admin privileges
+
+**Usage Example:**
+```js
+router.use('/api/admin', isAuthenticated, isAdmin);
+```
 
 ---
 
 ## ⚙️ Configuration
 
-- `config/db.js`: Sets up database connection (e.g., MongoDB)
-- `.env` / `.env.example`: Store environment variables
+- `config/db.js`: MongoDB or DB connection setup
+- `.env` / `.env.example`: Store secret credentials and configs
 
 ---
-
-## 🛠️ Utilities
-
-- `utils/`: General helper functions
-
----
-
-## 🚀 Getting Started
-
-1. Copy `.env.example` to `.env` and fill in your values.
-
----
+ #### *Payment and image upload modules will be implemented later*
