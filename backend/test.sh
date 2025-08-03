@@ -1,89 +1,81 @@
 #!/bin/bash
 
-# Set API base
-BASE_URL_auth="http://localhost:3000/api/auth"
-BASE_URL="http://localhost:3000/api/users"
-COOKIE_JAR="cookies.txt"
+BASE_URL="http://localhost:3000/api"
+SESSION_COOKIE="cookie.txt"
 
-echo "🧪 1. Register Normal User"
-curl -X POST "$BASE_URL_auth/register" \
-  -H "Content-Type: application/json" \
-  -c $COOKIE_JAR \
-  -d '{
-    "name": "NormalUser",
-    "email": "normal@example.com",
-    "phone": "9878987898",
-    "password": "pass1234"
-  }'
-echo -e "\n"
+# User credentials
+NAME="Test User"
+PHONE="9876543211"
+PASSWORD="initialPass123"
+NEW_PASSWORD="newPass456"
+EMAIL="testuser@example.com"
+ADMIN_CODE="admin123"
 
-echo "🧪 2. Register Admin User"
-curl -X POST "$BASE_URL_auth/register" \
-  -H "Content-Type: application/json" \
-  -c $COOKIE_JAR \
-  -d '{
-    "name": "AdminUser",
-    "email": "admin@example.com",
-    "phone": "2222222222",
-    "password": "adminpass",
-    "adminCode": "supersecretadminkey"
-  }'
-echo -e "\n"
+echo "📨 Step 1: Sending OTP..."
+curl -X POST "$BASE_URL/auth/send-otp" -H "Content-Type: application/json" \
+    -d "{\"phone\":\"$PHONE\"}"
+echo
 
-echo "🧪 3. Duplicate User Registration (Should Fail with 409)"
-curl -X POST "$BASE_URL_auth/register" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Duplicate",
-    "email": "normal@example.com",
-    "phone": "3333333333",
-    "password": "something"
-  }'
-echo -e "\n"
+echo "🔐 Step 2: Waiting for user to enter received OTP..."
+read -p "Enter OTP: " OTP
+OTP=$(echo "$OTP" | xargs)
 
-echo "🔐 4. Login as Normal User"
-curl -X POST "$BASE_URL_auth/login" \
-  -H "Content-Type: application/json" \
-  -c $COOKIE_JAR \
-  -d '{
-    "email": "normal@example.com",
-    "password": "pass1234"
-  }'
-echo -e "\n"
+echo "✅ Step 3: Verifying OTP..."
+curl -X POST "$BASE_URL/auth/verify-otp" -H "Content-Type: application/json" \
+    -d "{\"phone\":\"$PHONE\", \"otp\":\"$OTP\"}"
+echo
 
-echo "👤 5. Get User Profile"
-curl -X GET "$BASE_URL/me" \
-  -b $COOKIE_JAR
-echo -e "\n"
+echo "📝 Step 4: Registering user after OTP is verified..."
+curl -X POST "$BASE_URL/auth/register" -H "Content-Type: application/json" \
+    -d "{\"name\":\"$NAME\", \"phone\":\"$PHONE\", \"password\":\"$PASSWORD\", \"adminCode\":\"$ADMIN_CODE\"}" -c "$SESSION_COOKIE"
+echo
 
-echo "✏️ 6. Update Profile (Name & Phone)"
-curl -X PUT "$BASE_URL/me" \
-  -H "Content-Type: application/json" \
-  -b $COOKIE_JAR \
-  -d '{
-    "name": "UpdatedUser",
-    "phone": "4444444444"
-  }'
-echo -e "\n"
+echo "🔑 Logging in..."
+curl -X POST "$BASE_URL/auth/login" -H "Content-Type: application/json" \
+    -d "{\"phone\":\"$PHONE\", \"password\":\"$PASSWORD\"}" -c $SESSION_COOKIE
+echo
 
-echo "🚫 7. Invalid Login (Wrong Password)"
-curl -X POST "$BASE_URL_auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "normal@example.com",
-    "password": "wrongpass"
-  }'
-echo -e "\n"
+echo "👤 Getting profile..."
+curl -X GET "$BASE_URL/users/me" -b $SESSION_COOKIE
+echo
 
-echo "🧼 8. Logout (optional if implemented)"
-curl -X POST "$BASE_URL_auth/logout" \
-  -b $COOKIE_JAR
-echo -e "\n"
+echo "✏️ Updating profile..."
+curl -X PUT "$BASE_URL/users/me" -H "Content-Type: application/json" \
+    -d "{\"name\":\"Updated User\", \"phone\":\"$PHONE\", \"email\":\"$EMAIL\", \"otp\":\"$OTP\"}" -b $SESSION_COOKIE
+echo
 
-echo "🔒 9. Get Profile After Logout (Should Fail)"
-curl -X GET "$BASE_URL/me" \
-  -b $COOKIE_JAR
-echo -e "\n"
+echo "🔐 Changing password..."
+curl -X PUT "$BASE_URL/users/me/password" -H "Content-Type: application/json" \
+    -d "{\"currentPassword\":\"$PASSWORD\", \"newPassword\":\"$NEW_PASSWORD\", \"phone\":\"$PHONE\", \"otp\":\"$OTP\"}" -b $SESSION_COOKIE
+echo
 
-# Clean up
-rm -f $COOKIE_JAR
+echo "🚪 Logging out..."
+curl -X GET "$BASE_URL/auth/logout" -b $SESSION_COOKIE
+echo
+
+echo "🔑 Trying login with old password (should fail)..."
+curl -X POST "$BASE_URL/auth/login" -H "Content-Type: application/json" \
+    -d "{\"phone\":\"$PHONE\", \"password\":\"$PASSWORD\"}" -c $SESSION_COOKIE
+echo
+
+echo "🔐 Sending OTP for reset..."
+curl -X POST "$BASE_URL/auth/send-otp" -H "Content-Type: application/json" \
+    -d "{\"phone\":\"$PHONE\"}"
+echo -e "\nEnter OTP again for reset-password:"
+read -p "OTP: " RESET_OTP
+
+echo "🔁 Resetting password..."
+curl -X POST "$BASE_URL/auth/reset-password" -H "Content-Type: application/json" \
+    -d "{\"phone\":\"$PHONE\", \"otp\":\"$RESET_OTP\", \"newPassword\":\"$PASSWORD\"}"
+echo
+
+echo "✅ Logging in with RESET password..."
+curl -X POST "$BASE_URL/auth/login" -H "Content-Type: application/json" \
+    -d "{\"phone\":\"$PHONE\", \"password\":\"$PASSWORD\"}" -c $SESSION_COOKIE
+echo
+
+echo "❌ Deleting user..."
+curl -X DELETE "$BASE_URL/users/me" -b $SESSION_COOKIE
+echo
+
+echo "🎉 All tests done."

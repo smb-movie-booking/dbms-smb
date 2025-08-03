@@ -17,7 +17,7 @@ exports.login = (req, res) => {
     return res.status(400).json({ message: 'Invalid phone number format' });
   }
 
-  userModel.getByPhone(phone, (err, user) => {
+  userModel.findByPhone(phone, (err, user) => {
     if (err || !user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -31,6 +31,7 @@ exports.login = (req, res) => {
         id: user.UserID,
         name: user.User_Name,
         email: user.Email,
+        phone: user.Phone,
         isAdmin: user.IsAdmin === 1
       };
 
@@ -50,27 +51,32 @@ exports.register = (req, res) => {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
-  otpModel.getOTP(phone, (err, record) => {
-    if (err || !record || !record.Verified) {
-      return res.status(403).json({ message: 'Phone not verified via OTP' });
-    }
+  // Step 1: Check if phone is verified
+  otpModel.isPhoneVerified(phone, (err, isVerified) => {
+    if (err) return res.status(500).json({ message: 'Verification check failed' });
+    if (!isVerified) return res.status(403).json({ message: 'Phone not verified via OTP' });
 
     const isAdmin = adminCode === process.env.ADMIN_SECRET ? 1 : 0;
 
+    // Step 2: Hash password and create user
     bcrypt.hash(password, 10, (err, hashedPassword) => {
       if (err) return res.status(500).json({ message: 'Hashing error' });
 
       userModel.createUser(name, hashedPassword, null, phone, isAdmin, (err) => {
         if (err) return res.status(500).json({ message: 'User creation error' });
 
-        otpModel.deleteOTP(phone, () => {}); // Clean up
-        userModel.getByPhone(phone, (err, user) => {
+        // Step 3: Delete OTP entry
+        otpModel.deleteOTP(phone, () => {}); // optional callback
+
+        // Step 4: Auto-login the user
+        userModel.findByPhone(phone, (err, user) => {
           if (err || !user) return res.status(500).json({ message: 'Fetch failed' });
 
           req.session.user = {
             id: user.UserID,
             name: user.User_Name,
             email: user.Email,
+            phone: user.Phone,
             isAdmin: user.IsAdmin === 1
           };
 
@@ -82,6 +88,7 @@ exports.register = (req, res) => {
     });
   });
 };
+
 
 // GET /logout
 exports.logout = (req, res) => {

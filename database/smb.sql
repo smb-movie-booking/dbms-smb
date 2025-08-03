@@ -10,11 +10,14 @@ CREATE TABLE User (
     IsAdmin BOOLEAN DEFAULT 0
 );
 
+SET time_zone = '+05:30';
+
 CREATE TABLE OTP (
-  Phone VARCHAR(15) PRIMARY KEY,
+  Identifier VARCHAR(100) NOT NULL,  -- Can store either phone number or email
   OTP_Code VARCHAR(6) NOT NULL,
   Expires_At DATETIME NOT NULL,
-  Verified BOOLEAN DEFAULT FALSE
+  Verified BOOLEAN DEFAULT FALSE,
+  PRIMARY KEY (Identifier)
 );
 
 

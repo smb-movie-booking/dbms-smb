@@ -1,49 +1,92 @@
 const userModel = require('../models/userModel');
 const otpModel = require('../models/otpModel');
-
 const bcrypt = require('bcrypt');
 
-exports.changePassword = (req, res) => {
+// GET /users/me
+exports.getProfile = (req, res) => {
+  const user = req.session.user;
+  if (!user) return res.status(401).json({ error: 'Not authenticated' });
+  return res.json({ user });
+};
+
+// PUT /users/update-password
+exports.updatePassword = (req, res) => {
   const userId = req.session.user?.id;
-  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+  const { currentPassword, newPassword, confirmPassword } = req.body;
 
-  const { currentPassword, newPassword, phone, otp } = req.body;
+  if (!userId || !currentPassword || !newPassword || !confirmPassword)
+    return res.status(400).json({ error: 'All fields required' });
 
-  if (!currentPassword || !newPassword || !phone || !otp) {
-    return res.status(400).json({ error: 'All fields are required' });
-  }
+  if (newPassword !== confirmPassword)
+    return res.status(400).json({ error: 'Passwords do not match' });
 
-  const phoneRegex = /^[6-9]\d{9}$/;
-  if (!phoneRegex.test(phone)) {
-    return res.status(400).json({ error: 'Invalid phone number format' });
-  }
+  userModel.getPasswordById(userId, (err, user) => {
+    if (err || !user) return res.status(500).json({ error: 'User not found' });
 
-  // Step 1: OTP verification
+    bcrypt.compare(currentPassword, user.User_Password, (err, match) => {
+      if (err || !match)
+        return res.status(401).json({ error: 'Incorrect current password' });
+
+      bcrypt.hash(newPassword, 10, (err, hashedPwd) => {
+        if (err) return res.status(500).json({ error: 'Hashing failed' });
+
+        userModel.updatePassword(userId, hashedPwd, (err) => {
+          if (err) return res.status(500).json({ error: 'Update failed' });
+          res.json({ message: 'Password updated successfully' });
+        });
+      });
+    });
+  });
+};
+
+// PUT /users/update-name
+exports.updateName = (req, res) => {
+  const userId = req.session.user?.id;
+  const name = req.body.name?.trim();
+
+  if (!userId || !name) return res.status(400).json({ error: 'Name required' });
+
+  userModel.updateName(userId, name, (err) => {
+    if (err) return res.status(500).json({ error: 'Failed to update name' });
+    req.session.user.name = name;
+    res.json({ message: 'Name updated successfully' });
+  });
+};
+
+// PUT /users/update-phone
+exports.updatePhone = (req, res) => {
+  const userId = req.session.user?.id;
+  const phone = req.body.phone?.trim();
+  const otp = req.body.otp?.trim();
+
+  if (!userId || !phone || !otp)
+    return res.status(400).json({ error: 'Phone and OTP are required' });
+
+  // Get OTP that is not expired and not yet verified
   otpModel.getOTP(phone, (err, record) => {
-    if (err || !record) return res.status(400).json({ error: 'OTP not found' });
-    if (!record.Verified) return res.status(401).json({ error: 'OTP not verified' });
+    if (err || !record)
+      return res.status(400).json({ error: 'OTP not found or expired' });
 
-    // Step 2: Get user
-    userModel.getUserById(userId, (err, user) => {
-      if (err || !user) return res.status(404).json({ error: 'User not found' });
+    if (record.OTP_Code !== otp)
+      return res.status(401).json({ error: 'Invalid OTP' });
 
-      // Step 3: Compare current password
-      bcrypt.compare(currentPassword, user.User_Password, (err, isMatch) => {
-        if (err || !isMatch) return res.status(401).json({ error: 'Incorrect current password' });
+    // Mark OTP as verified (optional, but good for audit/logging)
+    otpModel.markAsVerified(phone, (err) => {
+      if (err) console.error('Warning: failed to mark OTP as verified');
 
-        // Step 4: Hash new password
-        bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
-          if (err) return res.status(500).json({ error: 'Error hashing password' });
+      userModel.findByPhone(phone, (err, existingUser) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
 
-          // Step 5: Update in DB
-          userModel.updatePassword(userId, hashedPassword, (err) => {
-            if (err) return res.status(500).json({ error: 'Failed to update password' });
+        if (existingUser && existingUser.UserID !== userId)
+          return res.status(409).json({ error: 'Phone already in use' });
 
-            // Clear OTP optionally
-            otpModel.deleteOTP(phone, () => {
-              return res.json({ message: 'Password changed successfully' });
-            });
-          });
+        userModel.updatePhone(userId, phone, (err) => {
+          if (err) return res.status(500).json({ error: 'Failed to update phone' });
+
+          req.session.user.phone = phone;
+          otpModel.deleteOTP(phone, () => {}); // Clean up OTP
+
+          res.json({ message: 'Phone number verified and updated successfully' });
         });
       });
     });
@@ -51,66 +94,29 @@ exports.changePassword = (req, res) => {
 };
 
 
-// GET /users/me
-exports.getProfile = (req, res) => {
+// PUT /users/update-email
+exports.updateEmail = (req, res) => {
   const userId = req.session.user?.id;
-  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
-
-  userModel.getUserById(userId, (err, user) => {
-    if (err || !user) return res.status(500).json({ error: 'Failed to fetch profile' });
-    res.json(user);
-  });
-};
-
-// PUT /users/me
-exports.updateProfile = (req, res) => {
-  const userId = req.session.user?.id;
-  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
-
-  const name = req.body.name?.trim();
-  const phone = req.body.phone?.trim();
   const email = req.body.email?.trim();
   const otp = req.body.otp?.trim();
 
-  if (!name || !phone || !email) {
-    return res.status(400).json({ error: 'Name, phone, and email are required' });
-  }
+  if (!userId || !email || !otp)
+    return res.status(400).json({ error: 'Email and OTP required' });
 
-  const phoneRegex = /^[6-9]\d{9}$/;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  otpModel.getOTP(email, (err, record) => {
+    if (err || !record || !record.Verified)
+      return res.status(401).json({ error: 'Invalid or unverified OTP' });
 
-  if (!phoneRegex.test(phone)) {
-    return res.status(400).json({ error: 'Invalid phone number format' });
-  }
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ error: 'Invalid email format' });
-  }
-
-  // Step 1: Verify OTP
-  otpModel.getOTP(phone, (err, record) => {
-    if (err || !record) return res.status(400).json({ error: 'OTP not found' });
-    if (!record.Verified) return res.status(401).json({ error: 'Phone not verified via OTP' });
-
-    // Step 2: Check if phone or email already used by someone else
-    userModel.findByEmailOrPhone(email, phone, (err, existingUser) => {
+    userModel.getByEmail(email, (err, existingUser) => {
       if (err) return res.status(500).json({ error: 'DB error' });
-      if (existingUser && existingUser.UserID !== userId) {
-        return res.status(409).json({ error: 'Email or phone already in use' });
-      }
+      if (existingUser && existingUser.UserID !== userId)
+        return res.status(409).json({ error: 'Email already in use' });
 
-      // Step 3: Update user in DB
-      userModel.updateUser(userId, name, phone, email, (err, result) => {
-        if (err) return res.status(500).json({ error: 'Failed to update profile' });
-
-        // Step 4: Update session info
-        req.session.user.name = name;
-        req.session.user.phone = phone;
+      userModel.updateEmail(userId, email, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed to update email' });
         req.session.user.email = email;
-
-        // Optional: clear OTP entry
-        otpModel.deleteOTP(phone, () => {
-          return res.json({ message: 'Profile updated successfully' });
-        });
+        otpModel.deleteOTP(email, () => {});
+        res.json({ message: 'Email updated successfully' });
       });
     });
   });
