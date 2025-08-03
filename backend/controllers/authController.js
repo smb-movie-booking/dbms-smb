@@ -6,18 +6,16 @@ require('dotenv').config();
 
 // POST /login
 exports.login = (req, res) => {
-  const { phone, password } = req.body;
+  const { identifier, password } = req.body;
 
-  if (!phone || !password) {
-    return res.status(400).json({ message: 'Phone number and password are required' });
+  if (!identifier || !password) {
+    return res.status(400).json({ message: 'Email/Phone and password are required' });
   }
 
   const phoneRegex = /^[6-9]\d{9}$/;
-  if (!phoneRegex.test(phone)) {
-    return res.status(400).json({ message: 'Invalid phone number format' });
-  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  userModel.findByPhone(phone, (err, user) => {
+  const handleUser = (err, user) => {
     if (err || !user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -39,8 +37,17 @@ exports.login = (req, res) => {
         message: user.IsAdmin === 1 ? 'Admin logged in successfully' : 'User logged in successfully'
       });
     });
-  });
+  };
+
+  if (phoneRegex.test(identifier)) {
+    userModel.findByPhone(identifier, handleUser);
+  } else if (emailRegex.test(identifier)) {
+    userModel.getByEmail(identifier, handleUser);
+  } else {
+    return res.status(400).json({ message: 'Invalid email or phone format' });
+  }
 };
+
 
 
 exports.register = (req, res) => {
