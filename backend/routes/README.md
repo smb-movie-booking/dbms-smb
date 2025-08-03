@@ -126,13 +126,13 @@ This document outlines the **backend API endpoints** for user authentication and
 
 ### 6. POST `/reset-password`
 
-* **Description:** Reset password after verifying OTP.
+* **Description:** Reset password after verifying OTP by either email or phone.
 
 * **Request Body:**
 
   ```json
   {
-    "phone": "9876543210",
+    "identifier": "9876543210" or "example@gmail.com",
     "otp": "123456",
     "newPassword": "newpass123"
   }
@@ -167,7 +167,7 @@ All routes below require authentication via `isAuthenticated` middleware.
   ```json
   {
     "id": 1,
-    "user_name": "Aadith",
+    "name": "Aadith",
     "email": "user@example.com",
     "phone": "9876543210"
   }
@@ -214,7 +214,7 @@ All routes below require authentication via `isAuthenticated` middleware.
 
 * **UX Guide:**
 
-  * Show OTP prompt when user inputs new phone.
+  * Show OTP prompt after user inputs new phone.
   * Verify and update with confirmation UI.
 
 ---
