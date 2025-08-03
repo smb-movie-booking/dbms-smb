@@ -107,35 +107,58 @@ exports.logout = (req, res) => {
 };
 
 exports.resetPassword = (req, res) => {
-  const { phone, otp, newPassword } = req.body;
+  const { phone, email, otp, newPassword } = req.body;
 
-  if (!phone || !otp || !newPassword) {
-    return res.status(400).json({ message: 'Phone, OTP, and new password are required' });
+  if ((!phone && !email) || !otp || !newPassword) {
+    return res.status(400).json({ message: 'Phone or email, OTP, and new password are required' });
   }
 
-  const phoneRegex = /^[6-9]\d{9}$/;
-  if (!phoneRegex.test(phone)) {
-    return res.status(400).json({ message: 'Invalid phone number format' });
+  const isPhone = !!phone;
+  const identifier = phone || email;
+
+  // Validate identifier format
+  if (isPhone) {
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(identifier)) {
+      return res.status(400).json({ message: 'Invalid phone number format' });
+    }
+  } else {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(identifier)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
   }
 
-  otpModel.getOTP(phone, (err, record) => {
-    if (err || !record) return res.status(400).json({ message: 'OTP not found' });
-    if (record.OTP_Code !== otp) return res.status(401).json({ message: 'Invalid OTP' });
-    if (new Date() > record.Expires_At) return res.status(400).json({ message: 'OTP expired' });
+  // Fetch valid OTP (expiration already handled in getOTP)
+  otpModel.getOTP(identifier, (err, record) => {
+    if (err || !record) {
+      return res.status(400).json({ message: 'OTP not found or expired' });
+    }
 
-    // Hash new password
+    if (record.OTP_Code !== otp) {
+      return res.status(401).json({ message: 'Invalid OTP' });
+    }
+
+    // Hash and update new password
     bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
-      if (err) return res.status(500).json({ message: 'Hashing error' });
+      if (err) {
+        return res.status(500).json({ message: 'Password hashing failed' });
+      }
 
-      // Update password
-      userModel.updatePasswordByPhone(phone, hashedPassword, (err, result) => {
-        if (err) return res.status(500).json({ message: 'Error updating password' });
+      const updateFn = isPhone
+        ? userModel.updatePasswordByPhone
+        : userModel.updatePasswordByEmail;
 
-        // Optionally mark OTP as verified or delete it
-        otpModel.deleteOTP(phone, () => {
+      updateFn(identifier, hashedPassword, (err, result) => {
+        if (err) {
+          return res.status(500).json({ message: 'Failed to update password' });
+        }
+
+        otpModel.deleteOTP(identifier, () => {
           return res.status(200).json({ message: 'Password reset successfully' });
         });
       });
     });
   });
 };
+

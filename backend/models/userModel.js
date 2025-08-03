@@ -98,4 +98,8 @@ exports.updatePasswordByPhone = (phone, hashedPassword, callback) => {
   db.query('UPDATE User SET User_Password = ? WHERE Phone = ?', [hashedPassword, phone], callback);
 };
 
+exports.updatePasswordByEmail = (email, hashedPassword, callback) => {
+  db.query('UPDATE User SET User_Password = ? WHERE Email = ?', [hashedPassword, email], callback);
+};
+
 

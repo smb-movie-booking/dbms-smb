@@ -29,14 +29,14 @@ This document outlines the **backend API endpoints** for user authentication and
 * **UX Guide:**
 
   * Store session or token.
-  * Redirect to user dashboard.
+  * Redirect to home.
   * Show error toast on failure.
 
 ---
 
 ### 2. POST `/register`
 
-* **Description:** Register a new user account.
+* **Description:** Register a new user account who completed phone verification.
 
 * **Request Body:**
 
@@ -48,16 +48,15 @@ This document outlines the **backend API endpoints** for user authentication and
     "phone": "9876543210"
   }
   ```
-
+  *After phone verification all fields are sent with request*
 * **Response:**
 
-  * `200 OK`: OTP sent to email or phone.
+  * `200 OK`: User is registered and saved in db.
   * `409 Conflict`: Email or phone already registered.
 
 * **UX Guide:**
 
-  * Immediately show OTP input UI after registration.
-  * Prevent resubmission until OTP is verified.
+  * Immediately redirects to home.
 
 ---
 
@@ -78,13 +77,13 @@ This document outlines the **backend API endpoints** for user authentication and
 
 ### 4. POST `/send-otp`
 
-* **Description:** Send OTP to phone/email for verification.
+* **Description:** Send OTP to phone/email for verification. Used with updation of logged in profile, and registration of new profile.
 
 * **Request Body:**
 
   ```json
   {
-    "phone": "9876543210"
+    "identifier": "9876543210" or "example@gmail.com"
   }
   ```
 
@@ -102,13 +101,13 @@ This document outlines the **backend API endpoints** for user authentication and
 
 ### 5. POST `/verify-otp`
 
-* **Description:** Verifies an OTP for a phone/email.
+* **Description:** Verifies an OTP for a phone/email Called after inputing phone or email.
 
 * **Request Body:**
 
   ```json
   {
-    "phone": "9876543210",
+    "identifier": "9876543210" or "example@gmail.com",
     "otp": "123456"
   }
   ```
