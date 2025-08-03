@@ -20,7 +20,10 @@ db.connect((err) => {
   console.log('✅ Connected to MySQL');
 });
 
-const sessionStore = new MySQLStore(dbOptions);
+const sessionStore = new MySQLStore({
+  ...dbOptions,
+  createDatabaseTable: true  // ✅ this fixes the "table doesn't exist" error
+});
 
 module.exports = {
   db,

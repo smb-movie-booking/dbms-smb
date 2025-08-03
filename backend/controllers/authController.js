@@ -52,7 +52,7 @@ exports.register = (req, res) => {
   }
 
   // Step 1: Check if phone is verified
-  otpModel.isPhoneVerified(phone, (err, isVerified) => {
+  otpModel.isVerified(phone, (err, isVerified) => {
     if (err) return res.status(500).json({ message: 'Verification check failed' });
     if (!isVerified) return res.status(403).json({ message: 'Phone not verified via OTP' });
 

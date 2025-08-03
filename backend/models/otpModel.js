@@ -42,7 +42,10 @@ exports.isVerified = (identifier, callback) => {
     LIMIT 1
   `;
   db.query(sql, [identifier], (err, results) => {
-    if (err) return callback(err);
+    if (err) {
+      console.error("OTP verification query error:", err);
+      return callback(err);
+    }
     const verified = results.length > 0 && results[0].Verified === 1;
     callback(null, verified);
   });

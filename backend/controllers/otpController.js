@@ -2,8 +2,7 @@ const otpModel = require('../models/otpModel');
 const userModel = require('../models/userModel')
 
 exports.sendOTP = (req, res) => {
-  const identifier = req.body.identifier?.trim();
-
+  const identifier = req.body.identifier?.trim().toLowerCase(); // 🔁 force lowercase
   if (!identifier) return res.status(400).json({ message: 'Identifier required' });
 
   const phoneRegex = /^[6-9]\d{9}$/;
@@ -21,13 +20,21 @@ exports.sendOTP = (req, res) => {
   checkUser(identifier, (err, user) => {
     if (err) return res.status(500).json({ message: 'DB error' });
 
-    if (user && req.session?.user && user.UserID !== req.session.user.id) {
-      return res.status(409).json({ message: `${isPhone ? 'Phone' : 'Email'} already registered by another user` });
-    }
+     const currentUserID = req.session?.user?.id;
+       if (user) {
+          // CASE 1: logged in & trying to use someone else's email/phone
+          if (currentUserID && user.UserID !== currentUserID) {
+            return res.status(409).json({ message: `${isPhone ? 'Phone' : 'Email'} already registered` });
+          }
 
-    if (user && req.session?.user && user.UserID === req.session.user.id) {
-      return res.status(400).json({ message: `This is already your current ${isPhone ? 'phone' : 'email'}` });
-    }
+          // CASE 2: not logged in (registration) and email/phone already used
+          if (!currentUserID) {
+            return res.status(409).json({ message: `${isPhone ? 'Phone' : 'Email'} already registered` });
+          }
+
+          // CASE 3: it's your own email/phone
+          return res.status(400).json({ message: `This is already your current ${isPhone ? 'phone' : 'email'}` });
+      }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const now = new Date();
@@ -46,7 +53,7 @@ exports.sendOTP = (req, res) => {
 
 
 exports.verifyOTP = (req, res) => {
-  const identifier = req.body.identifier?.trim();
+  const identifier = req.body.identifier?.trim().toLowerCase(); // 🔁 force lowercase
   const otp = req.body.otp?.trim();
 
   if (!identifier || !otp) {
