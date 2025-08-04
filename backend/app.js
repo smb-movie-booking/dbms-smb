@@ -21,6 +21,8 @@ app.use(session({
   }
 }));
 
+console.log(process.env.DB_USER);
+
 app.use(express.json());
 app.use('/api/movies', movieRoutes);
 app.use('/api/auth', authRoutes);

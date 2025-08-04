@@ -1,0 +1,14 @@
+.sidebar-container{
+    z-index:20;
+    position: fixed;
+    right: -100%;
+    top: 0;
+    width: min(100vw,20em);
+    min-height: 100vh;
+    background-color: white;
+    transition: all 0.2s ease-in-out;
+    
+}
+.sidebar-container.show{
+    right: 0px;
+}

@@ -1,0 +1,12 @@
+.input-container{
+    display: flex;
+    gap: 4px;
+}
+.otp-input {
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  text-align: center;
+  border: 1px solid gray;
+  border-radius: 4px;
+}
