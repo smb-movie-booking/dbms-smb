@@ -1,0 +1,11 @@
+### Get all users
+POST http://localhost:3000/api/auth/send-otp
+Content-Type: application/json
+
+{
+    "identifier":"example@gmail.com"
+}
+
+### Create a new user
+GET http://localhost:3000/api/movies/
+Content-Type: application/json
