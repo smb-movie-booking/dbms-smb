@@ -1,11 +1,14 @@
+
 # Define a variable for the base URL. This is the correct syntax for the REST Client extension.
 @host = http://localhost:3000
 
+POST {{host}}/api/admin/flush
+Content-Type: application/json
+
+{}
+
 ###
 # @name loginWithEmail
-# Login a user or admin. The `authController.js` uses a single `identifier` field
-# which can be either an email or a phone number.
-#
 # Controller logic: const { identifier, password } = req.body;
 POST {{host}}/api/auth/login
 Content-Type: application/json
