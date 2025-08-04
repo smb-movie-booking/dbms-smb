@@ -1,15 +1,108 @@
+# =================================================================
+# API Test Suite
+# This file tests the complete user flows of the application.
+# Each section represents a user journey with happy paths and edge cases.
+# =================================================================
 
-# Define a variable for the base URL. This is the correct syntax for the REST Client extension.
+# -----------------------------------------------------------------
+# Environment Variable
+# -----------------------------------------------------------------
 @host = http://localhost:3000
 
+
+# =================================================================
+# 0. ADMIN & DEBUGGING FLOW
+# =================================================================
+
+###
+# @name FlushDatabase
+# Deletes all records from all tables for a clean testing environment.
+# NOTE: This endpoint must be created on the server for this to work.
 POST {{host}}/api/admin/flush
 Content-Type: application/json
 
 {}
 
+
+# =================================================================
+# 1. NEW USER REGISTRATION FLOW
+# =================================================================
+
+# -----------------------------------------------------------------
+# Flow 1.1: Successful Registration (Happy Path)
+# -----------------------------------------------------------------
+
 ###
-# @name loginWithEmail
-# Controller logic: const { identifier, password } = req.body;
+# @name Step1_SendOTPForRegistration
+# A new user provides their phone number to receive an OTP.
+POST {{host}}/api/auth/send-otp
+Content-Type: application/json
+
+{
+  "identifier": "9876543210"
+}
+
+###
+# @name Step2_VerifyOTPForRegistration
+# The user submits the OTP to verify they own the phone number.
+POST {{host}}/api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "identifier": "9876543210",
+  "otp": "400599" 
+}
+
+###
+# @name Step3_RegisterUserAccount
+# With a verified phone, the user can now create their account.
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User One",
+  "phone": "9876543210",
+  "password": "password123",
+  "adminCode": ""
+}
+
+# -----------------------------------------------------------------
+# Flow 1.2: Registration Failure (Edge Cases)
+# -----------------------------------------------------------------
+
+###
+# @name Fail_RegisterWithUnverifiedPhone
+# An attempt to register without completing the OTP verification first.
+# EXPECTED: 403 Forbidden with "Phone not verified via OTP"
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Unverified User",
+  "phone": "9999999999",
+  "password": "password123"
+}
+
+###
+# @name Fail_RegisterWithTakenPhoneNumber
+# A user tries to register with a phone number that is already in use.
+# To test: Run the successful registration flow first, then run this.
+# EXPECTED: 409 Conflict from the /send-otp endpoint.
+POST {{host}}/api/auth/send-otp
+Content-Type: application/json
+
+{
+  "identifier": "9876543210"
+}
+
+
+# =================================================================
+# 2. LOGIN, PROFILE & LOGOUT FLOW
+# =================================================================
+
+###
+# @name Success_LoginWithEmail
+# A registered user logs in with their email and password.
 POST {{host}}/api/auth/login
 Content-Type: application/json
 
@@ -19,33 +112,46 @@ Content-Type: application/json
 }
 
 ###
-# @name loginWithPhone
-# Alternative login using a phone number as the identifier.
+# @name Success_GetProfile
+# After logging in, the user requests their own profile data.
+# This is a protected route and requires a valid session cookie.
+GET {{host}}/api/users/me
+
+###
+# @name Fail_LoginWithWrongPassword
+# A user attempts to log in with an incorrect password.
+# EXPECTED: 401 Unauthorized
 POST {{host}}/api/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "9876543210",
-  "password": "password123"
+  "identifier": "user@example.com",
+  "password": "wrong-password"
 }
 
 ###
-# @name logout
-# Logout the current user and destroy the session. No request body needed.
+# @name Success_Logout
+# The logged-in user ends their session.
 GET {{host}}/api/auth/logout
 
 ###
-# ----------------------------------------------------------------
-# USER REGISTRATION WORKFLOW
-# The following requests demonstrate the required 3-step sequence
-# for registering a new user, as per your controller logic.
-# ----------------------------------------------------------------
+# @name Fail_GetProfileAfterLogout
+# An attempt to access a protected route after the session has been destroyed.
+# EXPECTED: 401 Unauthorized
+GET {{host}}/api/users/me
+
+
+# =================================================================
+# 3. FORGOTTEN PASSWORD RESET FLOW
+# =================================================================
+
+# -----------------------------------------------------------------
+# Flow 3.1: Successful Password Reset
+# -----------------------------------------------------------------
 
 ###
-# @name sendOTPForRegistration
-# STEP 1: Send an OTP to the user's phone number. This is a prerequisite for registration.
-#
-# Controller logic: otpController.js -> sendOTP
+# @name Step1_SendOTPForPasswordReset
+# A user who forgot their password requests a reset OTP.
 POST {{host}}/api/auth/send-otp
 Content-Type: application/json
 
@@ -54,57 +160,8 @@ Content-Type: application/json
 }
 
 ###
-# @name verifyOTPForRegistration
-# STEP 2: Verify the OTP to confirm ownership of the phone number. This marks the
-# phone as 'verified' in the database, which the register endpoint checks.
-#
-# Controller logic: otpController.js -> verifyOTP
-POST {{host}}/api/auth/verify-otp
-Content-Type: application/json
-
-{
-  "identifier": "9876543210",
-  "otp": "123456"
-}
-
-###
-# @name registerUser
-# STEP 3: Register a new user after their phone has been verified.
-# If the phone is not verified (steps 1 & 2 were not completed), this request
-# will fail with a 403 Forbidden error.
-#
-# Controller logic: authController.js -> register
-POST {{host}}/api/auth/register
-Content-Type: application/json
-
-{
-  "name": "Test User",
-  "phone": "9876543210",
-  "password": "password123",
-  "adminCode": ""
-}
-
-###
-# @name registerAdmin
-# STEP 3 (Alternative): Register a new admin user.
-# This requires a valid `adminCode` which should match the `ADMIN_SECRET`
-# in the environment variables. The phone number must still be verified via OTP first.
-POST {{host}}/api/auth/register
-Content-Type: application/json
-
-{
-  "name": "Admin User",
-  "phone": "9876543211",
-  "password": "adminPassword123",
-  "adminCode": "your_secret_admin_code_here"
-}
-
-
-###
-# @name resetPasswordWithPhone
-# Reset password using a phone number and a valid OTP.
-#
-# Controller logic: const { phone, email, otp, newPassword } = req.body;
+# @name Step2_SubmitNewPasswordWithOTP
+# The user provides their identifier, the OTP, and a new password.
 POST {{host}}/api/auth/reset-password
 Content-Type: application/json
 
@@ -115,35 +172,44 @@ Content-Type: application/json
   "newPassword": "newPassword456"
 }
 
+# -----------------------------------------------------------------
+# Flow 3.2: Password Reset Failure (Edge Case)
+# -----------------------------------------------------------------
+
 ###
-# @name resetPasswordWithEmail
-# Reset password using an email and a valid OTP.
+# @name Fail_ResetPasswordWithWrongOTP
+# An attempt to reset the password using an invalid OTP.
+# EXPECTED: 401 Unauthorized with "Invalid OTP"
 POST {{host}}/api/auth/reset-password
 Content-Type: application/json
 
 {
-  "phone": null,
-  "email": "user@example.com",
-  "otp": "123456",
-  "newPassword": "newPassword456"
+  "phone": "9876543210",
+  "email": null,
+  "otp": "000000",
+  "newPassword": "someNewPassword"
 }
 
 
-###
-# @name getAllMovies
-# Get a list of all movies. No request body needed.
-GET {{host}}/api/movies
+# =================================================================
+# 4. PROFILE MANAGEMENT FLOW (LOGGED-IN USER)
+# =================================================================
+
+# NOTE: You must be logged in before running any requests in this section.
 
 ###
-# @name getProfile
-# Get the profile of the currently authenticated user. No request body needed.
-GET {{host}}/api/users/me
+# @name Success_UpdateUserName
+# A logged-in user updates their display name.
+PUT {{host}}/api/users/update-name
+Content-Type: application/json
+
+{
+  "name": "Updated Test User"
+}
 
 ###
-# @name updatePassword
-# Update the password for the currently authenticated user.
-#
-# Controller logic: const { currentPassword, newPassword, confirmPassword } = req.body;
+# @name Success_UpdatePassword
+# A logged-in user updates their password by providing their current one.
 PUT {{host}}/api/users/update-password
 Content-Type: application/json
 
@@ -154,44 +220,55 @@ Content-Type: application/json
 }
 
 ###
-# @name updateName
-# Update the name for the currently authenticated user.
-#
-# Controller logic: const name = req.body.name?.trim();
-PUT {{host}}/api/users/update-name
+# @name Fail_UpdatePasswordWithWrongCurrent
+# An attempt to update password with an incorrect current password.
+# EXPECTED: 401 Unauthorized
+PUT {{host}}/api/users/update-password
 Content-Type: application/json
 
 {
-  "name": "New Test User"
+  "currentPassword": "wrong-current-password",
+  "newPassword": "newPassword789",
+  "confirmPassword": "newPassword789"
 }
 
 ###
-# @name updatePhone
-# Update the phone number for the currently authenticated user after OTP verification.
-#
-# Controller logic: const phone = req.body.phone?.trim(); const otp = req.body.otp?.trim();
-PUT {{host}}/api/users/update-phone
+# @name Success_UpdateEmailFlow
+# A logged-in user updates their email via OTP verification.
+# Step 1: Send OTP to the new email address.
+POST {{host}}/api/auth/send-otp
 Content-Type: application/json
-
 {
-  "phone": "9988776655",
-  "otp": "123456"
+  "identifier": "new.email@example.com"
 }
-
 ###
-# @name updateEmail
-# Update the email for the currently authenticated user after OTP verification.
-#
-# Controller logic: const email = req.body.email?.trim(); const otp = req.body.otp?.trim();
+# Step 2: Submit the new email and the received OTP.
 PUT {{host}}/api/users/update-email
 Content-Type: application/json
-
 {
-  "email": "new.user@example.com",
+  "email": "new.email@example.com",
   "otp": "123456"
 }
 
+
+# =================================================================
+# 5. ACCOUNT DELETION FLOW
+# =================================================================
+
+# NOTE: You must be logged in before running this request.
+
 ###
-# @name deleteProfile
-# Delete the profile of the currently authenticated user. No request body needed.
+# @name Success_DeleteAccount
+# The currently authenticated user deletes their own profile.
+# This is a destructive and irreversible action.
 DELETE {{host}}/api/users/me
+
+
+# =================================================================
+# 6. GENERAL API FLOWS
+# =================================================================
+
+###
+# @name Success_GetAllMovies
+# Fetches the list of all movies. Does not require authentication.
+GET {{host}}/api/movies

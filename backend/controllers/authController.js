@@ -17,7 +17,7 @@ exports.login = (req, res) => {
 
   const handleUser = (err, user) => {
     if (err || !user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'User not found' });
     }
 
     bcrypt.compare(password, user.User_Password, (err, isMatch) => {
