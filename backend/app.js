@@ -2,6 +2,7 @@ const express = require('express');
 require('dotenv').config();
 
 const session = require('express-session');
+const cors=require('cors')
 const { db , sessionStore } = require('./config/db');
 
 const movieRoutes = require('./routes/movies');
@@ -24,6 +25,10 @@ app.use(session({
 console.log(process.env.DB_USER);
 
 app.use(express.json());
+app.use(cors({
+  origin:"http://localhost:5173",
+  credentials:true,
+}))
 app.use('/api/movies', movieRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

@@ -45,10 +45,7 @@ exports.sendOTP = (req, res) => {
       if (err) return res.status(500).json({ message: 'Error storing OTP' });
 
       console.log(`📲 OTP for ${identifier}: ${otp}`);
-      return res.status(200).json({
-        message: `OTP sent to ${isPhone ? 'phone' : 'email'} (console)`,
-        otp: otp
-      });
+      return res.status(200).json({ message: `OTP sent to ${isPhone ? 'phone' : 'email'} (console)` });
     });
   });
 };
