@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/auth/useAuth';
 import './login.css'
 import '../Register/register.css'
+import { Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
  
@@ -11,6 +12,7 @@ const Login = () => {
   const [otp,setOtp]=useState(new Array(6).fill(""))
   const [errors,setErrors]=useState({});
   const [OtpForm,setOtpForm]=useState(false);
+  const [showPassword,setShowPassword]=useState(false);
   const {login,getUser}=useAuth();
 
   const reqOtp=async()=>{
@@ -62,12 +64,16 @@ const Login = () => {
 
           <div className='register-field'>
             <label className='field-name'>Password</label>
-            <input className=''
-            value={formData.password}
-            onChange={(e)=>setFormData({...formData,password:e.target.value})}
-            type='password'
-            placeholder='password'/>
-            {errors.password && <p className='error'>{errors.password}</p>}
+            <div style={{position:"relative"}}>
+              <input className=''
+              value={formData.password}
+              onChange={(e)=>setFormData({...formData,password:e.target.value})}
+              type={`${showPassword?"text":"password"}`}
+              placeholder='password'/>
+              {errors.password && <p className='error'>{errors.password}</p>}
+
+              <span onClick={()=>setShowPassword(!showPassword)} style={{position:"absolute",right:"0",top:"20%"}}>{showPassword?<Eye/>:<EyeOff/>}</span>
+            </div>
           </div>
 
 

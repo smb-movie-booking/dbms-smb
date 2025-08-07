@@ -4,3 +4,20 @@
 *{
   font-family: 'Poppins',sans-serif;
 }
+
+button{
+  cursor: pointer;
+  padding: 2px 8px;
+}
+
+:root{
+  --primary-color:rgba(195, 195, 195,1);
+  --secondary-color:rgba(235, 95, 40,1);
+  --accent-color:rgba(54, 52, 49,1);
+  --neutral-color:rgba(204, 197, 185,1);
+}
+
+body{
+  background-color:white;
+  
+}

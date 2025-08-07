@@ -31,6 +31,17 @@ nav{
     gap: 12px;
 }
 
+.register-btn{
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    font-size:16px;
+    border-radius: 10px;
+}
+
+.register-btn:hover{
+    background-color: rgba(235, 95, 40,0.8);
+}
 .profile-btn{
     border-radius: 50%;
     padding: 2px 8px;
