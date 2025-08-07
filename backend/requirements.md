@@ -170,8 +170,6 @@ We need to build a **single API endpoint** that returns different JSON responses
 
 ## **Requirements**
 
----
-
 ### 🔹 1. **Browse Theaters by City – Theater List API**
 
 #### ✅ Filters:
@@ -224,5 +222,3 @@ For each theater showing the movie:
 ✅ This shows static detail info about one specific theater.
 
 ---
-
-Let me know if you want help implementing controller or model structure based on this.
