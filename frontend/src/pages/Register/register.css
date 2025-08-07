@@ -36,6 +36,9 @@ input{
 
 .otp-btn{
     width: 100%;
+    background-color: var(--secondary-color);
+    border: none;
+    color:white;
    
 }
 

@@ -7,8 +7,75 @@
     min-height: 100vh;
     background-color: white;
     transition: all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    
     
 }
 .sidebar-container.show{
     right: 0px;
+}
+
+.top-section{
+    border-bottom: 1px solid;
+}
+
+.top-section span{
+    color: var(--secondary-color);
+}
+
+.middle-section{
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    border-bottom: 1px solid;
+
+}
+
+.middle-section button{
+    padding: 4px 16px;
+    background: var(--primary-color);
+
+    border: none;
+}
+
+.middle-section button:hover{
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.fav{
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.bottom-section{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    
+
+   
+
+}
+
+
+
+.bottom-section .signout-btn{
+    border: 1px solid rgba(235, 95, 40,1);
+    background-color: rgba(235, 95, 40,0.4);
+    font-size: 16px;
+    padding: 12px 0;
+    margin-top: auto;
+    
+}
+
+.app-btn{
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-size: large;
+    font-weight: 400;
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    padding: 12px 0;
 }

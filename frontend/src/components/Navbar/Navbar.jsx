@@ -29,7 +29,7 @@ const Navbar = () => {
                 <p>Kochi</p>
             </span>
 
-            {!authUser?<button onClick={()=>navigate("/register")}>Register</button>:
+            {!authUser?<button onClick={()=>navigate("/register")} className='register-btn'>Register</button>:
             <button className='profile-btn'>{authUser?.user.name.slice(0,1).toUpperCase()}</button>}
 
             <div onClick={()=>setIsOpen(true)}>
@@ -38,7 +38,7 @@ const Navbar = () => {
         </div>
         
     </nav>
-    <Sidebar isOpen={isOpen}/>
+    <Sidebar isOpen={isOpen} setIsOpen={setIsOpen}/>
     </>
   )
 }

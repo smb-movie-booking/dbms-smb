@@ -11,6 +11,7 @@ export const useAuth=()=>{
         try {
             const {data}=await axiosInstance.post("/auth/send-otp",identifier)
             console.log(data);
+            return true;
         } catch (error) {
             console.log(error.response.data.message);
             toast.error(error.response.data.message)
@@ -66,5 +67,17 @@ export const useAuth=()=>{
         }
     }
 
-    return {getOtp,verifyOtp,register,login,getUser}
+
+    const logoutUser=async()=>{
+        try {
+            const {data}=await axiosInstance.get("/auth/logout");
+            setAuthUser(null);
+            toast.success(data);
+        } catch (error) {
+            console.log(error.response.data.message);
+        }
+        
+    }
+
+    return {getOtp,verifyOtp,register,login,getUser,logoutUser}
 }
