@@ -87,6 +87,7 @@ For each movie showing in the theater:
 
 * Movie name
 * All show times in that theater
+* All show id
 * Format (2D/3D/IMAX)
 * Language
 * Age format
@@ -201,6 +202,7 @@ For each theater showing the movie:
 
 * Theater name
 * List of show times
+* All show's id
 * Facilities (e.g., parking, food court, recliner seats)
 * Cancellation available (boolean)
 
