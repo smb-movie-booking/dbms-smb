@@ -4,7 +4,7 @@
     margin-top: 12em;
 }
 
-button{
+.reset-wrapper button{
     background-color: var(--secondary-color);
     color: white;
     border: none;
