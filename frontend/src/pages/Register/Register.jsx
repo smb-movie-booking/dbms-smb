@@ -4,54 +4,31 @@ import OtpField from '../../components/OtpField/OtpField';
 import { useAuth } from '../../hooks/auth/useAuth';
 import {Link} from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuthError } from '../../hooks/auth/useAuthError';
 const Register = () => {
   const inputref=useRef(null);
   const [isFocus,setIsFocus]=useState(null);
   const [formData,setFormData]=useState({name:"",password:"",phone:""})
   const [otp,setOtp]=useState(new Array(6).fill(""))
-  const [error,setError]=useState({});
+  //const [error,setError]=useState({});
   const [OtpForm,setOtpForm]=useState(false);
   const [showPassword,setShowPassword]=useState(false);
   const {getOtp,verifyOtp,register}=useAuth();
+  const {validateData,errors,setErrors}=useAuthError();
 
 
-const validateData=()=>{
-  const {name,password,phone}=formData;
-  let errors={};
 
-  if(!name){
-    errors.name="Please enter your name";
-  }
 
-  if(!password){
-    errors.password="Password is required";
-  }
-  else if(password.length<6){
-    errors.password="password must be min 6 character long";
-  }
-
-  const regex = /^[6-9]\d{9}$/;
-  if(!regex.test(phone)){
-    errors.mobile="Please enter a valid mobile number"
-    setFormData({...formData,phone:""});
-    
-  }
-
-  setError(errors);
-
-  return Object.keys(errors).length===0
-
-}
   const reqOtp=async()=>{
     const {phone}=formData;
     console.log(phone)
 
-    const isValid=validateData();
+    const isValid=validateData(formData);
     if(!isValid){
       return
     }
  
-    setError("");
+    setErrors({});
     
     const isOtpSent=await getOtp({identifier:phone});
     if(isOtpSent){
@@ -83,7 +60,7 @@ const validateData=()=>{
             onChange={(e)=>setFormData({...formData,name:e.target.value})}
             type='text'
             placeholder='Name'/>
-            {error.name && <p className='error'>{error.name}</p>}
+            {errors.name && <p className='error'>{errors.name}</p>}
           </div>
 
           <div className='register-field'>
@@ -94,7 +71,7 @@ const validateData=()=>{
               onChange={(e)=>setFormData({...formData,password:e.target.value})}
               type={`${showPassword?"text":"password"}`}
               placeholder='password'/>
-              {error.password && <p className='error'>{error.password}</p>}
+              {errors.password && <p className='error'>{errors.password}</p>}
 
               <span onClick={()=>setShowPassword(!showPassword)} style={{position:"absolute",right:"0",top:"20%"}}>{showPassword?<Eye/>:<EyeOff/>}</span>
             </div>
@@ -116,7 +93,7 @@ const validateData=()=>{
             </div>
             
           </div>
-          {error.mobile&&<p className='error'>{error.mobile}</p>}
+          {errors.mobile&&<p className='error'>{errors.mobile}</p>}
           <button className='otp-btn' onClick={reqOtp}>Get Otp</button>
         </div>
 
@@ -124,7 +101,7 @@ const validateData=()=>{
           <Link to="/login">Login</Link>
         </span>
         
-      </div>:<OtpField otp={otp} setOtp={setOtp} submit={submit}/>}
+      </div>:<OtpField otp={otp} setOtp={setOtp} submit={submit} phone={formData.phone}/>}
       
     </div>
   )

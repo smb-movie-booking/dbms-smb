@@ -10,3 +10,8 @@
   border: 1px solid gray;
   border-radius: 4px;
 }
+
+.otp-input:focus{
+  box-shadow: 0 0 10px var(--secondary-color);
+  border: 1px solid var(--neutral-color);
+}

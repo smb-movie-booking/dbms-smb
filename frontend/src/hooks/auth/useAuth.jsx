@@ -79,5 +79,21 @@ export const useAuth=()=>{
         
     }
 
-    return {getOtp,verifyOtp,register,login,getUser,logoutUser}
+    const resetPassword=async(userData)=>{
+        try {
+            const {data}=await axiosInstance.post("/auth/reset-password",userData);
+            setAuthUser(null);
+            console.log(data);
+            toast.success("Password changed successfully");
+            if(data.message){
+                return true;
+            }
+            
+            
+        } catch (error) {
+            console.log(error.response.data.message);
+        }
+    }
+
+    return {getOtp,verifyOtp,register,login,getUser,logoutUser,resetPassword}
 }

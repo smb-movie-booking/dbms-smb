@@ -22,6 +22,20 @@ exports.getOTP = (identifier, callback) => {
   });
 };
 
+// For password reset (verified OTP check)
+exports.getVerifiedOTP = (identifier, callback) => {
+  const sql = `
+    SELECT * FROM OTP
+    WHERE Identifier = ? AND Verified = TRUE AND Expires_At > NOW()
+    ORDER BY Expires_At DESC
+    LIMIT 1
+  `;
+  db.query(sql, [identifier], (err, results) => {
+    if (err) return callback(err);
+    callback(null, results[0]);
+  });
+};
+
 exports.markAsVerified = (identifier, callback) => {
   const sql = `
     UPDATE OTP SET Verified = TRUE WHERE Identifier = ? AND Expires_At > NOW()

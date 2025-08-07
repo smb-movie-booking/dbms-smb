@@ -108,14 +108,14 @@ exports.logout = (req, res) => {
 
 exports.resetPassword = (req, res) => {
   const { phone, email, otp, newPassword } = req.body;
-
-  if ((!phone && !email) || !otp || !newPassword) {
+  //console.log(req.body);
+  if (!phone || !otp || !newPassword) {
     return res.status(400).json({ message: 'Phone or email, OTP, and new password are required' });
   }
 
   const isPhone = !!phone;
   const identifier = phone || email;
-
+  console.log(identifier);
   // Validate identifier format
   if (isPhone) {
     const phoneRegex = /^[6-9]\d{9}$/;
@@ -130,7 +130,8 @@ exports.resetPassword = (req, res) => {
   }
 
   // Fetch valid OTP (expiration already handled in getOTP)
-  otpModel.getOTP(identifier, (err, record) => {
+  otpModel.getVerifiedOTP(identifier, (err, record) => {
+    console.log(record);
     if (err || !record) {
       return res.status(400).json({ message: 'OTP not found or expired' });
     }

@@ -5,43 +5,41 @@ import { useAuth } from '../../hooks/auth/useAuth';
 import './login.css'
 import '../Register/register.css'
 import { Eye, EyeOff } from 'lucide-react';
+import ResetPassword from '../ResetPassword/ResetPassword';
+import { useAuthError } from '../../hooks/auth/useAuthError';
 
 const Login = () => {
  
   const [formData,setFormData]=useState({password:"",phone:""})
   const [otp,setOtp]=useState(new Array(6).fill(""))
-  const [errors,setErrors]=useState({});
+  //const [errors,setErrors]=useState({});
   const [OtpForm,setOtpForm]=useState(false);
   const [showPassword,setShowPassword]=useState(false);
   const {login,getUser}=useAuth();
+  
+
+  const {validateData,errors,setErrors}=useAuthError();
 
   const reqOtp=async()=>{
     console.log(formData)
     const {phone,password}=formData;
-    let error={};
-    const regex = /^[6-9]\d{9}$/;
-    if(!regex.test(phone)){
-      error.mobile="Enter valid mobile number"
-      
+    const valid=validateData(formData);
+    console.log(valid)
+    if(valid){
+      setErrors({});
+      await login({identifier:formData.phone,password:formData.password})
     }
-
-    if(!password || password.length<6){
-      error.password="password is req and should be atleast 6 char long"
+    else{
+      return;
     }
+    
 
-    if(Object.keys(error).length){
-      setErrors(error);
-      return
-    }
-    setErrors("");
-
-    await login({identifier:formData.phone,password:formData.password})
 
 
   }
   return (
-    <div style={{width:"100%",height:"100%",display:"flex",justifyContent:"center",paddingTop:"20px"}}>
-      <div className='register-container'>
+    <div className='register-container' style={{marginInline:"auto" ,display:"flex",justifyContent:"center",paddingTop:"20px"}}>
+      <div style={{width:"100%"}} >
         <p className='header'>LogIn</p>
 
         <div style={{padding:"8px 20px"}}>
@@ -77,8 +75,13 @@ const Login = () => {
           </div>
 
 
-          
-          <button className='otp-btn' onClick={reqOtp}>LogIn</button>
+          <div>
+            <button className='otp-btn' onClick={reqOtp}>LogIn</button>
+            <Link to="/reset-password">
+            <p className='forgot-pass'>Forgot Password ?</p>
+            </Link>
+            
+          </div>
         </div>
 
         <span>Don't Have an Account?

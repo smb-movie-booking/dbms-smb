@@ -3,6 +3,7 @@ const userModel = require('../models/userModel')
 
 exports.sendOTP = (req, res) => {
   const identifier = req.body.identifier?.trim().toLowerCase(); // 🔁 force lowercase
+  const purpose = req.body.purpose || "register";
   if (!identifier) return res.status(400).json({ message: 'Identifier required' });
 
   const phoneRegex = /^[6-9]\d{9}$/;
@@ -21,6 +22,8 @@ exports.sendOTP = (req, res) => {
     if (err) return res.status(500).json({ message: 'DB error' });
 
      const currentUserID = req.session?.user?.id;
+     if(purpose==='register'){
+
        if (user) {
           // CASE 1: logged in & trying to use someone else's email/phone
           if (currentUserID && user.UserID !== currentUserID) {
@@ -28,13 +31,20 @@ exports.sendOTP = (req, res) => {
           }
 
           // CASE 2: not logged in (registration) and email/phone already used
-          if (!currentUserID) {
+         if (!currentUserID) {
             return res.status(409).json({ message: `${isPhone ? 'Phone' : 'Email'} already registered` });
           }
 
           // CASE 3: it's your own email/phone
           return res.status(400).json({ message: `This is already your current ${isPhone ? 'phone' : 'email'}` });
       }
+    }
+
+    if(purpose=="reset"){
+      if(!user){
+        return res.status(404).json({ message: `${isPhone ? 'Phone' : 'Email'} not found` });
+      }
+    }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const now = new Date();

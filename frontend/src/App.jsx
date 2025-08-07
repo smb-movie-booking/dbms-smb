@@ -7,6 +7,7 @@ import { useContext, useEffect, useState } from 'react'
 import { useAuth } from './hooks/auth/useAuth'
 import { Auth } from './Context/AuthContext'
 import toast, { Toaster } from 'react-hot-toast';
+import ResetPassword from './pages/ResetPassword/ResetPassword'
 
 function App() {
   const {getUser}=useAuth();
@@ -35,6 +36,7 @@ function App() {
         <Route path='/' element={<><Navbar/> <Home/></>}/>
         <Route path='/login' element={!authUser?<Login/>:<Navigate to="/"/>}/>
         <Route path='/register' element={!authUser?<Register/>:<Navigate to="/"/>}/>
+        <Route path='/reset-password' element={!authUser?<ResetPassword/>:<Navigate to="/"/>}/>
       </Routes>
     </>
   )

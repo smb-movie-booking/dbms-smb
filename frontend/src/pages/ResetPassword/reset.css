@@ -1,0 +1,48 @@
+.reset-wrapper{
+    display: flex;
+    justify-content: center;
+    margin-top: 12em;
+}
+
+button{
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    width: 100%;
+}
+
+.input-cont{
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.4);
+    width: 40vw;
+    padding: 8px 12px;
+}
+
+.input-cont .mobile{
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.mobile input{
+    border-bottom: 1px solid;
+    width: 70%;
+    transform: translateX(10%);
+}
+
+.mobile::before{
+    content:"(+91)";
+    position: absolute;
+    top: 50%;
+}
+
+@media (max-width:550px){
+    .input-cont{
+        width: 100%;
+    }
+}
+
+@media (min-width:550px) and (max-width:850px){
+    .input-cont{
+        width: 60vw;
+    }
+}

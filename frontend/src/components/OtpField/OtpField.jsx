@@ -1,12 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './otp.css'
-const OtpField = ({otp,setOtp,submit}) => {
+const OtpField = ({otp,setOtp,submit,phone}) => {
     
     const inputRef=useRef([])
 
     useEffect(()=>{
         inputRef.current[0]?.focus();
     },[])
+
+
+    useEffect(()=>{
+        const combinedOtp=otp.join("");
+        
+        if(combinedOtp.length===otp.length){
+            submit(combinedOtp);
+        }
+    },[otp])
 
     const handleChange=(index,e)=>{
         const value=e.target.value;
@@ -24,6 +33,8 @@ const OtpField = ({otp,setOtp,submit}) => {
         }
 
         
+
+        
     }
 
     const handleKeyDown=(index,e)=>{
@@ -37,18 +48,12 @@ const OtpField = ({otp,setOtp,submit}) => {
 
     }
 
-    const submitOtp=()=>{
-        const combinedOtp=otp.join("");
-        
-        if(combinedOtp.length===otp.length){
-            submit(combinedOtp);
-        }
-    }
+    
     console.log(otp);
   return (
     <div>
 
-        <p style={{textAlign:"center"}}>Enter the Otp</p>
+        <p style={{textAlign:"center"}}>{`Enter the Otp sent to (+91-) ${phone}`}</p>
 
         <div className='input-container'>
             {otp.map((value,index)=>{
@@ -62,7 +67,7 @@ const OtpField = ({otp,setOtp,submit}) => {
             })}
         </div>
 
-        <button onClick={submitOtp}>Submit</button>
+        
       
     </div>
   )

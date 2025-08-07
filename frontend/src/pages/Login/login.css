@@ -4,3 +4,13 @@
     border-bottom: 1px solid;
     
 }
+
+.forgot-pass{
+    color: var(--accent-color);
+    cursor:pointer;
+
+}
+
+.forgot-pass:hover{
+    text-decoration: underline;
+}
