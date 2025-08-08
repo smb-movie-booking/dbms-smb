@@ -10,6 +10,10 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin');
 const showRoutes = require('./routes/show');
+const bookingRoutes = require('./routes/bookings');
+const paymentRoutes = require('./routes/payment');
+
+
 const app = express();
 
 app.use(session({
@@ -36,6 +40,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/shows', showRoutes);
+app.use('/api/booking', bookingRoutes);
+app.use('/api/payment', paymentRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
