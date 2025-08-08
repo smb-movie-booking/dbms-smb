@@ -5,8 +5,7 @@ exports.fetchShows = (movieID, theaterID, showDate) => {
         const query = `
             SELECT 
                 ms.ShowID, 
-                TIME_FORMAT(ms.StartTime, '%H:%i') AS ShowTime,
-                ms.CinemaHallID
+                TIME_FORMAT(ms.StartTime, '%H:%i') AS ShowTime
             FROM Movie_Show ms
             JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
             WHERE ms.MovieID = ? 
