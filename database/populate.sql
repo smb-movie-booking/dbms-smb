@@ -1,6 +1,5 @@
 -- SQL Script to Clear All Data from All Tables
 -- Temporarily disables foreign key checks to allow truncation in any order.
-
 use smb;
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -360,7 +359,17 @@ BEGIN
 
                  IF seat_id_val IS NOT NULL THEN
                     INSERT INTO Show_Seat (ShowSeatID, Seat_Status, Price, CinemaSeatID, ShowID, BookingID)
-                    VALUES (show_seat_id, 1, price, seat_id_val, show_id, booking_id);
+                    VALUES (
+                        show_seat_id,
+                        CASE FLOOR(RAND() * 3)
+                            WHEN 0 THEN 0  -- Available
+                            ELSE 2         -- Booked
+                        END,
+                        price,
+                        seat_id_val,
+                        show_id,
+                        booking_id
+                    );
                     SET show_seat_id = show_seat_id + 1;
                  END IF;
                  SET seat_num = seat_num + 1;
@@ -374,7 +383,7 @@ BEGIN
             -- Create a review for the movie (not for every booking)
             IF RAND() > 0.5 AND review_id <= 100 THEN
                 INSERT INTO Review (ReviewID, UserID, MovieID, Rating, Comment, Review_Timestamp)
-                VALUES (review_id, user_id, movie_id, ROUND(5 + RAND() * 5, 1), 'This was a great movie!', NOW() - INTERVAL FLOOR(RAND() * 24) HOUR);
+                VALUES (review_id, user_id, movie_id,  LEAST(ROUND(5 + RAND() * 5, 1), 9.9), 'This was a great movie!', NOW() - INTERVAL FLOOR(RAND() * 24) HOUR);
                 SET review_id = review_id + 1;
             END IF;
 

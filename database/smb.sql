@@ -161,3 +161,24 @@ CREATE INDEX idx_review_movieid ON Review(MovieID);
 CREATE INDEX idx_review_userid ON Review(UserID);
 
 CREATE INDEX idx_show_movie_date ON Movie_Show(MovieID, Show_Date);
+
+DELIMITER $$
+
+CREATE PROCEDURE PopulateShowSeats(
+    IN inputShowID INT,
+    IN inputCinemaHallID INT,
+    IN inputDefaultPrice DECIMAL(10,2)
+)
+BEGIN
+    INSERT INTO Show_Seat (Seat_Status, Price, CinemaSeatID, ShowID)
+    SELECT 
+        0 AS Seat_Status,
+        inputDefaultPrice AS Price,
+        cs.CinemaSeatID,
+        inputShowID AS ShowID
+    FROM Cinema_Seat cs
+    WHERE cs.CinemaHallID = inputCinemaHallID;
+END$$
+
+DELIMITER ;
+

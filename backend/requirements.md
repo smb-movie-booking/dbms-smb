@@ -70,6 +70,7 @@ For each movie:
 * Movie ID
 * Poster image
 * Rating
+* Review count
 * Age format (e.g., UA16)
 * All languages available across theaters
 
@@ -110,6 +111,7 @@ For each movie showing in the theater:
 * Movie Name
 * Trailer link
 * Rating
+* Review count
 * All formats available
 * All genres (multiple allowed)
 * Release date
