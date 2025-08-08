@@ -57,7 +57,7 @@ We need to build a **single API endpoint** that returns different JSON responses
 
 #### ✅ Filters:
 
-* **Must:** `city`
+* **Must:** `city id`
 * **Optional:** `language` (up to 5 supported), `genre`, `format` (2D/3D/IMAX)
 
 #### 📤 Response JSON:
@@ -65,6 +65,7 @@ We need to build a **single API endpoint** that returns different JSON responses
 For each movie:
 
 * Movie name
+* Movie ID
 * Poster image
 * Rating
 * Age format (e.g., UA16)
@@ -78,7 +79,7 @@ For each movie:
 
 #### ✅ Filters:
 
-* **Must:** `theater name or code`, `show date`
+* **Must:** `theater ID`, `show date`
 * **Optional:** `preferred show time range`, `price range`
 
 #### 📤 Response JSON:
@@ -86,6 +87,7 @@ For each movie:
 For each movie showing in the theater:
 
 * Movie name
+* Movie ID
 * All show times in that theater
 * All show id
 * Format (2D/3D/IMAX)
@@ -98,11 +100,12 @@ For each movie showing in the theater:
 
 #### ✅ Filters:
 
-* **Must:** `movie name or code`
+* **Must:** `movie id`
 
 #### 📤 Response JSON:
 
 * Poster image
+* Movie Name
 * Trailer link
 * Rating
 * All formats available
@@ -175,15 +178,15 @@ We need to build a **single API endpoint** that returns different JSON responses
 
 #### ✅ Filters:
 
-* **Must:** `city`
+* **Must:** `city id`
 
 #### 📤 Response JSON:
 
 For each theater:
 
 * Theater name
+* Theater id
 * Address
-* Theater code
 
 ✅ This should show *all theaters located in the given city*.
 
@@ -193,7 +196,7 @@ For each theater:
 
 #### ✅ Filters:
 
-* **Must:** `movie name or code`, `show date`
+* **Must:** `movie id`, `show date`
 * **Optional:** `preferred show time`, `price range`, `language`, `format`
 
 #### 📤 Response JSON:
@@ -201,6 +204,7 @@ For each theater:
 For each theater showing the movie:
 
 * Theater name
+* Theater id
 * List of show times
 * All show's id
 * Facilities (e.g., parking, food court, recliner seats)
@@ -214,10 +218,11 @@ For each theater showing the movie:
 
 #### ✅ Filters:
 
-* **Must:** `theater name or code`
+* **Must:** `theater id`
 
 #### 📤 Response JSON:
 
+* Theater name
 * Full address
 * Facilities (as a list: parking, wheelchair access, Dolby sound, etc.)
 
