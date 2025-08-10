@@ -1,9 +1,11 @@
 import { useContext } from 'react'
 import {axiosInstance} from '../../utils/axios'
 import { Auth } from '../../Context/AuthContext'
+import {useNavigate} from 'react-router-dom'
 import toast from 'react-hot-toast';
+import axios from 'axios';
 export const useAuth=()=>{
-
+    const navigate=useNavigate()
     const {setAuthUser}=useContext(Auth);
 
 
@@ -11,7 +13,7 @@ export const useAuth=()=>{
         try {
             const {data}=await axiosInstance.post("/auth/send-otp",identifier)
             console.log(data);
-            return true;
+            return true
         } catch (error) {
             console.log(error.response.data.message);
             toast.error(error.response.data.message)
@@ -23,7 +25,9 @@ export const useAuth=()=>{
         try {
             const {data}=await axiosInstance.post("/auth/verify-otp",otpData);
             console.log(data);
-            
+            if(data.success){
+                return true;
+            }
             
         } catch (error) {
             console.log(error.response.data.message);
@@ -95,5 +99,34 @@ export const useAuth=()=>{
         }
     }
 
-    return {getOtp,verifyOtp,register,login,getUser,logoutUser,resetPassword}
+
+    const updateProfile=async(userData)=>{
+        try {
+            const {data}=await axiosInstance.put("/users/update-profile",userData);
+            if(data.success){
+                console.log(data);
+                toast.success(data.message);
+                await getUser();
+            }
+        } catch (error) {
+            toast.error(error.response.data.message);
+        }
+    }
+
+
+    const deleteProfile=async()=>{
+        try {
+            const {data}=await axiosInstance.delete("/users/me");
+            console.log(data);
+            if(data.success){
+                toast.success(data.message);
+                setAuthUser(null);
+                navigate("/")
+            }
+        } catch (error) {
+            toast.error(error.response.data.message)
+        }
+    }
+
+    return {getOtp,verifyOtp,register,login,getUser,logoutUser,resetPassword,updateProfile,deleteProfile}
 }

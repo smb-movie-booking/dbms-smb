@@ -132,6 +132,31 @@ exports.updateEmail = (req, res) => {
 };
 
 
+exports.updateProfile=(req,res)=>{
+  try {
+    const userId=req.session.user?.id;
+    const {name,email,phone}=req.body;
+
+    if(!name.trim() || !phone || !email){
+      return res.status(401).json({message:"Invalid Credentials"});
+    }
+
+    userModel.updateUser(userId, name, phone, email,(err,result)=>{
+      if(err){
+        return res.status(500).json({success:false,error:err.message})
+      }
+
+      req.session.user.name = name;
+      req.session.user.phone = phone;
+      req.session.user.email = email;
+      return res.status(200).json({success:true,message:"Profile Updated Successfullt"});
+    })
+  } catch (error) {
+    return  res.status(500).json({error:error.message})
+  }
+  
+}
+
 // DELETE /users/me
 exports.deleteProfile = (req, res) => {
   const userId = req.session.user?.id;
@@ -142,7 +167,7 @@ exports.deleteProfile = (req, res) => {
 
     req.session.destroy(() => {
       res.clearCookie('connect.sid');
-      res.json({ message: 'Profile deleted successfully' });
+      res.json({ success:true,message: 'Profile deleted successfully' });
     });
   });
 };

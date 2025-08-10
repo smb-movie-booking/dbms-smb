@@ -28,7 +28,7 @@ const Sidebar = ({isOpen,setIsOpen}) => {
 
       <div className='bottom-section'>
         <div>
-          {authUser?.user&&<button className='app-btn'>Edit Profile</button>}
+          {authUser?.user&&<button onClick={()=>{navigate(`/${authUser.user.id}/edit`);setIsOpen(false)}} className='app-btn'>Edit Profile</button>}
           {authUser?.user&&<button className='app-btn'>Your Orders</button>}
         </div>
 

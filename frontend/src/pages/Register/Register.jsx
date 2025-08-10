@@ -42,8 +42,11 @@ const Register = () => {
   const submit=async(combinedOtp)=>{
     const {phone}=formData;
     const data={identifier:phone,otp:combinedOtp}
-    await verifyOtp(data)
-    await register(formData)
+    const isVerfied=await verifyOtp(data);
+    if(isVerfied){
+      await register(formData);
+    }
+    
     
 
   }

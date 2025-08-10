@@ -84,7 +84,7 @@ exports.verifyOTP = (req, res) => {
 
     otpModel.markAsVerified(identifier, (err) => {
       if (err) return res.status(500).json({ message: 'Error marking verified' });
-      return res.status(200).json({ message: 'OTP verified successfully' });
+      return res.status(200).json({success:true, message: 'OTP verified successfully' });
     });
   });
 };

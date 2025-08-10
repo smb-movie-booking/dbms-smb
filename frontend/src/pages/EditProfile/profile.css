@@ -1,0 +1,105 @@
+.edit-wrapper{
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 4rem 16px;
+    background:var(--color-background);
+    overflow-x: hidden;
+    box-sizing: border-box;
+    position: relative;
+}
+
+
+h1{
+    text-align: center;
+    padding-bottom: 24px;
+}
+
+.edit-wrapper h1 span{
+    color: var(--secondary-color);
+    
+}
+
+.edit-wrapper .otp-box{
+    box-sizing: border-box;
+    position: absolute;
+    top: 30%;
+    z-index: 50;
+    backdrop-filter: blur(100px);
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.6);
+    background-color: rgba(255, 255, 255,0.2);
+    color: white;
+    padding: 2rem 4px;
+
+}
+
+.update-form{
+    margin-inline: auto;
+    
+}
+
+.update-form .input-box{
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.input-box input{
+    height: 40px; 
+    padding-left:8px ;
+}
+
+.input-box input:focus{
+    border-color:var(--secondary-color);
+    box-shadow: 0 0 3px var(--secondary-color);
+}
+
+.btn-cont{
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn-cont button{
+    padding: 4px 8px;
+}
+
+.btn-cont button:nth-child(1){
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 30px;
+}
+
+.btn-cont button:nth-child(2){
+    border: 1px solid rgb(212, 210, 210);
+    border-radius:30px;
+    color: red;
+    background-color: white;
+}
+
+.btn-cont button:nth-child(2):hover{
+    border: none;
+    color: white;
+    background-color: red;
+}
+
+@media (max-width:768px){
+    .update-form{
+        width: 100%
+    }
+}
+
+
+@media (min-width:768px){
+    .update-form{
+        width: 60%;
+    }
+    .otp-box{
+        left: 40%;
+    }
+}
+
+
+

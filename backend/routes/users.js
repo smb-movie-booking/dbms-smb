@@ -18,6 +18,8 @@ router.put('/update-email', isAuthenticated, userController.updateEmail);
 // Update password (with current password check)
 router.put('/update-password', isAuthenticated, userController.updatePassword);
 
+router.put('/update-profile',isAuthenticated, userController.updateProfile)
+
 // Delete user account
 router.delete('/me', isAuthenticated, userController.deleteProfile);
 

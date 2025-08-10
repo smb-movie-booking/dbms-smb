@@ -39,12 +39,16 @@ const ResetPassword = () => {
     const submit=async(combinedOtp)=>{
         const {phone,password:newPassword}=newData;
         const data={identifier:phone,otp:combinedOtp}
-        await verifyOtp(data);
-       const isResetSuccess= await resetPassword({phone,newPassword,otp:combinedOtp});
-       if(isResetSuccess){
-        setOtpForm(false);
-        navigate("/login");
-       }
+        const isVerified=await verifyOtp(data);
+        if(isVerified){
+          const isResetSuccess= await resetPassword({phone,newPassword,otp:combinedOtp});
+          if(isResetSuccess){
+          setOtpForm(false);
+          navigate("/login");
+          }
+        }
+       
+       
     }
   return (
     

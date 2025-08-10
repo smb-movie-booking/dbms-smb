@@ -48,7 +48,8 @@ nav{
 }
 
 .backdrop{
-    position: absolute;
+    position: fixed;
+    min-height: 100vh;
     inset: 0;
     z-index: 10;
     background-color: rgba(0,0,0,0.4);

@@ -3,6 +3,8 @@
 
 *{
   font-family: 'Poppins',sans-serif;
+  padding: 0;
+  margin: 0;
 }
 
 button{
@@ -15,6 +17,7 @@ button{
   --secondary-color:rgba(235, 95, 40,1);
   --accent-color:rgba(54, 52, 49,1);
   --neutral-color:rgba(204, 197, 185,1);
+  --color-background:linear-gradient(180deg,rgba(235, 95, 40,0.2) 0,#fff 400px);
 }
 
 body{
