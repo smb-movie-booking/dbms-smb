@@ -21,13 +21,14 @@ exports.createUser = (name, hashedPassword, email, phone, isAdmin = false, callb
 
 
 exports.getByEmail = (email, callback) => {
-  const sql = 'SELECT UserID, Email FROM User WHERE LOWER(Email) = LOWER(?) LIMIT 1';
+  const sql = 'SELECT * FROM User WHERE LOWER(Email) = LOWER(?) LIMIT 1';
   db.query(sql, [email], (err, results) => {
     if (err) {
       console.error('❌ DB error in getByEmail:', err);  // <-- this will help you debug
       return callback(err);
     }
     if (results.length === 0) return callback(null, null);
+    console.log(results[0])
     return callback(null, results[0]);
   });
 };

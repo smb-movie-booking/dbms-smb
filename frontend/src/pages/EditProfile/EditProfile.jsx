@@ -11,15 +11,39 @@ import toast from 'react-hot-toast';
 
 const EditProfile = () => {
     const {authUser}=useContext(Auth);
-    const {validateData,errors,setErrors}=useAuthError();
+    const [errors,setErrors]=useState({});
     const {getOtp,verifyOtp,updateProfile,deleteProfile}=useAuth();
     const [otp,setOtp]=useState(Array(6).fill(""));
     const [enableOtp,setEnableOtp]=useState(false);
+    
     const [formData,setFormData]=useState({name:"",email:null,phone:""});
 
     useEffect(()=>{
         setFormData(authUser?.user);
     },[])
+
+
+    const checkData=()=>{
+        let errors={};
+        const {name,email,phone}=formData;
+         const phoneRegex = /^[6-9]\d{9}$/;
+        if(!name.trim()){
+            errors.name="Name is required";
+        }
+
+        if(!phoneRegex.test(phone)){
+            errors.phone="Enter a valid mobile number";
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(email && !emailRegex.test(email)){
+            errors.email="Enter a valid Email!"
+        }
+
+        setErrors(errors);
+
+        return Object.keys(errors).length===0;
+    }
 
     const initiateOtpVerification=async()=>{
 
@@ -72,7 +96,7 @@ const EditProfile = () => {
 
     const updateChanges=(e)=>{
         e.preventDefault();
-        const valid=validateData(formData);
+        const valid=checkData();
         console.log(valid);
         console.log(errors);
         if(valid){
@@ -96,7 +120,7 @@ const EditProfile = () => {
         <h1>Edit Your <span>Profile</span></h1>
         <form className='update-form' onSubmit={updateChanges}>
             <div className='input-box'>
-                <label>Your Name</label>
+                <label>Your Name <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
                 <input
                 name='name'
                 type='text'
@@ -108,7 +132,7 @@ const EditProfile = () => {
             </div>
 
             <div className='input-box'>
-                <label>Email</label>
+                <label>Email <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
                 <input
                 name='email'
                 type='text'
@@ -120,7 +144,7 @@ const EditProfile = () => {
             </div>
 
             <div className='input-box'>
-                <label>Mobile Number</label>
+                <label>Mobile Number <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
                 <input
                 name='phone'
                 type='text'

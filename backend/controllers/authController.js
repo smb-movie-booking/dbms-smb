@@ -7,6 +7,7 @@ require('dotenv').config();
 // POST /login
 exports.login = (req, res) => {
   const { identifier, password } = req.body;
+  console.log(identifier)
 
   if (!identifier || !password) {
     return res.status(400).json({ message: 'Email/Phone and password are required' });

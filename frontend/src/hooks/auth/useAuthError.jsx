@@ -12,9 +12,8 @@ export const useAuthError=()=>{
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if(email!==undefined && !emailRegex.test(email)){
-            errors.email="Please enter a valid email"
-
+       if (!phone && (email === undefined || !emailRegex.test(email))) {
+            errors.email = "Please enter a valid email";
         }
 
         if(password!==undefined){
@@ -29,7 +28,7 @@ export const useAuthError=()=>{
         
 
         const regex = /^[6-9]\d{9}$/;
-        if(!regex.test(phone)){
+        if(!email && !regex.test(phone)){
             errors.mobile="Please enter a valid mobile number"
             
             

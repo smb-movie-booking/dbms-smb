@@ -136,9 +136,10 @@ exports.updateProfile=(req,res)=>{
   try {
     const userId=req.session.user?.id;
     const {name,email,phone}=req.body;
+    console.log(req.body);
 
-    if(!name.trim() || !phone || !email){
-      return res.status(401).json({message:"Invalid Credentials"});
+    if(!name.trim() || (!phone && !email)){
+      return res.status(401).json({message:"phone and email both cannot be empty"});
     }
 
     userModel.updateUser(userId, name, phone, email,(err,result)=>{

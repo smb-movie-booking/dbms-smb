@@ -7,13 +7,11 @@ import '../Register/register.css'
 import { Eye, EyeOff } from 'lucide-react';
 import ResetPassword from '../ResetPassword/ResetPassword';
 import { useAuthError } from '../../hooks/auth/useAuthError';
+import toast from 'react-hot-toast';
 
 const Login = () => {
  
   const [formData,setFormData]=useState({password:"",phone:""})
-  const [otp,setOtp]=useState(new Array(6).fill(""))
-  //const [errors,setErrors]=useState({});
-  const [OtpForm,setOtpForm]=useState(false);
   const [showPassword,setShowPassword]=useState(false);
   const {login,getUser}=useAuth();
   
@@ -22,12 +20,16 @@ const Login = () => {
 
   const reqOtp=async()=>{
     console.log(formData)
-    const {phone,password}=formData;
+    const {phone,email,password}=formData;
+    if(phone && email){
+      return toast.error("Fill in any one field");
+    }
     const valid=validateData(formData);
     console.log(valid)
     if(valid){
+      console.log(formData);
       setErrors({});
-      await login({identifier:formData.phone,password:formData.password})
+      await login({identifier:formData.phone || formData.email,password:formData.password})
     }
     else{
       return;
@@ -37,8 +39,10 @@ const Login = () => {
 
 
   }
+
+  console.log(formData);
   return (
-    <div className='register-container' style={{marginInline:"auto" ,display:"flex",justifyContent:"center",paddingTop:"20px"}}>
+    <div className='register-container' style={{marginInline:"auto" ,display:"flex",justifyContent:"center",paddingTop:"20px",marginTop:"2rem"}}>
       <div style={{width:"100%"}} >
         <p className='header'>LogIn</p>
 
@@ -58,6 +62,24 @@ const Login = () => {
             
           </div>
           {errors.mobile&&<p className='error'>{errors.mobile}</p>}
+
+          <div style={{width:"100%",display:"flex",alignItems:"center",color:"var(--secondary-color)",fontSize:"large"}}>
+            <hr style={{width:"100%",height:"1px",borderColor:"gray",opacity:"0.3"}}/> or 
+            <hr style={{width:"100%",height:"1px",borderColor:"gray",opacity:"0.3"}}/>
+          </div>
+
+          <div className='register-field' style={{marginBottom:"2rem"}} >
+                <label>Email </label>
+                <input
+                name='email'
+                type='text'
+                onChange={(e)=>setFormData({...formData,email:e.target.value})}
+                value={formData?.email || ""}
+                
+                placeholder='Email'/>
+                {errors.email&&<div className='error'>{errors.email}</div>}
+
+          </div>
          
 
           <div className='register-field'>
@@ -77,7 +99,7 @@ const Login = () => {
 
           <div>
             <button className='otp-btn' onClick={reqOtp}>LogIn</button>
-            <Link to="/reset-password">
+            <Link to="/reset-password ">
             <p className='forgot-pass'>Forgot Password ?</p>
             </Link>
             
