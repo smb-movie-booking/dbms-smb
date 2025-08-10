@@ -15,24 +15,26 @@ We need to build a **single API endpoint** that returns different JSON responses
   router.get('/explore', movieController.handleExplore);
   ```
 
-### ✅ Controller
+### ✅ Controller (`movieController.js`)
 
-* In `movieController.js`, create `handleExplore()` to:
+* Create `handleExplore()` to:
 
-  * Check filters from `req.query`
-  * Call the appropriate logic based on:
+  * Read filters from `req.query`.
+  * Case logic:
 
-    * `movie` → return detailed movie info
-    * `theater` + `showDate` → return shows in that theater
-    * `city` → return list of movies in city with optional filters
+    * `movie` → call `movieModel.getMovieDetails()` for detailed movie info.
+    * `theater` + `showDate` →
+
+      1. Call `movieModel.getMoviesByTheaterAndDate()` to get movie info for that theater and date.
+      2. Call `showModel.getShowsByTheaterAndDate()` to get list of `showId` and `showTime` (and price if needed).
+      3. Merge both results into one JSON before sending to frontend.
+    * `city` → call `movieModel.getMoviesByCity()` with optional filters for language, genre, format.
 
 ### ✅ Model
 
-* In `movieModel.js`, write SQL queries to:
-
-  * Join tables like `movie`, `movie_show`, `cinema`, `cinema_hall`, `city`, `show_seat`
-  * Apply filters dynamically
-  * Group languages, showtimes, and formats as needed
+* **`movieModel.js`** – SQL queries for movie-level data (titles, genres, formats, ratings, posters, languages).
+* **`showModel.js`** – SQL queries for show-level data (showId, showTime, price) joined with `movie_show`, `show_seat`, and `cinema_hall`.
+* Both models should dynamically apply filters only when parameters are provided.
 
 ---
 
@@ -57,7 +59,7 @@ We need to build a **single API endpoint** that returns different JSON responses
 
 #### ✅ Filters:
 
-* **Must:** `city`
+* **Must:** `city id`
 * **Optional:** `language` (up to 5 supported), `genre`, `format` (2D/3D/IMAX)
 
 #### 📤 Response JSON:
@@ -65,8 +67,10 @@ We need to build a **single API endpoint** that returns different JSON responses
 For each movie:
 
 * Movie name
+* Movie ID
 * Poster image
 * Rating
+* Review count
 * Age format (e.g., UA16)
 * All languages available across theaters
 
@@ -78,7 +82,7 @@ For each movie:
 
 #### ✅ Filters:
 
-* **Must:** `theater name or code`, `show date`
+* **Must:** `theater ID`, `show date`
 * **Optional:** `preferred show time range`, `price range`
 
 #### 📤 Response JSON:
@@ -86,6 +90,7 @@ For each movie:
 For each movie showing in the theater:
 
 * Movie name
+* Movie ID
 * All show times in that theater
 * All show id
 * Format (2D/3D/IMAX)
@@ -98,13 +103,15 @@ For each movie showing in the theater:
 
 #### ✅ Filters:
 
-* **Must:** `movie name or code`
+* **Must:** `movie id`
 
 #### 📤 Response JSON:
 
 * Poster image
+* Movie Name
 * Trailer link
 * Rating
+* Review count
 * All formats available
 * All genres (multiple allowed)
 * Release date
@@ -134,28 +141,26 @@ We need to build a **single API endpoint** that returns different JSON responses
   router.get('/lookup', theaterController.handleTheaterLookup);
   ```
 
----
+### ✅ Controller (`theaterController.js`)
 
-### ✅ Controller
+* Create `handleTheaterLookup()` to:
 
-* In `theaterController.js`, create `handleTheaterLookup()` to:
+  * Read filters from `req.query`.
+  * Case logic:
 
-  * Check filters from `req.query`
-  * Call the appropriate logic based on:
+    * `theater` → call `theaterModel.getTheaterDetails()` for static info (name, address, facilities).
+    * `movie` + `showDate` →
 
-    * `theater` → return detailed theater info
-    * `movie` + `showDate` → return list of theaters showing that movie
-    * `city` → return all theaters in city
-
----
+      1. Call `theaterModel.getTheatersByMovieAndDate()` for theater list.
+      2. Call `showModel.getShowsByMovieAndTheater()` to fetch all showIds and showTimes for each theater.
+      3. Merge results into one JSON with facilities and cancellation info.
+    * `city` → call `theaterModel.getTheatersByCity()`.
 
 ### ✅ Model
 
-* In `theaterModel.js`, write SQL queries to:
-
-  * Join `cinema`, `cinema_hall`, `movie_show`, `city`, and optionally `show_seat`
-  * Dynamically apply filters like language, format, preferred time, etc.
-  * Group shows per theater
+* **`theaterModel.js`** – SQL queries for theater-level data (name, address, facilities, cancellation flag).
+* **`showModel.js`** – SQL queries for show-level data (showId, showTime, price) joined with `movie_show`, `show_seat`, and `cinema_hall`.
+* Use dynamic filters in queries for language, format, preferred time, and price.
 
 ---
 
@@ -175,15 +180,15 @@ We need to build a **single API endpoint** that returns different JSON responses
 
 #### ✅ Filters:
 
-* **Must:** `city`
+* **Must:** `city id`
 
 #### 📤 Response JSON:
 
 For each theater:
 
 * Theater name
+* Theater id
 * Address
-* Theater code
 
 ✅ This should show *all theaters located in the given city*.
 
@@ -193,7 +198,7 @@ For each theater:
 
 #### ✅ Filters:
 
-* **Must:** `movie name or code`, `show date`
+* **Must:** `movie id`, `show date`
 * **Optional:** `preferred show time`, `price range`, `language`, `format`
 
 #### 📤 Response JSON:
@@ -201,6 +206,7 @@ For each theater:
 For each theater showing the movie:
 
 * Theater name
+* Theater id
 * List of show times
 * All show's id
 * Facilities (e.g., parking, food court, recliner seats)
@@ -214,10 +220,11 @@ For each theater showing the movie:
 
 #### ✅ Filters:
 
-* **Must:** `theater name or code`
+* **Must:** `theater id`
 
 #### 📤 Response JSON:
 
+* Theater name
 * Full address
 * Facilities (as a list: parking, wheelchair access, Dolby sound, etc.)
 
