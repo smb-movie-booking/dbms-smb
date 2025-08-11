@@ -104,7 +104,7 @@ const Register = () => {
           <Link to="/login">Login</Link>
         </span>
         
-      </div>:<OtpField otp={otp} setOtp={setOtp} submit={submit} phone={formData.phone}/>}
+      </div>:<OtpField otp={otp} setOtp={setOtp} submit={submit} media={formData.phone}/>}
       
     </div>
   )

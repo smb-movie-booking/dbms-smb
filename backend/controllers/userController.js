@@ -49,7 +49,7 @@ exports.updateName = (req, res) => {
   userModel.updateName(userId, name, (err) => {
     if (err) return res.status(500).json({ error: 'Failed to update name' });
     req.session.user.name = name;
-    res.json({ message: 'Name updated successfully' });
+    res.json({success:true, message: 'Name updated successfully' });
   });
 };
 
@@ -57,22 +57,11 @@ exports.updateName = (req, res) => {
 exports.updatePhone = (req, res) => {
   const userId = req.session.user?.id;
   const phone = req.body.phone?.trim();
-  const otp = req.body.otp?.trim();
 
-  if (!userId || !phone || !otp)
-    return res.status(400).json({ error: 'Phone and OTP are required' });
+  if (!userId || !phone)
+    return res.status(400).json({ error: 'Phone is required' });
 
-  // Get OTP that is not expired and not yet verified
-  otpModel.getOTP(phone, (err, record) => {
-    if (err || !record)
-      return res.status(400).json({ error: 'OTP not found or expired' });
-
-    if (record.OTP_Code !== otp)
-      return res.status(401).json({ error: 'Invalid OTP' });
-
-    // Mark OTP as verified (optional, but good for audit/logging)
-    otpModel.markAsVerified(phone, (err) => {
-      if (err) console.error('Warning: failed to mark OTP as verified');
+      
 
       userModel.findByPhone(phone, (err, existingUser) => {
         if (err) return res.status(500).json({ error: 'Database error' });
@@ -86,49 +75,39 @@ exports.updatePhone = (req, res) => {
           req.session.user.phone = phone;
           otpModel.deleteOTP(phone, () => {}); // Clean up OTP
 
-          res.json({ message: 'Phone number verified and updated successfully' });
+          res.json({success:true, message: 'Phone number verified and updated successfully' });
         });
       });
-    });
-  });
+
 };
 
 
 exports.updateEmail = (req, res) => {
   const userId = req.session.user?.id;
   const email = req.body.email?.trim();
-  const otp = req.body.otp?.trim();
+  //const identifier=email;
+  //const otp = req.body.otp?.trim();
 
-  if (!userId || !email || !otp)
-    return res.status(400).json({ error: 'Email and OTP required' });
+  if (!userId || !email ){
+    return res.status(400).json({ error: 'Email required' });
 
-  otpModel.getOTP(email, (err, record) => {
-    if (err || !record)
-      return res.status(400).json({ error: 'OTP not found or expired' });
+  }
+    
+    userModel.getByEmail(email, (err, existingUser) => {
+      if (err) return res.status(500).json({ error: 'DB error' });
 
-    if (record.OTP_Code !== otp)
-      return res.status(401).json({ error: 'Invalid OTP' });
+      if (existingUser && existingUser.UserID !== userId)
+        return res.status(409).json({ error: 'Email already in use' });
 
-    otpModel.markAsVerified(email, (err) => {
-      if (err) console.error('Warning: failed to mark OTP as verified');
+      userModel.updateEmail(userId, email, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed to update email' });
 
-      userModel.getByEmail(email, (err, existingUser) => {
-        if (err) return res.status(500).json({ error: 'DB error' });
+        req.session.user.email = email;
+        otpModel.deleteOTP(email, () => {}); // Cleanup
 
-        if (existingUser && existingUser.UserID !== userId)
-          return res.status(409).json({ error: 'Email already in use' });
-
-        userModel.updateEmail(userId, email, (err) => {
-          if (err) return res.status(500).json({ error: 'Failed to update email' });
-
-          req.session.user.email = email;
-          otpModel.deleteOTP(email, () => {}); // Cleanup
-
-          res.json({ message: 'Email updated successfully' });
-        });
+        res.json({success:true, message: 'Email updated successfully' });
       });
     });
-  });
 };
 
 

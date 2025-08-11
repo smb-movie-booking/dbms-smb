@@ -87,7 +87,7 @@ const ResetPassword = () => {
 
         <button onClick={passwordReset}>Change Password</button>
       
-    </div>:<OtpField otp={otp} setOtp={setOtp} submit={submit} phone={newData.phone}/>
+    </div>:<OtpField otp={otp} setOtp={setOtp} submit={submit} media={newData.phone}/>
     }
     </div>
     

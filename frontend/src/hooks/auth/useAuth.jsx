@@ -3,7 +3,6 @@ import {axiosInstance} from '../../utils/axios'
 import { Auth } from '../../Context/AuthContext'
 import {useNavigate} from 'react-router-dom'
 import toast from 'react-hot-toast';
-import axios from 'axios';
 export const useAuth=()=>{
     const navigate=useNavigate()
     const {setAuthUser}=useContext(Auth);
@@ -100,13 +99,40 @@ export const useAuth=()=>{
     }
 
 
-    const updateProfile=async(userData)=>{
+    const updateEmail=async(userData)=>{
         try {
-            const {data}=await axiosInstance.put("/users/update-profile",userData);
+            const {data}=await axiosInstance.put("/users/update-email",userData);
             if(data.success){
                 console.log(data);
                 toast.success(data.message);
                 await getUser();
+            }
+        } catch (error) {
+            toast.error(error.response.data.message);
+        }
+    }
+
+    const updatePhone=async(userData)=>{
+        try {
+            const {data}=await axiosInstance.put("/users/update-phone",userData);
+            if(data.success){
+                console.log(data);
+                toast.success(data.message);
+                await getUser();
+            }
+        } catch (error) {
+            toast.error(error.response.data.message);
+        }
+    }
+
+    const updateName=async(userData)=>{
+        try {
+            const {data}=await axiosInstance.put("/users/update-name",userData);
+            if(data.success){
+                console.log(data);
+                toast.success(data.message);
+                await getUser();
+                return true
             }
         } catch (error) {
             toast.error(error.response.data.message);
@@ -128,5 +154,5 @@ export const useAuth=()=>{
         }
     }
 
-    return {getOtp,verifyOtp,register,login,getUser,logoutUser,resetPassword,updateProfile,deleteProfile}
+    return {getOtp,verifyOtp,register,login,getUser,logoutUser,resetPassword,updateEmail,updatePhone,updateName,deleteProfile}
 }

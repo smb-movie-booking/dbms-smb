@@ -7,75 +7,57 @@ import OtpField from '../../components/OtpField/OtpField'
 import { useAuth } from '../../hooks/auth/useAuth'
 import { useAuthError } from '../../hooks/auth/useAuthError'
 import toast from 'react-hot-toast';
+import EditDetails from '../../components/EditDetails/EditDetails'
 
 
 const EditProfile = () => {
     const {authUser}=useContext(Auth);
     const [errors,setErrors]=useState({});
-    const {getOtp,verifyOtp,updateProfile,deleteProfile}=useAuth();
+    const {getOtp,verifyOtp,updateEmail,updatePhone,deleteProfile}=useAuth();
     const [otp,setOtp]=useState(Array(6).fill(""));
     const [enableOtp,setEnableOtp]=useState(false);
     
     const [formData,setFormData]=useState({name:"",email:null,phone:""});
+    const [showEditModal,setShowEditModal]=useState(false);
+    const [value,setValue]=useState("");
 
+    
     useEffect(()=>{
         setFormData(authUser?.user);
     },[])
 
 
-    const checkData=()=>{
-        let errors={};
-        const {name,email,phone}=formData;
-         const phoneRegex = /^[6-9]\d{9}$/;
-        if(!name.trim()){
-            errors.name="Name is required";
+   
+
+    const handleEditModal=(text)=>{
+        //const text=(e.currentTarget.textContent.trim());
+        setValue(text);
+        if(text){
+            setShowEditModal(true);
         }
-
-        if(!phoneRegex.test(phone)){
-            errors.phone="Enter a valid mobile number";
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if(email && !emailRegex.test(email)){
-            errors.email="Enter a valid Email!"
-        }
-
-        setErrors(errors);
-
-        return Object.keys(errors).length===0;
     }
 
-    const initiateOtpVerification=async()=>{
+    const initiateOtpVerification=async(identifierValue)=>{    
 
-        
-
-        if (JSON.stringify(authUser?.user) === JSON.stringify(formData)) {
-            return toast("No Changes Have Been Made");
-        }
-        
-        const isOtpSent=await getOtp({identifier:authUser?.user?.phone,purpose:"reset"});
-
-        if(isOtpSent){
-            setEnableOtp(true);
+        if(formData[identifierValue]){
+            const isOtpSent=await getOtp({identifier:formData[identifierValue]});
+            if(isOtpSent){
+                setEnableOtp(true);
+                setShowEditModal(false);
             
+            }   
+        }
+        else{
+            return toast.error("formData");
         }
 
-
     }
 
-    const handleChange=(e)=>{
-        let value=e.target.value;
-        let field=e.target.name;
-
-        setFormData({...formData,[field]:value});
-
-
-    }
+    //console.log(formData);
 
     const submitOtp=async(combinedOtp)=>{
-        const {phone}=authUser?.user;
         const data={
-            identifier:phone,
+            identifier:formData[value],
             otp:combinedOtp
         }
 
@@ -83,7 +65,13 @@ const EditProfile = () => {
         if(isVerified){
             
             setEnableOtp(false);
-            await updateProfile(formData);
+            if(value && value=='email'){
+                await updateEmail({email:formData?.email});
+            }
+            else if(value && value=='phone'){
+                await updatePhone({phone:formData?.phone})
+            }
+            
 
         }
         else{
@@ -94,18 +82,7 @@ const EditProfile = () => {
 
     }
 
-    const updateChanges=(e)=>{
-        e.preventDefault();
-        const valid=checkData();
-        console.log(valid);
-        console.log(errors);
-        if(valid){
-            setErrors({})
-            initiateOtpVerification();
-        }
-        
-
-    }
+    
 
     const deleteAccount=async()=>{
         if(authUser.user){
@@ -118,45 +95,44 @@ const EditProfile = () => {
     <div className='edit-wrapper'>
         
         <h1>Edit Your <span>Profile</span></h1>
-        <form className='update-form' onSubmit={updateChanges}>
+        <form className='update-form' >
             <div className='input-box'>
-                <label>Your Name <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
+                <label onClick={()=>handleEditModal("name")}>Your Name <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
                 <input
                 name='name'
                 type='text'
-                value={formData?.name || ""}
-                onChange={handleChange}
+                readOnly
+                value={authUser.user?.name || ""}
                 placeholder='Name'/>
                 {errors.name&&<div className='error'>{errors.name}</div>}
 
             </div>
 
             <div className='input-box'>
-                <label>Email <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
+                <label onClick={()=>handleEditModal("email")}>Email <span ><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
                 <input
                 name='email'
                 type='text'
-                value={formData?.email || ""}
-                onChange={handleChange}
+                readOnly
+                value={authUser.user?.email || ""}
                 placeholder='Email'/>
                 {errors.email&&<div className='error'>{errors.email}</div>}
 
             </div>
 
             <div className='input-box'>
-                <label>Mobile Number <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
+                <label onClick={()=>handleEditModal("phone")}>Mobile Number <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
                 <input
                 name='phone'
                 type='text'
-                value={formData?.phone || ""}
-                onChange={handleChange}
+                readOnly
+                value={authUser.user?.phone || ""}
                 placeholder='Mobile'/>
                 {errors.mobile&&<div className='error'>{errors.mobile}</div>}
 
             </div>
 
             <div className='btn-cont'>
-                <button>Save Changes</button>
                 <button type='button' onClick={deleteAccount}>Delete Account</button>
             </div>
 
@@ -164,11 +140,13 @@ const EditProfile = () => {
         </form>
 
 
-        {enableOtp && <div onClick={()=>setEnableOtp(false)} className='backdrop' style={{backdropFilter:"blur(3px)"}}/>}
+        {(enableOtp || showEditModal) && <div onClick={()=>{setEnableOtp(false);setShowEditModal(false)}} className='backdrop' style={{backdropFilter:"blur(3px)"}}/>}
 
         {enableOtp&&<div className='otp-box'>
-            {enableOtp && <OtpField otp={otp} setOtp={setOtp} submit={submitOtp} phone={authUser?.user?.phone}/>}
+            {enableOtp && <OtpField otp={otp} setOtp={setOtp} submit={submitOtp} media={formData[value]}/>}
         </div>}
+
+        {showEditModal && <EditDetails value={value} formData={formData} setFormData={setFormData} sendOtp={initiateOtpVerification} setShowEditModal={setShowEditModal}/>}
         
       
     </div>

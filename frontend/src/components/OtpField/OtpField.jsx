@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './otp.css'
-const OtpField = ({otp,setOtp,submit,phone}) => {
+const OtpField = ({otp,setOtp,submit,media}) => {
     
     const inputRef=useRef([])
 
@@ -48,12 +48,11 @@ const OtpField = ({otp,setOtp,submit,phone}) => {
 
     }
 
-    
-    console.log(otp);
+
   return (
     <div>
         <h3>Verify Its  <span>You</span></h3>
-        <p style={{textAlign:"center"}}>{`Enter the Otp sent to (+91-) ${phone}`}</p>
+        <p style={{textAlign:"center"}}>Enter the Otp sent to (+91-) <span>{media}</span></p>
 
         <div className='input-container'>
             {otp.map((value,index)=>{

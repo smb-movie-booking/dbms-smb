@@ -95,6 +95,22 @@ exports.updateName = (userId, name, callback) => {
   });
 };
 
+exports.updateEmail = (userId, email, callback) => {
+  const query = 'UPDATE User SET Email = ? WHERE UserID = ?';
+  db.query(query, [email, userId], (err, result) => {
+    if (err) return callback(err);
+    callback(null, result);
+  });
+};
+
+exports.updatePhone = (userId, phone, callback) => {
+  const query = 'UPDATE User SET Phone = ? WHERE UserID = ?';
+  db.query(query, [phone, userId], (err, result) => {
+    if (err) return callback(err);
+    callback(null, result);
+  });
+};
+
 exports.updatePasswordByPhone = (phone, hashedPassword, callback) => {
   db.query('UPDATE User SET User_Password = ? WHERE Phone = ?', [hashedPassword, phone], callback);
 };

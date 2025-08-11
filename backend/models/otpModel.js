@@ -31,6 +31,8 @@ exports.getVerifiedOTP = (identifier, callback) => {
     LIMIT 1
   `;
   db.query(sql, [identifier], (err, results) => {
+    console.log(results[0]);
+    console.log(err);
     if (err) return callback(err);
     callback(null, results[0]);
   });

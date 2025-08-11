@@ -65,21 +65,15 @@ h1{
     padding: 4px 8px;
 }
 
-.btn-cont button:nth-child(1){
-    background-color: var(--secondary-color);
-    color: white;
-    border: none;
-    border-radius: 30px;
-}
 
-.btn-cont button:nth-child(2){
+.btn-cont button:nth-child(1){
     border: 1px solid rgb(212, 210, 210);
     border-radius:30px;
     color: red;
     background-color: white;
 }
 
-.btn-cont button:nth-child(2):hover{
+.btn-cont button:nth-child(1):hover{
     border: none;
     color: white;
     background-color: red;
