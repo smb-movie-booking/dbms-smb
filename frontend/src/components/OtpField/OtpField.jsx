@@ -42,11 +42,17 @@ const OtpField = ({otp,setOtp,submit,media}) => {
             inputRef.current[index+1].focus();
         }
 
-        
+    }
 
-        
+    const handleclick=(index)=>{
+        inputRef.current[index].setSelectionRange(1,1);
+        const newOtp=[...otp];
+        const emptyIndex=newOtp.findIndex((ele)=>ele==="");
+        if(index>0 && emptyIndex){
+            const nextIndex=newOtp.indexOf("");
+            inputRef.current[nextIndex].focus();
+        }
 
-        
     }
 
     const handleKeyDown=(index,e)=>{
@@ -59,11 +65,15 @@ const OtpField = ({otp,setOtp,submit,media}) => {
         }
 
         else if(e.key==="ArrowLeft" && index>0 && inputRef.current[index-1]){
+            e.preventDefault();
             inputRef.current[index-1].focus();
+            handleclick(index-1);
         }
 
         else if(e.key==="ArrowRight" && index<otp.length-1 && inputRef.current[index+1]){
+            e.preventDefault();
             inputRef.current[index+1].focus();
+            handleclick(index+1);
         }
         else{
             return;
@@ -73,17 +83,19 @@ const OtpField = ({otp,setOtp,submit,media}) => {
 
 
   return (
-    <div>
+    <div className='otp-wrapper'>
         <h3>Verify Its  <span>You</span></h3>
         <p style={{textAlign:"center"}}>Enter the Otp sent to <span>{media}</span></p>
 
         <div className='input-container'>
             {otp.map((value,index)=>{
-                return <input 
+                return <input
+                type='text' 
                 key={index}
                 value={value}
                 onChange={(e)=>handleChange(index,e)} 
                 onKeyDown={(e)=>handleKeyDown(index,e)}
+                onClick={(e)=>handleclick(index,e)}
                 ref={(input)=>inputRef.current[index]=input} 
                 className='otp-input'/>
             })}

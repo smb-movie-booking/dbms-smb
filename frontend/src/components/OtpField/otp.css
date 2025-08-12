@@ -1,6 +1,12 @@
+.otp-wrapper{
+  box-sizing: border-box;
+  padding: 1rem 2rem;
+}
+
 .input-container{
     display: flex;
     gap: 4px;
+    justify-content: center;
 }
 .otp-input {
   width: 40px;
