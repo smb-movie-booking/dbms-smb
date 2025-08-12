@@ -42,8 +42,8 @@ const EditDetails = ({value,formData,setFormData,sendOtp,setShowEditModal}) => {
 
     }
 
-    const handleClick=async()=>{
-
+    const handleClick=async(e)=>{
+        e.preventDefault();
         const valid=checkErrors();
         if(valid){
             sendOtp(value)   
@@ -51,7 +51,8 @@ const EditDetails = ({value,formData,setFormData,sendOtp,setShowEditModal}) => {
 
     }
 
-    const handleUpdateName=async()=>{
+    const handleUpdateName=async(e)=>{
+        e.preventDefault();
         const {name}=formData;
         if(name === authUser?.user?.name ){
             return toast.error("Name hasnt been changed");
@@ -64,6 +65,7 @@ const EditDetails = ({value,formData,setFormData,sendOtp,setShowEditModal}) => {
         }
     }
   return (
+    <form>
     <div className='modal-wrapper update-form'>
         <div className='modal-title'>
             <h4>{`Edit Your ${value.toUpperCase()}`}</h4>
@@ -83,6 +85,7 @@ const EditDetails = ({value,formData,setFormData,sendOtp,setShowEditModal}) => {
 
         {value!=="name"?<button onClick={handleClick}>Verify via OTP</button>:<button onClick={handleUpdateName}>Update Name</button>}
     </div>
+    </form>
   )
 }
 

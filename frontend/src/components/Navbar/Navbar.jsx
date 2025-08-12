@@ -39,7 +39,7 @@ const Navbar = () => {
             </span>
 
             {!authUser?<button onClick={()=>navigate("/register")} className='register-btn'>Register</button>:
-            <button className='profile-btn'>{authUser?.user.name.slice(0,1).toUpperCase()}</button>}
+            <button className='profile-btn' onClick={()=>navigate(`/${authUser?.user?.id}/edit`)}>{authUser?.user.name.slice(0,1).toUpperCase()}</button>}
 
             <div onClick={()=>setIsOpen(true)}>
                 <Menu />

@@ -51,6 +51,14 @@ h1{
     padding-left:8px ;
 }
 
+.input-box div:nth-child(1) span{
+    cursor: pointer;
+}
+
+.input-box div:nth-child(1) span:hover{
+    color: var(--secondary-color);
+}
+
 .input-box input:focus{
     border-color:var(--secondary-color);
     box-shadow: 0 0 3px var(--secondary-color);

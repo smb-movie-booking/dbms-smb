@@ -49,8 +49,13 @@ export const useAuth=()=>{
     const login=async(userData)=>{
         try {
             const {data}=await axiosInstance.post("/auth/login",userData);
+            if(data.success){
+                await getUser();
+                return true
+            }
+            
             console.log(data);
-            await getUser();
+            
         } catch (error) {
             console.log(error.response.data.message);
             toast.error(error.response.data.message)

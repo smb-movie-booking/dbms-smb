@@ -34,7 +34,7 @@ exports.login = (req, res) => {
         isAdmin: user.IsAdmin === 1
       };
 
-      return res.status(200).json({
+      return res.status(200).json({success:true,
         message: user.IsAdmin === 1 ? 'Admin logged in successfully' : 'User logged in successfully'
       });
     });

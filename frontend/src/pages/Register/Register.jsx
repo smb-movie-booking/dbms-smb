@@ -17,7 +17,11 @@ const Register = () => {
   const {validateData,errors,setErrors}=useAuthError();
 
 
-
+  const handleKeyDown=(e)=>{
+    if(e.key==="Enter"){
+      reqOtp();
+    }
+  }
 
   const reqOtp=async()=>{
     const {phone}=formData;
@@ -97,7 +101,7 @@ const Register = () => {
             
           </div>
           {errors.mobile&&<p className='error'>{errors.mobile}</p>}
-          <button className='otp-btn' onClick={reqOtp}>Get Otp</button>
+          <button className='otp-btn' onClick={reqOtp} onKeyDown={handleKeyDown}>Get Otp</button>
         </div>
 
         <span>Already Have an Account?

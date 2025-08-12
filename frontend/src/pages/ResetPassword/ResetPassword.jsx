@@ -22,6 +22,12 @@ const ResetPassword = () => {
         setNewData({...newData,[name]:value});
     }
 
+    const handleKeyDown=(e)=>{
+      if(e.key==="Enter"){
+        passwordReset();
+      }
+    }
+
     const passwordReset=async()=>{
         const valid=validateData(newData);
         if(valid){
@@ -63,6 +69,7 @@ const ResetPassword = () => {
         <input
         type='text'
         name='phone'
+        onKeyDown={handleKeyDown}
         value={newData.phone}
         onChange={handleChange}
         />
@@ -73,6 +80,7 @@ const ResetPassword = () => {
             <label className='field-name'>New Password</label>
             <div style={{position:"relative"}}>
               <input className=''
+              onKeyDown={handleKeyDown}
               value={newData.password}
               name='password'
               onChange={handleChange}
@@ -85,7 +93,7 @@ const ResetPassword = () => {
             </div>
         </div>
 
-        <button onClick={passwordReset}>Change Password</button>
+        <button onClick={passwordReset} onKeyDown={handleKeyDown}>Change Password</button>
       
     </div>:<OtpField otp={otp} setOtp={setOtp} submit={submit} media={newData.phone}/>
     }

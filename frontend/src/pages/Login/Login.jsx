@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import OtpField from '../../components/OtpField/OtpField'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/auth/useAuth';
 import './login.css'
 import '../Register/register.css'
@@ -14,11 +14,13 @@ const Login = () => {
   const [formData,setFormData]=useState({password:"",phone:""})
   const [showPassword,setShowPassword]=useState(false);
   const {login,getUser}=useAuth();
+  const navigate=useNavigate();
   
 
   const {validateData,errors,setErrors}=useAuthError();
 
-  const reqOtp=async()=>{
+  const reqOtp=async(e)=>{
+    e.preventDefault();
     console.log(formData)
     const {phone,email,password}=formData;
     if(phone && email){
@@ -29,7 +31,10 @@ const Login = () => {
     if(valid){
       console.log(formData);
       setErrors({});
-      await login({identifier:formData.phone || formData.email,password:formData.password})
+      const isLoggedIn=await login({identifier:formData.phone || formData.email,password:formData.password});
+      if(isLoggedIn){
+        navigate("/");
+      }
     }
     else{
       return;
@@ -40,12 +45,13 @@ const Login = () => {
 
   }
 
-  console.log(formData);
+  //console.log(formData);
   return (
+    <form onSubmit={reqOtp}>
     <div className='register-container' style={{marginInline:"auto" ,display:"flex",justifyContent:"center",paddingTop:"20px",marginTop:"2rem"}}>
       <div style={{width:"100%"}} >
-        <p className='header'>LogIn</p>
-
+        <p className='header'>Login</p>
+        
         <div style={{padding:"8px 20px"}}>
 
           <div style={{display:"flex",alignItems:"center",marginBottom:"12px"}}>
@@ -98,13 +104,14 @@ const Login = () => {
 
 
           <div>
-            <button className='otp-btn' onClick={reqOtp}>LogIn</button>
+            <button className='otp-btn' >LogIn</button>
             <Link to="/reset-password ">
             <p className='forgot-pass'>Forgot Password ?</p>
             </Link>
             
           </div>
         </div>
+        
 
         <span>Don't Have an Account?
           <Link to="/register">Register</Link>
@@ -113,6 +120,7 @@ const Login = () => {
       </div>
       
     </div>
+    </form>
   
   )
 }

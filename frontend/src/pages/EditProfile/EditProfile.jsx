@@ -97,7 +97,11 @@ const EditProfile = () => {
         <h1>Edit Your <span>Profile</span></h1>
         <form className='update-form' >
             <div className='input-box'>
-                <label onClick={()=>handleEditModal("name")}>Your Name <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
+                <div style={{display:"flex",justifyContent:"space-between"}}>
+                    <label >Your Name </label>
+                    <span onClick={()=>handleEditModal("name")}>Edit <Pencil size={"17px"} stroke='var(--secondary-color)'/></span>
+                </div>
+                
                 <input
                 name='name'
                 type='text'
@@ -109,7 +113,10 @@ const EditProfile = () => {
             </div>
 
             <div className='input-box'>
-                <label onClick={()=>handleEditModal("email")}>Email <span ><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
+                <div style={{display:"flex",justifyContent:"space-between"}}>
+                    <label >Email </label>
+                    <span onClick={()=>handleEditModal("email")}>Edit <Pencil size={"17px"} stroke='var(--secondary-color)'/></span>
+                </div>
                 <input
                 name='email'
                 type='text'
@@ -121,7 +128,10 @@ const EditProfile = () => {
             </div>
 
             <div className='input-box'>
-                <label onClick={()=>handleEditModal("phone")}>Mobile Number <span><Pencil size={"17px"} stroke='var(--secondary-color)'/></span></label>
+                <div style={{display:"flex",justifyContent:"space-between"}}>
+                    <label >Mobile Number </label>
+                    <span onClick={()=>handleEditModal("phone")}>Edit <Pencil size={"17px"} stroke='var(--secondary-color)'/></span>
+                </div>
                 <input
                 name='phone'
                 type='text'
