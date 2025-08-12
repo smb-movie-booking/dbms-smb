@@ -37,6 +37,7 @@ exports.getByEmail = (email, callback) => {
 exports.findByPhone = (phone, callback) => {
   db.query('SELECT * FROM User WHERE Phone = ?', [phone], (err, results) => {
     if (err) return callback(err);
+    console.log(results[0])
     callback(null, results[0] || null);
   });
 };
