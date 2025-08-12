@@ -12,8 +12,6 @@ import {
   ViewShows
 } from "../pages/Admin";
 
-import ProtectedAdmin from "../components/ProtectedAdmin";
-
 export const adminRoutes = [
   { path: "/admin", element: <AdminDashboard /> },
   { path: "/admin/add-city", element: <AddCity /> },

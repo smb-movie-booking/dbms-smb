@@ -30,6 +30,7 @@ const Sidebar = ({isOpen,setIsOpen}) => {
         <div>
           {authUser?.user&&<button onClick={()=>{navigate(`/${authUser.user.id}/edit`);setIsOpen(false)}} className='app-btn'>Edit Profile</button>}
           {authUser?.user&&<button className='app-btn'>Your Orders</button>}
+          {authUser?.user&& authUser.user.isAdmin && (<button className="app-btn" onClick={() => { navigate("/admin"); setIsOpen(false); }}> Admin</button>)}
         </div>
 
         {authUser?.user&&<button onClick={handleClick} className='signout-btn'>SignOut</button>}

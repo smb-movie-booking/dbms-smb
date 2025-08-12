@@ -21,8 +21,17 @@ const Navbar = () => {
     <>
     {isOpen&&<div className='backdrop' onClick={()=>setIsOpen(false)} />}
     <nav>
-        <div className='logoImg'>
-            <img src='' alt='Logo'/>
+        <div
+        className="logoImg"
+        style={{ cursor: "pointer" }}
+        onClick={() => navigate("/")}
+        >
+        <img
+            src="/M.png"
+            alt="Logo"
+            style={{ width: "50px", height: "auto", objectFit: "contain" }}
+            />
+
         </div>
 
         <div className='search-container'>

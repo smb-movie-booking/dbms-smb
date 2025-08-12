@@ -12,20 +12,6 @@ import EditProfile from './pages/EditProfile/EditProfile'
 import ProtectedAdmin from './components/ProtectedAdmin';
 import { adminRoutes } from "./routes/adminRoutes";
 
-import { 
-  AdminDashboard, 
-  AddCity, 
-  AddCinema, 
-  AddCinemaHall, 
-  AddSeats, 
-  AddMovie, 
-  AddShow, 
-  ViewCities, 
-  ViewCinemas, 
-  ViewMovies, 
-  ViewShows 
-} from './pages/Admin';
-
 function App() {
   const {getUser}=useAuth();
   const {authUser}=useContext(Auth);
