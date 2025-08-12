@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import axios from "../../../utils/axios";
+import { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 
 export default function ViewCities() {
   const [cities, setCities] = useState([]);
 
   useEffect(() => {
-    axios.get("/admin/cities")
+    axiosInstance.get("/admin/cities")
       .then(res => setCities(res.data))
       .catch(err => console.error(err));
   }, []);
@@ -14,7 +14,7 @@ export default function ViewCities() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this city?")) return;
     try {
-      await axios.delete(`/admin/cities/${id}`);
+      await axiosInstance.delete(`/admin/cities/${id}`);
       setCities(prev => prev.filter(c => c.CityID !== id));
     } catch (err) {
       alert("Could not delete: " + (err.response?.data?.message || err.message));

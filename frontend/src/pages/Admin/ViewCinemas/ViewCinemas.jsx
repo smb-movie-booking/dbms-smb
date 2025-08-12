@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import axios from "../../../utils/axios";
+import  { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 
 export default function ViewCinemas() {
   const [cinemas, setCinemas] = useState([]);
 
   useEffect(() => {
-    axios.get("/admin/cinemas").then(res => setCinemas(res.data)).catch(console.error);
+    axiosInstance.get("/admin/cinemas").then(res => setCinemas(res.data)).catch(console.error);
   }, []);
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this cinema?")) return;
     try {
-      await axios.delete(`/admin/cinemas/${id}`);
+      await axiosInstance.delete(`/admin/cinemas/${id}`);
       setCinemas(prev => prev.filter(c => c.CinemaID !== id));
     } catch (err) {
       alert("Could not delete: " + (err.response?.data?.message || err.message));

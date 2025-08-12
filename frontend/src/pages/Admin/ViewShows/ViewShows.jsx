@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import axios from "../../../utils/axios";
+import  { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 
 export default function ViewShows() {
   const [shows, setShows] = useState([]);
 
   useEffect(() => {
-    axios.get("/admin/shows").then(res => setShows(res.data)).catch(console.error);
+    axiosInstance.get("/admin/shows").then(res => setShows(res.data)).catch(console.error);
   }, []);
 
   const handleDelete = async (id) => {
     if (!confirm("Delete show?")) return;
     try {
-      await axios.delete(`/admin/shows/${id}`);
+      await axiosInstance.delete(`/admin/shows/${id}`);
       setShows(prev => prev.filter(s => s.ShowID !== id));
     } catch (err) {
       alert("Could not delete show: " + (err.response?.data?.message || err.message));

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "../../../utils/axios";
+import  { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
 
@@ -12,7 +12,7 @@ export default function AddCity() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("/admin/cities", {
+      await axiosInstance.post("/admin/cities", {
         City_Name: cityName,
         City_State: stateName,
         ZipCode: zip,

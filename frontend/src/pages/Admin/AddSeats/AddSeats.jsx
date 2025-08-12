@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "../../../utils/axios";
+import  { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
 
@@ -11,14 +11,14 @@ export default function AddSeats() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("/admin/cinema-halls").then(res => setHalls(res.data)).catch(console.error);
+    axiosInstance.get("/admin/cinema-halls").then(res => setHalls(res.data)).catch(console.error);
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       // make multiple inserts for seats; backend can accept batch
-      await axios.post("/admin/cinema-seats", {
+      await axiosInstance.post("/admin/cinema-seats", {
         CinemaHallID: hallId,
         Seats: seatCount,
         Seat_Type: seatType

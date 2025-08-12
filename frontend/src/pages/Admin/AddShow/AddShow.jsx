@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "../../../utils/axios";
+import { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
 
@@ -17,8 +17,8 @@ export default function AddShow() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("/admin/movies").then(res => setMovies(res.data)).catch(console.error);
-    axios.get("/admin/cinema-halls").then(res => setHalls(res.data)).catch(console.error);
+    axiosInstance.get("/admin/movies").then(res => setMovies(res.data)).catch(console.error);
+    axiosInstance.get("/admin/cinema-halls").then(res => setHalls(res.data)).catch(console.error);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -36,11 +36,11 @@ export default function AddShow() {
       };
 
       // create show
-      const res = await axios.post("/admin/shows", body);
+      const res = await axiosInstance.post("/admin/shows", body);
       const newShow = res.data; // expect { ShowID: ... }
 
       // call backend endpoint to populate show seats using stored proc
-      await axios.post(`/admin/shows/${newShow.ShowID}/populate-seats`, {
+      await axiosInstance.post(`/admin/shows/${newShow.ShowID}/populate-seats`, {
         CinemaHallID: hallId,
         defaultPrice: defaultPrice
       });

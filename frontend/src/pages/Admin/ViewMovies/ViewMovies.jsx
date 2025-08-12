@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import axios from "../../../utils/axios";
+import{ axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 
 export default function ViewMovies() {
   const [movies, setMovies] = useState([]);
 
   useEffect(() => {
-    axios.get("/admin/movies").then(res => setMovies(res.data)).catch(console.error);
+    axiosInstance.get("/admin/movies").then(res => setMovies(res.data)).catch(console.error);
   }, []);
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this movie?")) return;
     try {
-      await axios.delete(`/admin/movies/${id}`);
+      await axiosInstance.delete(`/admin/movies/${id}`);
       setMovies(prev => prev.filter(m => m.MovieID !== id));
     } catch (err) {
       alert("Could not delete: " + (err.response?.data?.message || err.message));

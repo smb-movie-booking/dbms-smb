@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../../../utils/axios";
+import { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
 
@@ -13,13 +13,13 @@ export default function AddCinema() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("/admin/cities").then(res => setCities(res.data)).catch(console.error);
+    axiosInstance.get("/admin/cities").then(res => setCities(res.data)).catch(console.error);
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("/admin/cinemas", {
+      await axiosInstance.post("/admin/cinemas", {
         Cinema_Name: name,
         TotalCinemaHalls: totalHalls,
         CityID: cityId,

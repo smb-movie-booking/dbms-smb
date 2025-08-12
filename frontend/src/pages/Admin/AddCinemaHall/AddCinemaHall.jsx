@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../../../utils/axios";
+import  { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
 
@@ -11,13 +11,13 @@ export default function AddCinemaHall() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("/admin/cinemas").then(res => setCinemas(res.data)).catch(console.error);
+    axiosInstance.get("/admin/cinemas").then(res => setCinemas(res.data)).catch(console.error);
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("/admin/cinema-halls", {
+      await axiosInstance.post("/admin/cinema-halls", {
         Hall_Name: hallName,
         TotalSeats: totalSeats,
         CinemaID: cinemaId

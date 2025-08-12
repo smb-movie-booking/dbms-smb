@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "../../../utils/axios";
+import  { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
 
@@ -16,7 +16,7 @@ export default function AddMovie() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("/admin/movies", {
+      await axiosInstance.post("/admin/movies", {
         Title: title,
         Movie_Description: description,
         Duration: duration,
