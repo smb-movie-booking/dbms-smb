@@ -9,6 +9,22 @@ import { Auth } from './Context/AuthContext'
 import toast, { Toaster } from 'react-hot-toast';
 import ResetPassword from './pages/ResetPassword/ResetPassword'
 import EditProfile from './pages/EditProfile/EditProfile'
+import ProtectedAdmin from './components/ProtectedAdmin';
+import { adminRoutes } from "./routes/adminRoutes";
+
+import { 
+  AdminDashboard, 
+  AddCity, 
+  AddCinema, 
+  AddCinemaHall, 
+  AddSeats, 
+  AddMovie, 
+  AddShow, 
+  ViewCities, 
+  ViewCinemas, 
+  ViewMovies, 
+  ViewShows 
+} from './pages/Admin';
 
 function App() {
   const {getUser}=useAuth();
@@ -39,6 +55,13 @@ function App() {
         <Route path='/register' element={!authUser?<Register/>:<Navigate to="/"/>}/>
         <Route path='/reset-password' element={!authUser?<ResetPassword/>:<Navigate to="/"/>}/>
         <Route path='/:userid/edit' element={authUser?<><Navbar/><EditProfile/></>:<Login/>}/>
+        {adminRoutes.map(({ path, element }, index) => (
+        <Route
+          key={index}
+          path={path}
+          element={<ProtectedAdmin>{element}</ProtectedAdmin>}
+        />
+      ))}
       </Routes>
     </>
   )
