@@ -61,9 +61,9 @@ Content-Type: application/json
 
 {
   "name": "Test User One",
-  "phone": "9876543210",
+  "phone": "9800543212",
   "password": "password123",
-  "adminCode": ""
+  "adminCode": "myadminsecret"
 }
 
 # -----------------------------------------------------------------
