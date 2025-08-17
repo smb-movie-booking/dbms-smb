@@ -23,3 +23,31 @@ exports.fetchShows = (movieID, theaterID, showDate) => {
         });
     });
 };
+
+exports.fetchShowsByTheaterAndDate = (theaterID, showDate) => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT 
+                ms.ShowID,
+                ms.MovieID,
+                TIME_FORMAT(ms.StartTime, '%H:%i') AS ShowTime,
+                ms.Price,
+                ms.Format,
+                m.MovieName,
+                m.Movie_Language,
+                m.Genre,
+                m.AgeFormat
+            FROM Movie_Show ms
+            JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
+            JOIN Movie m ON ms.MovieID = m.MovieID
+            WHERE ch.CinemaID = ? 
+              AND DATE(ms.Show_Date) = ?
+            ORDER BY m.MovieName, ms.StartTime ASC
+        `;
+
+        db.query(query, [theaterID, showDate], (err, results) => {
+            if (err) reject(err);
+            else resolve(results);
+        });
+    });
+};
