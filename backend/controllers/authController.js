@@ -61,10 +61,11 @@ exports.register = (req, res) => {
 
   // Step 1: Check if phone is verified
   otpModel.isVerified(phone, (err, isVerified) => {
-    if (err) return res.status(500).json({ message: 'Verification check failed' });
-    if (!isVerified) return res.status(403).json({ message: 'Phone not verified via OTP' });
-
     const isAdmin = adminCode === process.env.ADMIN_SECRET ? 1 : 0;
+    if (!isAdmin) {
+      if (err) return res.status(500).json({ message: 'Verification check failed' });
+      if (!isVerified) return res.status(403).json({ message: 'Phone not verified via OTP' });
+    }
 
     // Step 2: Hash password and create user
     bcrypt.hash(password, 10, (err, hashedPassword) => {
