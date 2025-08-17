@@ -55,7 +55,7 @@ const Register = () => {
 
   }
   return (
-    <div style={{width:"100%",height:"100%",display:"flex",justifyContent:"center",paddingTop:"20px",background:"var(--color-background)"}}>
+    <div style={{width:"100%",height:"100%",display:"flex",justifyContent:"center",paddingTop:"20px"}}>
       {!OtpForm?<div className='register-container'>
         <p className='header'>Get <span style={{color:"var(--secondary-color)"}}>Started</span></p>
 

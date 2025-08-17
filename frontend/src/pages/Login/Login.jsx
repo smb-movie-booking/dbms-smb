@@ -13,6 +13,7 @@ const Login = () => {
  
   const [formData,setFormData]=useState({password:"",phone:""})
   const [showPassword,setShowPassword]=useState(false);
+  const [loading,setLoading]=useState(false);
   const {login,getUser}=useAuth();
   const navigate=useNavigate();
   
@@ -29,12 +30,19 @@ const Login = () => {
     const valid=validateData(formData);
     console.log(valid)
     if(valid){
+      setLoading(true);
       console.log(formData);
       setErrors({});
-      const isLoggedIn=await login({identifier:formData.phone || formData.email,password:formData.password});
-      if(isLoggedIn){
-        navigate("/");
+      try{
+        const isLoggedIn=await login({identifier:formData.phone || formData.email,password:formData.password});
+        if(isLoggedIn){
+          navigate("/");
+        }
+
+      }finally{
+        setLoading(false);
       }
+
     }
     else{
       return;
@@ -104,7 +112,7 @@ const Login = () => {
 
 
           <div>
-            <button className='otp-btn' >LogIn</button>
+            <button className='otp-btn' disabled={loading}>Login</button>
             <Link to="/reset-password ">
             <p className='forgot-pass'>Forgot Password ?</p>
             </Link>

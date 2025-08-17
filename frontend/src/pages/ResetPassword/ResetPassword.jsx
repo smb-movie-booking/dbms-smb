@@ -11,6 +11,7 @@ const ResetPassword = () => {
     const [showPassword,setShowPassword]=useState(false);
     const [OtpForm,setOtpForm]=useState(false);
     const [otp,setOtp]=useState(new Array(6).fill(""));
+    const [loading,setLoading]=useState(false);
 
 
     const{validateData,errors,setErrors}=useAuthError();
@@ -32,9 +33,16 @@ const ResetPassword = () => {
         const valid=validateData(newData);
         if(valid){
             setErrors({});
-            const isOtpSent=await getOtp({identifier:newData.phone,purpose:"reset"});
-            if(isOtpSent){
-                setOtpForm(true);
+            setLoading(true);
+            try{
+              const isOtpSent=await getOtp({identifier:newData.phone,purpose:"reset"});
+              
+              if(isOtpSent){
+                  setOtpForm(true);
+              }
+
+            }finally{
+              setLoading(false);
             }
         }
         else{
@@ -93,7 +101,7 @@ const ResetPassword = () => {
             </div>
         </div>
 
-        <button onClick={passwordReset} onKeyDown={handleKeyDown}>Change Password</button>
+        <button onClick={passwordReset} onKeyDown={handleKeyDown} disabled={loading}>Change Password</button>
       
     </div>:<OtpField otp={otp} setOtp={setOtp} submit={submit} media={newData.phone}/>
     }

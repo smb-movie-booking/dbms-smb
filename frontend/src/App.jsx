@@ -11,6 +11,7 @@ import ResetPassword from './pages/ResetPassword/ResetPassword'
 import EditProfile from './pages/EditProfile/EditProfile'
 import ProtectedAdmin from './components/ProtectedAdmin';
 import { adminRoutes } from "./routes/adminRoutes";
+import Skeleton from './components/Skeleton/Skeleton'
 
 function App() {
   const {getUser}=useAuth();
@@ -28,7 +29,7 @@ function App() {
   },[])
 
   if(loading){
-    return <div>Loading...</div>
+    return <Skeleton/>
   }
   console.log(authUser)
   return (

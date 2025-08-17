@@ -1,0 +1,50 @@
+
+.skeleton-container{
+    background-color: white;
+}
+
+.skeleton-gridContainer{
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 2rem;
+}
+.skeleton-gridContainer div{
+    height:50vh ;
+}
+
+.skeleton-animation{
+    border-radius: 10px;
+    background: linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 50%, #e0e0e0 75%);
+    background-size:400% 100% ;
+    animation: shimmer 2s infinite linear ;
+}
+
+@keyframes shimmer{
+    0%{
+        background-position: 100% 0;
+    }
+
+    100%{
+        background-position: -100% 0;
+    }
+}
+
+@media screen and (max-width:768px){
+    .skeleton-gridContainer{
+        grid-template-columns: repeat(2,1fr);
+    }
+
+    .skeleton-gridContainer div{
+        height: 180px;
+    }
+}
+
+@media (min-width:769px) and (max-width:967px){
+    .skeleton-gridContainer{
+        grid-template-columns: repeat(3,1fr);
+    }
+
+    .skeleton-gridContainer div{
+        height: 200px;
+    }
+}

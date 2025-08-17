@@ -1,4 +1,8 @@
 const adminModel = require('../models/adminModel');
+const bcrypt = require('bcrypt');
+const userModel = require('../models/userModel');
+require('dotenv').config();
+
 
 exports.flushAllTables = async (req, res) => {
   try {
