@@ -1,4 +1,5 @@
 const movieModel = require('../models/movieModel');
+const showModel = require('../models/showModel');
 
 const handleExplore = async(req,res) => {
     try{
