@@ -39,3 +39,55 @@ exports.truncateTables = async (tables) => {
   await connection.query('SET FOREIGN_KEY_CHECKS = 1');
 };
 
+// CityID , City_Name , City_State , ZipCode
+exports.findCityByName=(name,callback)=>{
+  const sql="SELECT * FROM city WHERE lower(City_Name) = lower(?) LIMIT 1";
+  db.query(sql, [name], (err, results) => {
+    if (err) {
+      console.error('❌ DB error in findCity:', err);  // <-- this will help you debug
+      return callback(err);
+    }
+    if (results.length === 0) return callback(null, null);
+    console.log(results[0])
+    return callback(null, results[0]);
+  });
+}
+
+exports.findCityById=(id,callback)=>{
+  const sql='SELECT * from city WHERE CityID=?';
+  db.query(sql,[id],(err,result)=>{
+    if(err)return callback(err)
+    if(result[0].length===0)return callback(null,null)
+    return callback(null,result[0]);
+  })
+}
+
+exports.addCity=(name,state,code,callback)=>{
+  db.query('SELECT MAX(CityID) as maxid from city',(err,results)=>{
+    if(err){
+      console.log(err);
+      return callback(err);
+    }
+    const newCityID=(results[0].maxid || 0) + 1;
+    const sql='INSERT INTO city values(?,?,?,?)';
+    db.query(sql,[newCityID,name,state,code],(err,results)=>{
+      if(err){
+        return callback(err)
+      }
+      return callback(null,{ inserted: true, cityId: newCityID })
+    })
+  })
+}
+
+exports.findCinemaById=(id,callback)=>{
+  db.query('SELECT * FROM cinema WHERE CinemaID=?',[id],(err,results)=>{
+    if(err)return callback(err)
+    if(results.length===0)return callback(null,null)
+    return callback(null,results[0]);
+
+  })
+}
+
+
+
+

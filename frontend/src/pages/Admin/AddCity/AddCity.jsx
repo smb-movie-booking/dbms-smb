@@ -1,27 +1,32 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import  { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useAdmin } from "../../../hooks/auth/useAdmin";
 
 export default function AddCity() {
   const [cityName, setCityName] = useState("");
-  const [stateName, setStateName] = useState("");
+  const [stateName, setStateName] = useState("Kerala");
   const [zip, setZip] = useState("");
+  const [loading,setLoading]=useState(false);
+
+  const {addNewCity}=useAdmin();
   const navigate = useNavigate();
+
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      await axiosInstance.post("/admin/cities", {
-        City_Name: cityName,
-        City_State: stateName,
-        ZipCode: zip,
-      });
-      alert("City added");
+    if(!cityName.trim() || !stateName.trim() || !zip.trim()) return toast.error("All fields are required");
+    const zipRegex=/^\d+$/
+    if(zip.length !==6 || !zipRegex.test(zip) ) return toast.error("Use a valid Zip")
+    try{
+      setLoading(true);
+      await addNewCity({cityName,stateName,zip});
       navigate("/admin/view-cities");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to add city: " + (err.response?.data?.message || err.message));
+    }finally{
+      setLoading(false)
     }
   };
 
@@ -35,7 +40,7 @@ export default function AddCity() {
           <input value={stateName} onChange={(e) => setStateName(e.target.value)} placeholder="State" required />
           <input value={zip} onChange={(e) => setZip(e.target.value)} placeholder="Zip code" />
           <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn" type="submit">Add City</button>
+            <button className="btn" type="submit" disabled={loading}>Add City</button>
             <button type="button" onClick={() => navigate("/admin")}>Cancel</button>
           </div>
         </form>

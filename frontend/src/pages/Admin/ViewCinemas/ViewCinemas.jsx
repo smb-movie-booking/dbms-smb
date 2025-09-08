@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from "react";
 import  { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
+import toast from "react-hot-toast";
 
 export default function ViewCinemas() {
   const [cinemas, setCinemas] = useState([]);
 
   useEffect(() => {
-    axiosInstance.get("/admin/cinemas").then(res => setCinemas(res.data)).catch(console.error);
+    axiosInstance.get("/admin/cinemas").then(res => setCinemas(res.data.cinemas)).catch(console.error);
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete =(id) => {
     if (!confirm("Delete this cinema?")) return;
-    try {
-      await axiosInstance.delete(`/admin/cinemas/${id}`);
+    axiosInstance.delete(`/admin/cinemas/${id}`).then(res=>{
+      toast.success(res.data.message);
       setCinemas(prev => prev.filter(c => c.CinemaID !== id));
-    } catch (err) {
-      alert("Could not delete: " + (err.response?.data?.message || err.message));
-    }
+      return
+  }).catch(err=>alert("Could not delete: " + (err.response?.data?.message || err.message)));
+
   };
 
   return (
@@ -27,7 +28,7 @@ export default function ViewCinemas() {
         <table style={{ width: "100%" }}>
           <thead><tr><th>ID</th><th>Name</th><th>CityID</th><th>Halls</th><th>Action</th></tr></thead>
           <tbody>
-            {cinemas.map(c => (
+            {cinemas?.length>0 && cinemas?.map(c => (
               <tr key={c.CinemaID}>
                 <td>{c.CinemaID}</td>
                 <td>{c.Cinema_Name}</td>

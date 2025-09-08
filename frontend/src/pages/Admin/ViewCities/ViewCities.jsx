@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
+import toast from "react-hot-toast";
 
 export default function ViewCities() {
   const [cities, setCities] = useState([]);
 
   useEffect(() => {
     axiosInstance.get("/admin/cities")
-      .then(res => setCities(res.data))
-      .catch(err => console.error(err));
+      .then(res => setCities(res.data.cities))
+      .catch(err => toast.error(err.response.data.message || err.message));
   }, []);
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this city?")) return;
     try {
-      await axiosInstance.delete(`/admin/cities/${id}`);
+      const {data}=await axiosInstance.delete(`/admin/cities/${id}`);
+      toast.success(data.message)
       setCities(prev => prev.filter(c => c.CityID !== id));
     } catch (err) {
       alert("Could not delete: " + (err.response?.data?.message || err.message));

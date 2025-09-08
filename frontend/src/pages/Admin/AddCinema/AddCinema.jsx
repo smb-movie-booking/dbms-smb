@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
+import { useAdmin } from "../../../hooks/auth/useAdmin";
 
 export default function AddCinema() {
   const [name, setName] = useState("");
@@ -10,22 +11,17 @@ export default function AddCinema() {
   const [cities, setCities] = useState([]);
   const [facilities, setFacilities] = useState("");
   const [cancellationAllowed, setCancellationAllowed] = useState(false);
+  const {addCinemas}=useAdmin();
   const navigate = useNavigate();
 
   useEffect(() => {
-    axiosInstance.get("/admin/cities").then(res => setCities(res.data)).catch(console.error);
+    axiosInstance.get("/admin/cities").then(res => setCities(res.data.cities)).catch(console.error);
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axiosInstance.post("/admin/cinemas", {
-        Cinema_Name: name,
-        TotalCinemaHalls: totalHalls,
-        CityID: cityId,
-        Facilities: facilities,
-        Cancellation_Allowed: cancellationAllowed
-      });
+      await addCinemas({name,totalHalls,cityId}) //didnt include facilities and cancellationAllowed
       alert("Cinema added");
       navigate("/admin/view-cinemas");
     } catch (err) {
@@ -44,7 +40,7 @@ export default function AddCinema() {
           <input type="number" min="1" placeholder="Total Halls" value={totalHalls} onChange={e => setTotalHalls(e.target.value)} required />
           <select value={cityId} onChange={e => setCityId(e.target.value)} required>
             <option value="">Select City</option>
-            {cities.map(c => <option key={c.CityID} value={c.CityID}>{c.City_Name}</option>)}
+            {cities.length>0 && cities?.map(c => <option key={c.CityID} value={c.CityID}>{c.City_Name}</option>)}
           </select>
           <input placeholder="Facilities (comma separated)" value={facilities} onChange={e => setFacilities(e.target.value)} />
           <label><input type="checkbox" checked={cancellationAllowed} onChange={e => setCancellationAllowed(e.target.checked)} /> Cancellation Allowed</label>
