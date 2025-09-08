@@ -2,31 +2,31 @@ const {db} = require('../config/db');
 
 const getMovieDetails = async (movieId) => {
   const [rows] = await db.query(
-    `SELECT MovieId, MovieName, Poster_Image_URL, Trailer_URL, Rating,
-           Genre, Movie_Language, ReleaseDate, Duration, AgeFormat, Movie_Description
-    FROM movie
-    WHERE MovieId = ?`, [movieId]);
+    `SELECT MovieID,Title, Poster_Image_URL, Trailer_URL, Rating,
+           Genre, Movie_Language, ReleaseDate, Duration, Age_Format, Movie_Description
+    FROM Movie
+    WHERE MovieID = ?`, [movieId]);
   return rows[0];
 };
 
 const getMoviesByTheaterAndDate = async (theaterId, date) => {
   const [rows] = await db.query(
-    `SELECT DISTINCT m.MovieId, m.MovieName, m.Movie_Language, m.Genre, m.Poster_Image_URL, ms.Format
-    FROM movie m
-    JOIN movie_show ms ON m.MovieId = ms.MovieId
-    JOIN cinema_hall ch ON ms.HallId = ch.HallId
-    WHERE ch.CinemaId = ? AND DATE(ms.ShowDate) = ?`, [theaterId, date]);
+    `SELECT DISTINCT m.MovieID, m.Title, m.Movie_Language, m.Genre, m.Poster_Image_URL, ms.Format
+    FROM Movie m
+    JOIN Movie_Show ms ON m.MovieID = ms.MovieID
+    JOIN cinema_hall ch ON ms.CinemaHallID = ch.CinemaHallID
+    WHERE ch.CinemaID = ? AND DATE(ms.Show_Date) = ?`, [theaterId, date]);
   return rows;
 };
 
 const getMoviesByCity = async (cityId, filters) => {
   let query = `
-    SELECT DISTINCT m.MovieId, m.MovieName, m.Poster_Image_URL, m.Rating, m.Genre, m.Movie_Language
-    FROM movie m
-    JOIN movie_show ms ON m.MovieId = ms.MovieId
-    JOIN cinema_hall ch ON ms.HallId = ch.HallId
-    JOIN cinema c ON ch.CinemaId = c.CinemaId
-    WHERE c.CityId = ?`;
+    SELECT DISTINCT m.MovieID, m.Title, m.Poster_Image_URL, m.Rating, m.Genre, m.Movie_Language
+    FROM Movie m
+    JOIN Movie_Show ms ON m.MovieID = ms.MovieID
+    JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
+    JOIN Cinema c ON ch.CinemaID = c.CinemaID
+    WHERE c.CityID = ?`;
   const params = [cityId];
 
   if (filters.language) {
@@ -34,11 +34,11 @@ const getMoviesByCity = async (cityId, filters) => {
     params.push(filters.language.split(","));
   }
   if (filters.genre) {
-    query += " AND m.Genre = ?";
+    query += " AND m.Genre IN (?)";
     params.push(filters.genre);
   }
   if (filters.format) {
-    query += " AND ms.Format = ?";
+    query += " AND ms.Format IN (?)";
     params.push(filters.format);
   }
 

@@ -31,15 +31,16 @@ exports.fetchShowsByTheaterAndDate = (theaterID, showDate) => {
                 ms.ShowID,
                 ms.MovieID,
                 TIME_FORMAT(ms.StartTime, '%H:%i') AS ShowTime,
-                ms.Price,
+                ss.Price,
                 ms.Format,
-                m.MovieName,
+                m.Title,
                 m.Movie_Language,
                 m.Genre,
-                m.AgeFormat
+                m.Age_Format
             FROM Movie_Show ms
             JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
             JOIN Movie m ON ms.MovieID = m.MovieID
+            LEFT JOIN Show_Seat ss ON ms.ShowID = ss.ShowID
             WHERE ch.CinemaID = ? 
               AND DATE(ms.Show_Date) = ?
             ORDER BY m.MovieName, ms.StartTime ASC
