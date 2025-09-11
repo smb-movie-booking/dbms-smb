@@ -13,4 +13,10 @@ router.post('/cinemas',adminController.addNewCinemas);
 router.get('/cinemas',adminController.getAllCinemas)
 router.delete('/cinemas/:id',adminController.deleteCinemas);
 
+
+router.post('/cinema-halls',adminController.addNewCinemaHall);
+router.get('/cinema-halls',adminController.getAllCinemaHalls);
+
+router.post('/cinema-seats',adminController.addSeats);
+
 module.exports = router;

@@ -33,7 +33,7 @@ const Sidebar = ({isOpen,setIsOpen}) => {
           {authUser?.user&& authUser.user.isAdmin && (<button className="app-btn" onClick={() => { navigate("/admin"); setIsOpen(false); }}> Admin</button>)}
         </div>
 
-        {authUser?.user&& authUser.user.isAdmin && <button onClick={handleClick} className='signout-btn'>SignOut</button>}
+        {authUser?.user&&  <button onClick={handleClick} className='signout-btn'>SignOut</button>}
 
       </div>
     </div>

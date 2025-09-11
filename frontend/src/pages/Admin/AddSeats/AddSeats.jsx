@@ -11,7 +11,7 @@ export default function AddSeats() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axiosInstance.get("/admin/cinema-halls").then(res => setHalls(res.data)).catch(console.error);
+    axiosInstance.get("/admin/cinema-halls").then(res => setHalls(res.data.halls)).catch(console.error);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -19,12 +19,12 @@ export default function AddSeats() {
     try {
       // make multiple inserts for seats; backend can accept batch
       await axiosInstance.post("/admin/cinema-seats", {
-        CinemaHallID: hallId,
-        Seats: seatCount,
-        Seat_Type: seatType
+        hallId,
+        seatCount,
+        seatType
       });
       alert("Seats added (backend should create Cinema_Seat rows)");
-      navigate("/admin");
+      //navigate("/admin");
     } catch (err) {
       console.error(err);
       alert("Could not add seats: " + (err.response?.data?.message || err.message));

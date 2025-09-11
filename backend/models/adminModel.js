@@ -82,9 +82,43 @@ exports.addCity=(name,state,code,callback)=>{
 exports.findCinemaById=(id,callback)=>{
   db.query('SELECT * FROM cinema WHERE CinemaID=?',[id],(err,results)=>{
     if(err)return callback(err)
-    if(results.length===0)return callback(null,null)
+    if(results[0].length===0)return callback(null,null)
     return callback(null,results[0]);
 
+  })
+}
+
+
+exports.findCinemaHallById=(id,callback)=>{
+  const sql='SELECT * from cinema_hall WHERE CinemaHallID=?';
+  db.query(sql,[id],(err,result)=>{
+    if(err)return callback(err)
+    if(result[0].length===0)return callback(null,null)
+    return callback(null,result[0]);
+  })
+}
+
+exports.findCinemaHallByName=(name,id,callback)=>{
+  const sql="SELECT * FROM cinema_hall WHERE lower(Hall_Name) = lower(?) AND CinemaID=? LIMIT 1";
+  db.query(sql, [name,id], (err, results) => {
+    if (err) {
+      console.error('❌ DB error in findCity:', err);  // <-- this will help you debug
+      return callback(err);
+    }
+    if (results.length === 0) return callback(null, null);
+    console.log(results[0])
+    return callback(null, results[0]);
+  });
+}
+
+exports.getOccupiedSeats=(hallId,callback)=>{
+  const sql='select sum(s.seatNumber) as total_occupied from cinema_seat s INNER JOIN cinema_hall h ON s.CinemaHallID = h.CinemaHallID WHERE s.CinemaHallID=?';
+  db.query(sql,[hallId],(err,result)=>{
+    if(err)return callback(err,null);
+    
+    if(!result[0].total_occupied)return callback(null,{total_occupied:0});
+    return callback(null,result[0])
+    
   })
 }
 

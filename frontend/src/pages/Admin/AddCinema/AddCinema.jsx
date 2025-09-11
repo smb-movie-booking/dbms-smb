@@ -21,7 +21,7 @@ export default function AddCinema() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await addCinemas({name,totalHalls,cityId}) //didnt include facilities and cancellationAllowed
+      await addCinemas({name,totalHalls,cityId,facilities:facilities || null , cancellationAllowed}) //didnt include facilities and cancellationAllowed
       alert("Cinema added");
       navigate("/admin/view-cinemas");
     } catch (err) {

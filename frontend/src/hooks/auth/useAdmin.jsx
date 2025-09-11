@@ -28,5 +28,17 @@ export const useAdmin=()=>{
         }
     }
 
-    return {addNewCity,addCinemas}
+    const addCinemaHall=async(hallData)=>{
+        try {
+            const {data}=await axiosInstance.post("/admin/cinema-halls",hallData);
+            if(data.success){
+                toast.success(data.message)
+            }
+            console.log(data)
+        } catch (error) {
+            toast.error(error.response.data.message ||  error.message)
+        }
+    }
+
+    return {addNewCity,addCinemas,addCinemaHall}
 }
