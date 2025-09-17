@@ -60,9 +60,9 @@ POST {{host}}/api/auth/register
 Content-Type: application/json
 
 {
-  "name": "Test User One",
-  "phone": "9800543212",
-  "password": "password123",
+  "name": "aadith",
+  "phone": "8089714072",
+  "password": "aadith123",
   "adminCode": "myadminsecret"
 }
 

@@ -20,7 +20,7 @@ router.get('/cinema-halls',adminController.getAllCinemaHalls);
 
 router.post('/cinema-seats',adminController.addSeats);
 
-router.post('/movie',upload.single("image"),uploadToCloudinary,adminController.addMovie)
+router.post('/movie',upload.single("file"),uploadToCloudinary,adminController.addMovie)
 router.get('/movie',adminController.getMovies)
 router.delete('/movie/:id',adminController.deleteMovie)
 

@@ -367,60 +367,97 @@ exports.addSeats = (req, res) => {
 };
 
 
-exports.addMovie=(req,res)=>{
-  const { title, description, duration, language,releaseDate, genre,imageUrl } = req.body;
-  console.log(imageUrl,title)
-  const country="india"
+exports.addMovie = (req, res) => {
+  const { 
+    title, 
+    description, 
+    duration, 
+    language, 
+    releaseDate, 
+    genre, 
+    rating, 
+    ageFormat, 
+    trailerUrl, 
+    imageUrl 
+  } = req.body;
+
+  const country = "India"; // default
 
   const user = req.session.user;
-  if (!user || !user?.isAdmin) return res.status(400).json({ message: "Unauthorized" });
+  if (!user || !user?.isAdmin)
+    return res.status(400).json({ message: "Unauthorized" });
 
-
-  db.query("SELECT max(MovieID) as maxid from movie",(err,result)=>{
-    if(err){
-      console.log(err);
+  db.query("SELECT MAX(MovieID) as maxid FROM Movie", (err, result) => {
+    if (err) {
+      console.error(err);
       return res.status(500).json({ message: "DB Error" });
     }
-    const newId=(result[0].maxid || 0) + 1 ;
 
-    const sql="INSERT INTO movie (MovieID,Title, Movie_Description, Duration, Movie_Language, ReleaseDate, Country, Genre, Poster_Image_URL) VALUES (?,?, ?, ?, ?, ?, ?, ?,?)"
+    const newId = (result[0].maxid || 0) + 1;
 
-    db.query(sql,[newId,title,description,duration,language,releaseDate,country,genre,imageUrl],(err,results)=>{
-      if(err){
-        console.log(err);
-        return res.status(500).json({ message: "DB Error" });
+    const sql = `
+      INSERT INTO Movie (
+        MovieID, Title, Movie_Description, Duration, Movie_Language,
+        ReleaseDate, Country, Genre, Rating, Age_Format, Trailer_URL, Poster_Image_URL
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(
+      sql,
+      [
+        newId,
+        title,
+        description,
+        duration,
+        language,
+        releaseDate,
+        country,
+        genre,
+        rating,
+        ageFormat,
+        trailerUrl,
+        imageUrl
+      ],
+      (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ message: "DB Error" });
+        }
+        return res
+          .status(201)
+          .json({ success: true, message: "Movie added successfully" });
       }
-
-      
-      return res.status(201).json({success:true,message:"Movie added successfully"});
-      
-    })
+    );
+  });
+};
 
 
+exports.getMovies = (req, res) => {
+  const sql = `
+    SELECT 
+      MovieID, Title, Movie_Description, Duration, Movie_Language,
+      ReleaseDate, Country, Genre, Rating, Age_Format, Trailer_URL, Poster_Image_URL, IsActive
+    FROM Movie
+    ORDER BY Created_At DESC
+  `;
 
-  })
-}
-
-exports.getMovies=(req,res)=>{
-  db.query("SELECT MovieID,Title,Movie_Language,Genre,ReleaseDate FROM movie ",(err,results)=>{
-    if(err){
-      console.log(err);
-      return res.status(500).json({message:"DB Error"});
-    }
-    //console.log(results[0]);
-    if(results.length > 0){
-      return res.status(200).json({movies:results})
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: "DB Error" });
     }
 
-  })
-}
+    return res.status(200).json({ movies: results });
+  });
+};
+
 
 exports.deleteMovie=(req,res)=>{
   const {id}=req.params
   const user=req.session.user;
   if(!user || !user?.isAdmin)return res.status(400).json({message:"Unauthorized"});
 
-  db.query("DELETE FROM movie WHERE MovieID=?",[id],(err,results)=>{
+  db.query("DELETE FROM Movie WHERE MovieID=?",[id],(err,results)=>{
     if(err){
       console.log(err);
       return res.status(500).json({message:"DB Error"});
