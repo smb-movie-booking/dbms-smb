@@ -1,3 +1,4 @@
+drop database smb;
 CREATE DATABASE IF NOT EXISTS smb;
 USE smb;
 
