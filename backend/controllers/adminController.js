@@ -59,7 +59,7 @@ exports.getAllCities=(req,res)=>{
   const isAdmin=req.session.user.isAdmin
   if(!user || !isAdmin)return res.status(400).json({message:"Not Authorized"});
 
-  db.query('select * from city',(err,results)=>{
+  db.query('select * from City',(err,results)=>{
     if(err)return res.status(400).json({error:err});
 
     if(results)return res.status(200).json({success:true,cities:results.length>0?results:[]})
@@ -81,7 +81,7 @@ exports.deleteCity=(req,res)=>{
 
     if(!city)return res.status(400).json({message:"No Such City exists"});
 
-    db.query('DELETE FROM city WHERE CityID=?',[id],(err,result)=>{
+    db.query('DELETE FROM City WHERE CityID=?',[id],(err,result)=>{
       if(err){
         console.log(err);
         return res.status(400).json({message:"Couldnt Delete,Some error occured"})
@@ -115,13 +115,13 @@ exports.addNewCinemas=(req,res)=>{
       }
       if(!city)return res.status(401).json({message:"City doesn't exist"});
 
-      db.query('SELECT MAX(CinemaID) as maxid from cinema',(err,result)=>{
+      db.query('SELECT MAX(CinemaID) as maxid from Cinema',(err,result)=>{
         if(err){
           console.log(err);
           return res.status(500).json({ message: "DB Error" });
         }
         const newCinemaId = (result[0].maxid || 0) + 1 ;
-        const sql='INSERT INTO cinema(CinemaID,Cinema_Name,TotalCinemaHalls,CityID,Facilities,Cancellation_Allowed) values(?,?,?,?,?,?)'
+        const sql='INSERT INTO Cinema(CinemaID,Cinema_Name,TotalCinemaHalls,CityID,Facilities,Cancellation_Allowed) values(?,?,?,?,?,?)'
         db.query(sql,[newCinemaId,name.trim(),totalHalls,cityId,facilities,cancellationAllowed],(err,result)=>{
           if(err){
             console.log(err);
@@ -145,7 +145,7 @@ exports.getAllCinemas=(req,res)=>{
   const user=req.session.user;
   if(!user || !user?.isAdmin)return res.status(400).json({message:"Not Authorized"});
 
-  db.query('select * from cinema',(err,results)=>{
+  db.query('select * from Cinema',(err,results)=>{
     if(err)return res.status(400).json({error:err});
 
     if(results)return res.status(200).json({success:true,cinemas:results.length>0?results:[]})
@@ -167,7 +167,7 @@ exports.deleteCinemas=(req,res)=>{
 
     if(!cinema)return res.status(400).json({message:"No Such Cinema exists"});
 
-    db.query('DELETE FROM cinema WHERE CinemaID=?',[id],(err,result)=>{
+    db.query('DELETE FROM Cinema WHERE CinemaID=?',[id],(err,result)=>{
       if(err){
         console.log(err);
         return res.status(400).json({message:"Couldnt Delete,Some error occured"})
@@ -206,7 +206,7 @@ exports.addNewCinemaHall=(req,res)=>{
 
       //if(cinema?. TotalCinemaHalls)  
 
-        db.query('SELECT count(*) as count from cinema_hall where CinemaID=?',[cinemaId],(err,result)=>{
+        db.query('SELECT count(*) as count from Cinema_Hall where CinemaID=?',[cinemaId],(err,result)=>{
           if(err){
             console.log(err);
             return res.status(500).json({ message: "DB Error" });
@@ -223,13 +223,13 @@ exports.addNewCinemaHall=(req,res)=>{
               }
               if(existing)return res.status(401).json({message:"Screen already exists"});
 
-              db.query('SELECT MAX(CinemaHallID) as maxid from cinema_hall',(err,result)=>{
+              db.query('SELECT MAX(CinemaHallID) as maxid from Cinema_Hall',(err,result)=>{
               if(err){
                 console.log(err);
                 return res.status(500).json({ message: "DB Error" });
               }
               const newCinemaHallId = (result[0].maxid || 0) + 1 ;
-              const sql='INSERT INTO cinema_hall(CinemaHallID,Hall_Name,TotalSeats,CinemaID) values(?,?,?,?)'
+              const sql='INSERT INTO Cinema_Hall(CinemaHallID,Hall_Name,TotalSeats,CinemaID) values(?,?,?,?)'
               db.query(sql,[newCinemaHallId,hallName.trim().toLowerCase(),totalSeats,cinemaId],(err,result)=>{
                 if(err){
                   console.log(err);
@@ -259,7 +259,7 @@ exports.getAllCinemaHalls=(req,res)=>{
   const user=req.session.user;
   if(!user || !user?.isAdmin)return res.status(400).json({message:"Not Authorized"});
 
-  db.query('select * from cinema_hall',(err,results)=>{
+  db.query('select * from Cinema_Hall',(err,results)=>{
     if(err)return res.status(400).json({error:err});
 
     if(results)return res.status(200).json({success:true,halls:results.length>0?results:[]})
@@ -295,7 +295,7 @@ exports.addSeats = (req, res) => {
 
       // 3) check if row exists for this seat_type
       const sqlCheck =
-        "SELECT * FROM cinema_seat WHERE CinemaHallID=? AND Seat_Type=?";
+        "SELECT * FROM Cinema_Seat WHERE CinemaHallID=? AND Seat_Type=?";
       db.query(sqlCheck, [hallId, seatType], (err, rows) => {
         if (err) {
           console.log(err);
@@ -315,7 +315,7 @@ exports.addSeats = (req, res) => {
               .json({ message: "Couldn't update, Seat limit will be exceeded" });
 
           const sqlUpdate =
-            "UPDATE cinema_seat SET SeatNumber=? WHERE CinemaHallID=? AND Seat_Type=?";
+            "UPDATE Cinema_Seat SET SeatNumber=? WHERE CinemaHallID=? AND Seat_Type=?";
           db.query(sqlUpdate, [seatCount, hallId, seatType], (err, result) => {
             if (err) {
               console.log(err);
@@ -333,7 +333,7 @@ exports.addSeats = (req, res) => {
               .json({ message: "Couldn't add, Seat limit will be exceeded" });
 
           db.query(
-            "SELECT MAX(CinemaSeatID) as maxid from cinema_seat",
+            "SELECT MAX(CinemaSeatID) as maxid from Cinema_Seat",
             (err, results) => {
               if (err) {
                 console.log(err);
@@ -343,7 +343,7 @@ exports.addSeats = (req, res) => {
               const newID = (results[0].maxid || 0) + 1;
 
               const sql =
-                "INSERT INTO cinema_seat (CinemaSeatID,SeatNumber,Seat_Type,CinemaHallID) values(?,?,?,?)";
+                "INSERT INTO Cinema_Seat (CinemaSeatID,SeatNumber,Seat_Type,CinemaHallID) values(?,?,?,?)";
               db.query(
                 sql,
                 [newID, seatCount, seatType, hallId],
