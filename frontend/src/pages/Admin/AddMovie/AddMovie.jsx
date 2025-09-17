@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import  { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
+import './addMovie.css'
+import { useAdmin } from "../../../hooks/auth/useAdmin";
 
 export default function AddMovie() {
   const [title, setTitle] = useState("");
@@ -10,28 +13,46 @@ export default function AddMovie() {
   const [language, setLanguage] = useState("");
   const [releaseDate, setReleaseDate] = useState("");
   const [genre, setGenre] = useState("");
-  const [poster, setPoster] = useState("");
+  const [image, setImage] = useState("");
+  const {addMovie}=useAdmin();
+  const [loading,setLoading]=useState(false);
   const navigate = useNavigate();
+
+  const validate=()=>{
+    if(!title.trim() || !description.trim() || !duration || !language || !releaseDate || !genre || !image)return false
+
+    return true
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      await axiosInstance.post("/admin/movies", {
-        Title: title,
-        Movie_Description: description,
-        Duration: duration,
-        Movie_Language: language,
-        ReleaseDate: releaseDate || null,
-        Genre: genre,
-        Poster_Image_URL: poster
-      });
-      alert("Movie added");
-      navigate("/admin/view-movies");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to add movie: " + (err.response?.data?.message || err.message));
+    
+    const isValid=validate();
+    if(!isValid)return console.log("Not valid")
+
+    const formData=new FormData();
+    formData.append("title",title)
+    formData.append("description",description)
+    formData.append("duration",duration)
+    formData.append("language",language)
+    formData.append("releaseDate",releaseDate)
+    formData.append("genre",genre)
+    formData.append("image",image);
+    try{
+      setLoading(true);
+      await addMovie(formData);
+    }finally{
+      setLoading(false);
     }
+
   };
+
+  const handleImageUpload=(e)=>{
+    const file=e.target.files[0];
+    if(!file)return
+    setImage(file); 
+
+  }
 
   return (
     <>
@@ -45,9 +66,20 @@ export default function AddMovie() {
           <input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Language" />
           <input type="date" value={releaseDate} onChange={e => setReleaseDate(e.target.value)} placeholder="Release date" />
           <input value={genre} onChange={e => setGenre(e.target.value)} placeholder="Genre" />
-          <input value={poster} onChange={e => setPoster(e.target.value)} placeholder="Poster URL" />
+
+
+          <div className="upload-preview-container">
+            {image && <div className="preview">
+              <img src={image && URL.createObjectURL(image) } alt="poster-img" className="preview-img" />
+            </div>}
+            <input 
+            onChange={handleImageUpload}
+            type="file"
+            accept="image/*"/>
+
+          </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn" type="submit">Add Movie</button>
+            <button className="btn" type="submit" disabled={loading}>{loading?"Adding....":"Add Movie"}</button>
             <button type="button" onClick={() => navigate("/admin")}>Cancel</button>
           </div>
         </form>

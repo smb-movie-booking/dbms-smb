@@ -17,8 +17,8 @@ export default function AddShow() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axiosInstance.get("/admin/movies").then(res => setMovies(res.data)).catch(console.error);
-    axiosInstance.get("/admin/cinema-halls").then(res => setHalls(res.data)).catch(console.error);
+    axiosInstance.get("/admin/movies").then(res => setMovies(res.data,movies)).catch(console.error);
+    axiosInstance.get("/admin/cinema-halls").then(res => setHalls(res.data.halls)).catch(console.error);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -66,7 +66,7 @@ export default function AddShow() {
 
           <select value={hallId} onChange={e => setHallId(e.target.value)} required>
             <option value="">Select Cinema Hall</option>
-            {halls.map(h => <option key={h.CinemaHallID} value={h.CinemaHallID}>{h.Hall_Name} (Cinema {h.CinemaID})</option>)}
+            { halls.length > 0 && halls?.map(h => <option key={h.CinemaHallID} value={h.CinemaHallID}>{h.Hall_Name} (Cinema {h.CinemaID})</option>)}
           </select>
 
           <input type="date" value={showDate} onChange={e => setShowDate(e.target.value)} required />

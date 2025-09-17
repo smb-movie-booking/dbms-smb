@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
+const {upload, uploadToCloudinary } = require('../middlewares/multer');
 
 // Flush route: /admin/flush
 router.post('/flush', adminController.flushAllTables);
@@ -18,5 +19,9 @@ router.post('/cinema-halls',adminController.addNewCinemaHall);
 router.get('/cinema-halls',adminController.getAllCinemaHalls);
 
 router.post('/cinema-seats',adminController.addSeats);
+
+router.post('/movie',upload.single("image"),uploadToCloudinary,adminController.addMovie)
+router.get('/movie',adminController.getMovies)
+router.delete('/movie/:id',adminController.deleteMovie)
 
 module.exports = router;

@@ -1,19 +1,24 @@
 import React, { useEffect, useState } from "react";
 import{ axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
+import toast from "react-hot-toast";
 
 export default function ViewMovies() {
   const [movies, setMovies] = useState([]);
 
   useEffect(() => {
-    axiosInstance.get("/admin/movies").then(res => setMovies(res.data)).catch(console.error);
+    axiosInstance.get("/admin/movie").then(res => setMovies(res.data.movies)).catch(console.error);
   }, []);
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this movie?")) return;
     try {
-      await axiosInstance.delete(`/admin/movies/${id}`);
-      setMovies(prev => prev.filter(m => m.MovieID !== id));
+      const {data}=await axiosInstance.delete(`/admin/movie/${id}`);
+      if(data.success){
+        setMovies(prev => prev.filter(m => m.MovieID !== id));
+        toast.success(data.message)
+      }
+    
     } catch (err) {
       alert("Could not delete: " + (err.response?.data?.message || err.message));
     }
