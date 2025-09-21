@@ -30,6 +30,7 @@ export default function AdminDashboard() {
 
           <div style={cardStyle} onClick={() => navigate("/admin/view-cities")}>View Cities</div>
           <div style={cardStyle} onClick={() => navigate("/admin/view-cinemas")}>View Cinemas</div>
+           <div style={cardStyle} onClick={() => navigate("/admin/view-halls")}>View Cinema Halls</div>
           <div style={cardStyle} onClick={() => navigate("/admin/view-movies")}>View Movies</div>
           <div style={cardStyle} onClick={() => navigate("/admin/view-shows")}>View Shows</div>
         </div>

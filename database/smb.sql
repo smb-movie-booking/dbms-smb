@@ -1,3 +1,4 @@
+drop database smb;
 CREATE DATABASE IF NOT EXISTS smb;
 USE smb;
 
@@ -64,8 +65,8 @@ CREATE TABLE Movie (
     Movie_Language VARCHAR(16),
     ReleaseDate DATETIME,
     Country VARCHAR(64),
-    Genre VARCHAR(20),
-    Rating DECIMAL(2,1),    -- e.g., 8.5
+    Genre VARCHAR(50),
+    Rating DECIMAL(2,1) CHECK (Rating >= 0.0 AND Rating <= 10.0),    -- e.g., 8.5
     Age_Format VARCHAR(8),  -- e.g., UA16, A, U
     Poster_Image_URL VARCHAR(255),
     Trailer_URL VARCHAR(255),

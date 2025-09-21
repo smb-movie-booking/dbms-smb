@@ -11,6 +11,7 @@ import ViewCities from './ViewCities/ViewCities';
 import ViewCinemas from './ViewCinemas/ViewCinemas';
 import ViewMovies from './ViewMovies/ViewMovies';
 import ViewShows from './ViewShows/ViewShows';
+import ViewCinemaHalls from './ViewCinemaHalls/ViewCinemaHalls';
 
 export {
   AdminDashboard,
@@ -23,5 +24,6 @@ export {
   ViewCities,
   ViewCinemas,
   ViewMovies,
-  ViewShows
+  ViewShows,
+  ViewCinemaHalls
 };

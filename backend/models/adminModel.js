@@ -41,7 +41,7 @@ exports.truncateTables = async (tables) => {
 
 // CityID , City_Name , City_State , ZipCode
 exports.findCityByName=(name,callback)=>{
-  const sql="SELECT * FROM city WHERE lower(City_Name) = lower(?) LIMIT 1";
+  const sql="SELECT * FROM City WHERE lower(City_Name) = lower(?) LIMIT 1";
   db.query(sql, [name], (err, results) => {
     if (err) {
       console.error('❌ DB error in findCity:', err);  // <-- this will help you debug
@@ -54,7 +54,7 @@ exports.findCityByName=(name,callback)=>{
 }
 
 exports.findCityById=(id,callback)=>{
-  const sql='SELECT * from city WHERE CityID=?';
+  const sql='SELECT * from City WHERE CityID=?';
   db.query(sql,[id],(err,result)=>{
     if(err)return callback(err)
     if(result[0].length===0)return callback(null,null)
@@ -63,13 +63,13 @@ exports.findCityById=(id,callback)=>{
 }
 
 exports.addCity=(name,state,code,callback)=>{
-  db.query('SELECT MAX(CityID) as maxid from city',(err,results)=>{
+  db.query('SELECT MAX(CityID) as maxid from City',(err,results)=>{
     if(err){
       console.log(err);
       return callback(err);
     }
     const newCityID=(results[0].maxid || 0) + 1;
-    const sql='INSERT INTO city values(?,?,?,?)';
+    const sql='INSERT INTO City values(?,?,?,?)';
     db.query(sql,[newCityID,name,state,code],(err,results)=>{
       if(err){
         return callback(err)
@@ -80,7 +80,7 @@ exports.addCity=(name,state,code,callback)=>{
 }
 
 exports.findCinemaById=(id,callback)=>{
-  db.query('SELECT * FROM cinema WHERE CinemaID=?',[id],(err,results)=>{
+  db.query('SELECT * FROM Cinema WHERE CinemaID=?',[id],(err,results)=>{
     if(err)return callback(err)
     if(results[0].length===0)return callback(null,null)
     return callback(null,results[0]);
@@ -90,7 +90,7 @@ exports.findCinemaById=(id,callback)=>{
 
 
 exports.findCinemaHallById=(id,callback)=>{
-  const sql='SELECT * from cinema_hall WHERE CinemaHallID=?';
+  const sql='SELECT * from Cinema_Hall WHERE CinemaHallID=?';
   db.query(sql,[id],(err,result)=>{
     if(err)return callback(err)
     if(result[0].length===0)return callback(null,null)
@@ -99,7 +99,7 @@ exports.findCinemaHallById=(id,callback)=>{
 }
 
 exports.findCinemaHallByName=(name,id,callback)=>{
-  const sql="SELECT * FROM cinema_hall WHERE lower(Hall_Name) = lower(?) AND CinemaID=? LIMIT 1";
+  const sql="SELECT * FROM Cinema_Hall WHERE lower(Hall_Name) = lower(?) AND CinemaID=? LIMIT 1";
   db.query(sql, [name,id], (err, results) => {
     if (err) {
       console.error('❌ DB error in findCity:', err);  // <-- this will help you debug
@@ -112,7 +112,7 @@ exports.findCinemaHallByName=(name,id,callback)=>{
 }
 
 exports.getOccupiedSeats=(hallId,callback)=>{
-  const sql='select sum(s.seatNumber) as total_occupied from cinema_seat s INNER JOIN cinema_hall h ON s.CinemaHallID = h.CinemaHallID WHERE s.CinemaHallID=?';
+  const sql='select sum(s.seatNumber) as total_occupied from Cinema_Seat s INNER JOIN Cinema_Hall h ON s.CinemaHallID = h.CinemaHallID WHERE s.CinemaHallID=?';
   db.query(sql,[hallId],(err,result)=>{
     if(err)return callback(err,null);
     

@@ -9,7 +9,8 @@ import {
   ViewCities,
   ViewCinemas,
   ViewMovies,
-  ViewShows
+  ViewShows,
+  ViewCinemaHalls
 } from "../pages/Admin";
 
 export const adminRoutes = [
@@ -24,4 +25,5 @@ export const adminRoutes = [
   { path: "/admin/view-cinemas", element: <ViewCinemas /> },
   { path: "/admin/view-movies", element: <ViewMovies /> },
   { path: "/admin/view-shows", element: <ViewShows /> },
+  { path: "/admin/view-halls", element: <ViewCinemaHalls /> },
 ];
