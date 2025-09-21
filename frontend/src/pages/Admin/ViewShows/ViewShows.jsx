@@ -6,7 +6,7 @@ export default function ViewShows() {
   const [shows, setShows] = useState([]);
 
   useEffect(() => {
-    axiosInstance.get("/admin/view-shows").then(res => setShows(res.data)).catch(console.error);
+    axiosInstance.get("/admin/view-shows").then(res => setShows(res.data.shows)).catch(console.error);
   }, []);
 
   const handleDelete = async (id) => {
