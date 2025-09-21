@@ -30,6 +30,6 @@ const handleExplore = async(req,res) => {
     }
 }
 
-export default { handleExplore };
+module.exports = { handleExplore };
 
 

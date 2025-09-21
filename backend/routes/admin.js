@@ -27,7 +27,7 @@ router.delete('/movie/:id',adminController.deleteMovie)
 
 
 router.post('/shows',adminController.addNewShow)
-router.get('/shows',adminController.getAllShows)
-router.delete('/shows/:id',adminController.deleteShow)
+router.get('/view-shows',adminController.getAllShows)
+router.delete('/delete-shows/:id',adminController.deleteShow)
 
 module.exports = router;

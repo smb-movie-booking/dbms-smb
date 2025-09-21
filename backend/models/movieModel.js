@@ -46,4 +46,4 @@ const getMoviesByCity = async (cityId, filters) => {
   return rows;
 };
 
-export default { getMovieDetails, getMoviesByTheaterAndDate, getMoviesByCity };
+module.exports = { getMovieDetails, getMoviesByTheaterAndDate, getMoviesByCity };
