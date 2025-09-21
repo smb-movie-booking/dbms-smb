@@ -433,3 +433,102 @@ exports.deleteMovie=(req,res)=>{
 
   })
 }
+
+
+exports.getHallPlusCinemaName=(req,res)=>{
+  const sql='SELECT CinemaID,CinemahallID,Hall_Name,Cinema_Name,Cancellation_Allowed from cinema_hall NATURAL JOIN cinema';
+  db.query(sql,(err,results)=>{
+    if(err){
+      console.log(err)
+      return res.status(500).json({message:"DB error"});
+    }
+    
+    return res.status(200).json({result: results.length>0 ? results:[]})
+  })
+}
+
+exports.addNewShow=(req,res)=>{
+  const {MovieID,CinemaHallID,Show_Date,StartTime,EndTime,Format,Show_Language}=req.body
+
+  const user=req.session.user;
+  if(!user || !user?.isAdmin)return res.status(400).json({message:"Unauthorized"});
+
+
+  adminModel.findShow(StartTime,EndTime,CinemaHallID,(err,show)=>{
+    if(err){
+      console.log(err)
+      return res.status(500).json({message:"DB Error"});
+
+    }
+
+    if (show[0]){
+      return res.status(401).json({success:false,message:"Already a show Scheduled"})
+    }
+    db.query("SELECT max(ShowID) as maxid from movie_show",(err,result)=>{
+      if(err){
+      console.log(err)
+      return res.status(500).json({message:"DB Error"});
+
+    }
+
+      const newID= (result[0].maxid || 0 ) + 1;
+
+      const sql='INSERT INTO movie_show(ShowID,Show_Date,StartTime,EndTime,CinemaHallID,MovieID,Format,Show_Language) VALUES(?,?,?,?,?,?,?,?)';
+      db.query(sql,[newID,Show_Date,StartTime,EndTime,CinemaHallID,MovieID,Format,Show_Language],(err,result)=>{
+        if(err){
+      console.log(err)
+      return res.status(500).json({message:"DB Error"});
+      }
+
+      if(result.affectedRows){
+        return res.status(201).json({success:true,message:"Added show"});
+      };
+      })
+
+    })
+  })
+
+}
+
+exports.getAllShows=(req,res)=>{
+  db.query("SELECT * FROM movie_show",(err,results)=>{
+    if(err){
+      console.log(err)
+      return res.status(500).json({message:"DB Error"});
+
+    }
+
+    return res.status(200).json({shows:results.length > 0 ? results:[]})
+  })
+}
+
+exports.deleteShow=(req,res)=>{
+  const user=req.session.user
+  const {id}=req.params
+  if(!user || !user?.isAdmin)return res.status(400).json({message:"Unauthorized"});
+  if(!id)return res.status(400).json({message:"Bad request, No id"});
+
+  db.query('SELECT * from movie_show WHERE ShowID=? ',[id],(err,result)=>{
+    if(err){
+      console.log(err)
+      return res.status(500).json({message:"DB Error"});
+
+    }
+
+    if(!result.length >0)return res.status(404).json({message:"No data found"});
+
+    db.query('DELETE FROM movie_show WHERE ShowID=?',[id],(err,response)=>{
+      if(err){
+      console.log(err)
+      return res.status(500).json({message:"DB Error"});
+
+    }
+
+    if(response.affectedRows>0){
+      return res.status(200).json({message:"Show Deleted"});
+    }
+    return res.status(400).json({message:"Some error Occurred"});
+    })
+  })
+
+}

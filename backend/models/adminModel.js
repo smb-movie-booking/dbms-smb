@@ -123,6 +123,38 @@ exports.getOccupiedSeats=(hallId,callback)=>{
 }
 
 
+exports.findShow = (StartTime, EndTime, CinemaHallID, callback) => {
+  const start = new Date(StartTime);
+  const end = new Date(EndTime);
+  const tenMinutes = 10 * 60 * 1000;
+
+  // Optional 1-hour buffer
+  const startWithBuffer = new Date(start.getTime() - tenMinutes);
+  const endWithBuffer = new Date(end.getTime() + tenMinutes);
+
+  const sql = `
+    SELECT * 
+    FROM movie_show 
+    WHERE CinemaHallID = ? 
+      AND (
+        (StartTime BETWEEN ? AND ?) 
+        OR (EndTime BETWEEN ? AND ?) 
+        OR (? BETWEEN StartTime AND EndTime)
+        OR (? BETWEEN StartTime AND EndTime)
+      )
+    LIMIT 1
+  `;
+
+  db.query(sql, [
+    CinemaHallID,
+    startWithBuffer, endWithBuffer,   // existing shows starting inside new show
+    startWithBuffer, endWithBuffer,   // existing shows ending inside new show
+    startWithBuffer, endWithBuffer    // new show starting or ending inside existing shows
+  ], (err, result) => {
+    if (err) return callback(err, null);
+    return callback(null, result);
+  });
+};
 
 
 
