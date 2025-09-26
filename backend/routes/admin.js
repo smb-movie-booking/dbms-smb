@@ -17,11 +17,17 @@ router.delete('/cinemas/:id',adminController.deleteCinemas);
 
 router.post('/cinema-halls',adminController.addNewCinemaHall);
 router.get('/cinema-halls',adminController.getAllCinemaHalls);
+router.get('/detail/halls',adminController.getHallPlusCinemaName);
 
 router.post('/cinema-seats',adminController.addSeats);
 
 router.post('/movie',upload.single("file"),uploadToCloudinary,adminController.addMovie)
 router.get('/movie',adminController.getMovies)
 router.delete('/movie/:id',adminController.deleteMovie)
+
+
+router.post('/shows',adminController.addNewShow)
+router.get('/view-shows',adminController.getAllShows)
+router.delete('/delete-shows/:id',adminController.deleteShow)
 
 module.exports = router;

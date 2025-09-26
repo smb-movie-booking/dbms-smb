@@ -48,5 +48,4 @@ const getMoviesByCity = (cityId, filters, callback) => {
   });
 };
 
-
 module.exports = { getMovieDetails, getMoviesByTheaterAndDate, getMoviesByCity };

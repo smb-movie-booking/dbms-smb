@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { axiosInstance } from "../../../utils/axios";
 import Navbar from "../../../components/Navbar/Navbar";
 import { useNavigate } from "react-router-dom";
+import { useAdmin } from "../../../hooks/auth/useAdmin";
+import toast from "react-hot-toast";
 
 export default function AddShow() {
   const [movies, setMovies] = useState([]);
@@ -12,19 +14,40 @@ export default function AddShow() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [format, setFormat] = useState("2D");
-  const [language, setLanguage] = useState("");
+  const [language, setLanguage] = useState("English");
   const [defaultPrice, setDefaultPrice] = useState(120.00);
   const navigate = useNavigate();
+  const {addShow}=useAdmin();
 
   useEffect(() => {
-    axiosInstance.get("/admin/movies").then(res => setMovies(res.data,movies)).catch(console.error);
-    axiosInstance.get("/admin/cinema-halls").then(res => setHalls(res.data.halls)).catch(console.error);
+    axiosInstance.get("/admin/movie").then(res => setMovies(res.data.movies)).catch(console.error);
+    axiosInstance.get("/admin/detail/halls").then(res => setHalls(res.data.result)).catch(console.error);
   }, []);
+
+  const validate=()=>{
+
+    const today = new Date();
+    const date=new Date(`${showDate}`)
+
+    const todayStr=today.toDateString();
+    const start=new Date(`${todayStr} ${startTime}`);
+    const end=new Date(`${todayStr} ${endTime}`);
+
+    const timediff=(end-start)/60000;
+    console.log(timediff)
+
+    if(date < today)return { result:false,message:"Invalid Date"}
+    if(timediff <= 0 || timediff > 300)return { result:false,message:"Invalid Time"}
+    return {result:true}
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(hallId)
+    const valid=validate();
+    if(!valid.result)return toast.error(valid.message);
 
-    try {
+    //try {
       const body = {
         MovieID: movieId,
         CinemaHallID: hallId,
@@ -36,11 +59,11 @@ export default function AddShow() {
       };
 
       // create show
-      const res = await axiosInstance.post("/admin/shows", body);
-      const newShow = res.data; // expect { ShowID: ... }
+      
+      const newShow = addShow(body); // expect { ShowID: ... }
 
       // call backend endpoint to populate show seats using stored proc
-      await axiosInstance.post(`/admin/shows/${newShow.ShowID}/populate-seats`, {
+      /*await axiosInstance.post(`/admin/shows/${newShow.ShowID}/populate-seats`, {
         CinemaHallID: hallId,
         defaultPrice: defaultPrice
       });
@@ -51,6 +74,7 @@ export default function AddShow() {
       console.error(err);
       alert("Failed to create show: " + (err.response?.data?.message || err.message));
     }
+      */
   };
 
   return (
@@ -66,7 +90,7 @@ export default function AddShow() {
 
           <select value={hallId} onChange={e => setHallId(e.target.value)} required>
             <option value="">Select Cinema Hall</option>
-            { halls.length > 0 && halls?.map(h => <option key={h.CinemaHallID} value={h.CinemaHallID}>{h.Hall_Name} (Cinema {h.CinemaID})</option>)}
+            { halls.length > 0 && halls?.map(h => <option key={h.CinemahallID} value={h.CinemahallID}>{h.Hall_Name} ( {h?.Cinema_Name})</option>)}
           </select>
 
           <input type="date" value={showDate} onChange={e => setShowDate(e.target.value)} required />

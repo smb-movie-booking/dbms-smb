@@ -52,7 +52,19 @@ export const useAdmin=()=>{
         }
     }
 
-    
+    const addShow=async(showInfo)=>{
+        try {
+            const {data} = await axiosInstance.post("/admin/shows", showInfo);
+            console.log(data);
+            if(data.success){
+                return toast.success(data.message)
+            }
+        } catch (error) {
+            console.log(error)
+            toast.error(error.response.data.message)
+            
+        }
+    }
 
-    return {addNewCity,addCinemas,addCinemaHall,addMovie}
+    return {addNewCity,addCinemas,addCinemaHall,addMovie,addShow}
 }
