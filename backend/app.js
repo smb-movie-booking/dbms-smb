@@ -12,6 +12,7 @@ const adminRoutes = require('./routes/admin');
 const showRoutes = require('./routes/show');
 const bookingRoutes = require('./routes/bookings');
 const paymentRoutes = require('./routes/payment');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/shows', showRoutes);
 app.use('/api/booking', bookingRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/movies', reviewRoutes);
 
 
 const PORT = process.env.PORT || 3000;

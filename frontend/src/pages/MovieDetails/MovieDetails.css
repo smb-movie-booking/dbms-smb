@@ -1,0 +1,168 @@
+/* MovieDetails.css */
+
+.movie-detail {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.movie-header {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.movie-header img {
+  width: 220px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ccc;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.movie-header img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.movie-info {
+  flex: 1;
+  min-width: 300px;
+}
+
+.movie-detail .movie-info h1 {
+    margin-top: 0;
+    font-size: 2rem;
+    color: #ff4500;
+    font-weight: 700;
+}
+
+.movie-info p {
+  line-height: 1.5;
+  margin: 8px 0;
+  color: #555;
+}
+
+.movie-info button {
+  background: var(--secondary-color, #007bff);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  color: #fff;
+  font-weight: 600;
+  margin-top: 15px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  border: 1px solid #006ae6;
+}
+
+.movie-info button:hover {
+  background: darken(var(--secondary-color, #007bff), 10%);
+  transform: translateY(-2px);
+}
+
+.review-section {
+  margin-top: 40px;
+}
+
+.review-section h2 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  border-bottom: 2px solid #ff4500;
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+.review-section .review-card {
+  background: #f9f9f9;
+  margin-bottom: 15px;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #ddd;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.review-section .review-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.review-section .review-card p {
+  margin: 5px 0;
+}
+
+.review-section .review-card strong {
+  color: var(--primary-color, #111);
+}
+
+/* Poster Trailer Label Below Image */
+.movie-header .trailer-label {
+  text-align: center;
+  margin-top: 8px;
+  font-weight: 600;
+  color: #007bff;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.movie-header .trailer-label:hover {
+  color: #0056b3;
+}
+
+.review-scroll-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.review-cards-wrapper {
+  display: flex;
+  overflow-x: auto;
+  gap: 15px;
+  scroll-behavior: smooth;
+  padding: 10px 0;
+}
+
+.review-card {
+  min-width: 250px; /* width of each card */
+  flex-shrink: 0;
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.scroll-btn {
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  font-size: 1.5rem;
+  width: 35px;
+  height: 100%;
+  cursor: pointer;
+  position: absolute;
+  z-index: 10;
+  top: 0;
+}
+
+.scroll-btn.left {
+  left: 0;
+}
+
+.scroll-btn.right {
+  right: 0;
+}
+

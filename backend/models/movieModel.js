@@ -1,23 +1,34 @@
 const {db} = require('../config/db');
 
-const getMovieDetails = async (movieId) => {
-  const [rows] = await db.query(
-    `SELECT MovieID,Title, Poster_Image_URL, Trailer_URL, Rating,
+const getMovieDetails = (movieId, callback) => {
+  const sql = `
+    SELECT MovieID, Title, Poster_Image_URL, Trailer_URL, Rating,
            Genre, Movie_Language, ReleaseDate, Duration, Age_Format, Movie_Description
     FROM Movie
-    WHERE MovieID = ?`, [movieId]);
-  return rows[0];
+    WHERE MovieID = ?`;
+
+  db.query(sql, [movieId], (err, rows) => {
+    if (err) {
+      return callback(err, null);
+    }
+    callback(null, rows[0]);
+  });
 };
 
-const getMoviesByTheaterAndDate = async (theaterId, date) => {
-  const [rows] = await db.query(
-    `SELECT DISTINCT m.MovieID, m.Title, m.Movie_Language, m.Genre, m.Poster_Image_URL, ms.Format
+const getMoviesByTheaterAndDate = (theaterId, date, callback) => {
+  const sql = `
+    SELECT DISTINCT m.MovieID, m.Title, m.Movie_Language, m.Genre, m.Poster_Image_URL, ms.Format
     FROM Movie m
     JOIN Movie_Show ms ON m.MovieID = ms.MovieID
     JOIN cinema_hall ch ON ms.CinemaHallID = ch.CinemaHallID
-    WHERE ch.CinemaID = ? AND DATE(ms.Show_Date) = ?`, [theaterId, date]);
-  return rows;
+    WHERE ch.CinemaID = ? AND DATE(ms.Show_Date) = ?`;
+
+  db.query(sql, [theaterId, date], (err, rows) => {
+    if (err) return callback(err, null);
+    callback(null, rows);
+  });
 };
+
 
 const getMoviesByCity = (cityId, filters, callback) => {
   let query = `

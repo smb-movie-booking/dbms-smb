@@ -18,7 +18,7 @@ const Home = () => {
   // Hardcoded filter options for the UI
   const availableLanguages = ['Malayalam', 'English', 'Hindi', 'Tamil', 'Korean', 'Odia', 'Telugu'];
   const availableGenres = ['Action', 'Comedy', 'Drama', 'Thriller', 'Sci-Fi'];
-  const availableFormats = ['2D', '3D', 'IMAX 2D', '4DX'];
+  const availableFormats = ['2D', '3D', 'IMAX', '4DX'];
 
   // Function to fetch movies from the backend
   const fetchMovies = async () => {
@@ -69,7 +69,7 @@ const Home = () => {
   const handleMovieClick = (movieId) => {
     // Navigate to the movie detail page
     // This assumes you have a route like "/explore/movie/:id"
-    navigate(`/explore?movie=${movieId}`);
+    navigate(`/movies/${movieId}`);
   };
 
   return (

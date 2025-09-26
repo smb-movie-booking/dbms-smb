@@ -4,21 +4,36 @@ const showModel = require('../models/showModel');
 const handleExplore = async(req,res) => {
     try{
         const {city, language, genre, format, theater, showDate, movie } = req.query;
-        if(movie) {
-            const details = await movieModel.getMovieDetail(movie);
-            return res.json(details);
+        if (movie) {
+            movieModel.getMovieDetails(movie, (err, details) => {
+                if (err) {
+                    return res.status(500).json({ error: "Failed to fetch movie details" });
+                }
+                return res.json(details);
+            });
         }
-        if (theater && showDate) {
-        const movies = await movieModel.getMoviesByTheaterAndDate(theater, showDate);
-        const shows = await showModel.fetchShowsByTheaterAndDate(theater, showDate);
-        const merged = movies.map(m => ({
-            ...m,
-            shows: shows.filter(s => s.movieId === m.movieId)
-        }));
+        else if (theater && showDate) {
+            movieModel.getMoviesByTheaterAndDate(theater, showDate, (err, movies) => {
+                if (err) {
+                    return res.status(500).json({ error: "Failed to fetch movies" });
+                }
 
-        return res.json(merged);
+                showModel.fetchShowsByTheaterAndDate(theater, showDate, (err2, shows) => {
+                    if (err2) {
+                        return res.status(500).json({ error: "Failed to fetch shows" });
+                    }
+
+                    const merged = movies.map(m => ({
+                        ...m,
+                        shows: shows.filter(s => s.movieId === m.MovieID)
+                    }));
+
+                    return res.json(merged);
+                });
+            });
         }
-        if (city) {
+
+        else if (city) {
         movieModel.getMoviesByCity(city, { language, genre, format }, (err, movies) => {
             if (err) {
             console.error(err);

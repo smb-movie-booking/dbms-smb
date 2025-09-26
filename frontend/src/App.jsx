@@ -11,6 +11,7 @@ import ResetPassword from './pages/ResetPassword/ResetPassword'
 import EditProfile from './pages/EditProfile/EditProfile'
 import ProtectedAdmin from './components/ProtectedAdmin';
 import { adminRoutes } from "./routes/adminRoutes";
+import MovieDetails from './pages/MovieDetails/MovieDetails';
 import Skeleton from './components/Skeleton/Skeleton'
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
         <Route path='/register' element={!authUser?<Register/>:<Navigate to="/"/>}/>
         <Route path='/reset-password' element={!authUser?<ResetPassword/>:<Navigate to="/"/>}/>
         <Route path='/:userid/edit' element={authUser?<><Navbar/><EditProfile/></>:<Login/>}/>
+        <Route path='/movies/:movieId' element={<MovieDetails/>} />
         {adminRoutes.map(({ path, element }, index) => (
         <Route
           key={index}
