@@ -19,7 +19,7 @@ const getMoviesByTheaterAndDate = async (theaterId, date) => {
   return rows;
 };
 
-const getMoviesByCity = async (cityId, filters) => {
+const getMoviesByCity = (cityId, filters, callback) => {
   let query = `
     SELECT DISTINCT m.MovieID, m.Title, m.Poster_Image_URL, m.Rating, m.Genre, m.Movie_Language
     FROM Movie m
@@ -35,15 +35,18 @@ const getMoviesByCity = async (cityId, filters) => {
   }
   if (filters.genre) {
     query += " AND m.Genre IN (?)";
-    params.push(filters.genre);
+    params.push(filters.genre.split(","));
   }
   if (filters.format) {
     query += " AND ms.Format IN (?)";
-    params.push(filters.format);
+    params.push(filters.format.split(","));
   }
 
-  const [rows] = await db.query(query, params);
-  return rows;
+  db.query(query, params, (err, results) => {
+    if (err) return callback(err);
+    callback(null, results);
+  });
 };
 
-export default { getMovieDetails, getMoviesByTheaterAndDate, getMoviesByCity };
+
+module.exports = { getMovieDetails, getMoviesByTheaterAndDate, getMoviesByCity };

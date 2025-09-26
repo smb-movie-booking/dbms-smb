@@ -19,10 +19,16 @@ const handleExplore = async(req,res) => {
         return res.json(merged);
         }
         if (city) {
-        const movies = await movieModel.getMoviesByCity(city, { language, genre, format });
-        return res.json(movies);
-        }
+        movieModel.getMoviesByCity(city, { language, genre, format }, (err, movies) => {
+            if (err) {
+            console.error(err);
+            return res.status(500).json({ error: "Internal server error" });
+            }
+            return res.json(movies);
+        });
+        } else {
         return res.status(400).json({ error: "Invalid query params" });
+        }
 
     }catch(err){
         console.error(err);
@@ -30,6 +36,4 @@ const handleExplore = async(req,res) => {
     }
 }
 
-export default { handleExplore };
-
-
+module.exports = { handleExplore };

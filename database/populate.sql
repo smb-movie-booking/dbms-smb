@@ -43,15 +43,15 @@ INSERT INTO City (CityID, City_Name, City_State, ZipCode) VALUES
 -- ### Data for Cinema Table ###
 -- Inserting 50 cinemas across various cities
 INSERT INTO Cinema (CinemaID, Cinema_Name, TotalCinemaHalls, CityID, Facilities, Cancellation_Allowed) VALUES
-(1, 'PVR Icon', 5, 1, 'Parking,Dolby,Recliner', 1),
-(2, 'INOX Insignia', 4, 2, 'Parking,Dolby,Recliner,Cafe', 1),
-(3, 'Cinepolis VIP', 6, 3, 'Parking,IMAX,4DX,Recliner', 1),
-(4, 'Miraj Cinemas', 3, 4, 'Parking,Dolby', 0),
-(5, 'SPI Cinemas', 8, 5, 'Parking,Dolby Atmos,Recliner', 1),
-(6, 'Carnival Cinemas', 4, 6, 'Parking,Cafe', 0),
-(7, 'City Pride', 5, 7, 'Parking,Dolby', 1),
-(8, 'Mukta A2 Cinemas', 3, 8, 'Parking', 0),
-(9, 'Raj Mandir Cinema', 1, 9, 'Heritage,Cafe', 0),
+(1, 'PVR Icon', 5, 10, 'Parking,Dolby,Recliner', 1),
+(2, 'INOX Insignia', 4, 10, 'Parking,Dolby,Recliner,Cafe', 1),
+(3, 'Cinepolis VIP', 6, 10, 'Parking,IMAX,4DX,Recliner', 1),
+(4, 'Miraj Cinemas', 3, 10, 'Parking,Dolby', 0),
+(5, 'SPI Cinemas', 8, 10, 'Parking,Dolby Atmos,Recliner', 1),
+(6, 'Carnival Cinemas', 4, 10, 'Parking,Cafe', 0),
+(7, 'City Pride', 5, 10, 'Parking,Dolby', 1),
+(8, 'Mukta A2 Cinemas', 3, 10, 'Parking', 0),
+(9, 'Raj Mandir Cinema', 1, 10, 'Heritage,Cafe', 0),
 (10, 'PVR Cinemas', 7, 10, 'Parking,Dolby,Recliner', 1);
 
 DROP PROCEDURE IF EXISTS PopulateHallsAndSeats;
@@ -98,7 +98,7 @@ CALL PopulateHallsAndSeats();
 -- ### Data for Movie Table ###
 -- Inserting 50 movies
 INSERT INTO Movie (MovieID, Title, Movie_Description, Duration, Movie_Language, ReleaseDate, Country, Genre, Rating, Age_Format, Poster_Image_URL, Trailer_URL, IsActive) VALUES
-(1, 'Kalki 2898 AD', 'A modern-day avatar of Vishnu, a Hindu god, who is believed to have descended to earth to protect the world from evil forces.', '03:01:00', 'Telugu', '2024-06-27 00:00:00', 'India', 'Sci-Fi', 8.5, 'UA', 'https://example.com/kalki_poster.jpg', 'https://example.com/kalki_trailer.mp4', 1),
+(1, 'Kalki 2898 AD', 'A modern-day avatar of Vishnu, a Hindu god, who is believed to have descended to earth to protect the world from evil forces.', '03:01:00', 'Telugu', '2024-06-27 00:00:00', 'India', 'Sci-Fi', 8.5, 'UA', 'https://res.cloudinary.com/dwiphkazt/image/upload/v1758117747/kalki-2898-ad-et00352941-1718275859_sk9bgt.avif', 'https://example.com/kalki_trailer.mp4', 1),
 (2, 'Jawan', 'A man is driven by a personal vendetta to rectify the wrongs in society, while keeping a promise made years ago.', '02:49:00', 'Hindi', '2023-09-07 00:00:00', 'India', 'Action', 7.8, 'UA', 'https://example.com/jawan_poster.jpg', 'https://example.com/jawan_trailer.mp4', 1),
 (3, 'Oppenheimer', 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.', '03:00:00', 'English', '2023-07-21 00:00:00', 'USA', 'Biography', 8.6, 'A', 'https://example.com/oppenheimer_poster.jpg', 'https://example.com/oppenheimer_trailer.mp4', 1),
 (4, 'Leo', 'Parthiban is a mild-mannered cafe owner in Kashmir, who fends off a gang of thugs and gains local fame. This brings him to the attention of a drug cartel who suspect that he was once a part of them.', '02:44:00', 'Tamil', '2023-10-19 00:00:00', 'India', 'Action', 7.9, 'UA', 'https://example.com/leo_poster.jpg', 'https://example.com/leo_trailer.mp4', 1),
