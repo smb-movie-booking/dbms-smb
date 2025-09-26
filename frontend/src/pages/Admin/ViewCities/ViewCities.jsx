@@ -25,7 +25,6 @@ export default function ViewCities() {
 
   return (
     <>
-      <Navbar />
       <div style={{ padding: 24 }}>
         <h2>Cities</h2>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>

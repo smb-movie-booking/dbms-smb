@@ -35,7 +35,6 @@ export default function AddCinemaHall() {
 
   return (
     <>
-      <Navbar/>
       <div style={{ padding: 24 }}>
         <h2>Add Cinema Hall</h2>
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: 8, maxWidth: 480 }}>

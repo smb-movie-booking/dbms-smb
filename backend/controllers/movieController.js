@@ -1,5 +1,7 @@
 const movieModel = require('../models/movieModel');
 const showModel = require('../models/showModel');
+const { db } = require('../config/db');
+
 
 const handleExplore = async(req,res) => {
     try{
@@ -51,4 +53,25 @@ const handleExplore = async(req,res) => {
     }
 }
 
-module.exports = { handleExplore };
+const getCities = (req, res) => {
+  const sql = "SELECT CityID, City_Name, City_State, ZipCode FROM City ORDER BY City_Name ASC";
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error fetching cities:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    // send clean structured data
+    const cities = results.map(r => ({
+      id: r.CityID,
+      name: r.City_Name,
+      state: r.City_State,
+      zipcode: r.ZipCode
+    }));
+
+    res.json(cities);
+  });
+};
+
+module.exports = { handleExplore , getCities};

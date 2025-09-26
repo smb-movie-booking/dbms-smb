@@ -32,7 +32,6 @@ export default function AddCity() {
 
   return (
     <>
-      <Navbar />
       <div className="admin-container" style={{ padding: 24 }}>
         <h2>Add City</h2>
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: 8, maxWidth: 480 }}>

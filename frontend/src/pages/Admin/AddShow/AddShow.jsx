@@ -79,7 +79,6 @@ export default function AddShow() {
 
   return (
     <>
-      <Navbar />
       <div style={{ padding: 24 }}>
         <h2>Add Show</h2>
         <form onSubmit={handleSubmit} style={{ maxWidth: 720, display: "grid", gap: 8 }}>

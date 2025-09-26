@@ -16,7 +16,6 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <Navbar />
       <div className="admin-container" style={{ padding: 24 }}>
         <h1 style={{ marginBottom: 16 }}>Admin Dashboard</h1>
 

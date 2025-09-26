@@ -28,7 +28,6 @@ export default function ViewMovies() {
 
   return (
     <>
-      <Navbar />
       <div style={{ padding: 24 }}>
         <h2>Movies</h2>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>

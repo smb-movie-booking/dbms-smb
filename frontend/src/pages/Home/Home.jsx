@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '../../utils/axios'; // adjust path if needed
 import toast from 'react-hot-toast'; 
+import Navbar from '../../components/Navbar/Navbar';
 
-const Home = () => {
+
+const Home = ({ selectedCity }  ) => {
   // State for storing movies, filters, and current city
   const [movies, setMovies] = useState([]);
-  const [selectedCity, setSelectedCity] = useState({ id: 10, name: 'Kochi' }); // Default city
   const [filters, setFilters] = useState({
     languages: [],
     genres: [],

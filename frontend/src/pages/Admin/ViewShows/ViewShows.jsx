@@ -32,7 +32,6 @@ export default function ViewShows() {
 
   return (
     <>
-      <Navbar />
       <div style={{ padding: 24 }}>
         <h2>Shows</h2>
         <table style={{ width: "100%" }}>

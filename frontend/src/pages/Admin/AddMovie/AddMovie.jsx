@@ -75,7 +75,6 @@ export default function AddMovie() {
 
   return (
     <>
-      <Navbar />
       <div style={{ padding: 24 }}>
         <h2>Add Movie</h2>
         <form

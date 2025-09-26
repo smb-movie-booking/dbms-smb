@@ -22,7 +22,6 @@ export default function ViewCinemas() {
 
   return (
     <>
-      <Navbar />
       <div style={{ padding: 24 }}>
         <h2>Cinemas</h2>
         <table style={{ width: "100%" }}>

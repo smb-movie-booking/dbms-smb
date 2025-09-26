@@ -58,6 +58,7 @@ Content-Type: application/json
 # With a verified phone, the user can now create their account.
 POST {{host}}/api/auth/register
 Content-Type: application/json
+
 {
   "name": "aadith",
   "phone": "8089714072",

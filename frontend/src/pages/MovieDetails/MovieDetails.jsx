@@ -51,7 +51,6 @@ const MovieDetails = () => {
 
   return (
     <>
-        <Navbar />
         <div className="movie-detail">
           <div className="movie-header" style={{ display: "flex", gap: "20px" }}>
             <div style={{ textAlign: "center" }}>

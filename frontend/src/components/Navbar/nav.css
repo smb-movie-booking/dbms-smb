@@ -61,3 +61,13 @@ nav{
     }
 }
 
+.city-dropdown {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+

@@ -33,7 +33,6 @@ useEffect(() => {
 
   return (
     <>
-      <Navbar />
       <div style={{ padding: "24px 16px" }}> {/* Adjusted container padding */}
         <h2 style={{ marginBottom: 24 }}>Cinema Halls</h2> {/* More spacing below heading */}
 
