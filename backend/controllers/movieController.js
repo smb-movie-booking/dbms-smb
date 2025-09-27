@@ -6,6 +6,7 @@ const { db } = require('../config/db');
 const handleExplore = async(req,res) => {
     try{
         const {city, language, genre, format, theater, showDate, movie } = req.query;
+        console.log(req.query)
         if (movie) {
             movieModel.getMovieDetails(movie, (err, details) => {
                 if (err) {
@@ -40,7 +41,9 @@ const handleExplore = async(req,res) => {
             if (err) {
             console.error(err);
             return res.status(500).json({ error: "Internal server error" });
+
             }
+            console.log(movie)
             return res.json(movies);
         });
         } else {

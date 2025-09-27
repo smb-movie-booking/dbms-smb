@@ -57,30 +57,30 @@ BEGIN
     DECLARE k INT DEFAULT 1;
     DECLARE hall_id INT DEFAULT 1;
     DECLARE seat_id INT DEFAULT 1;
-    DECLARE total_halls INT;
-    DECLARE total_seats INT;
+    DECLARE total_halls_for_cinema INT; -- Renamed to avoid confusion with total_seats
+    DECLARE seats_in_current_hall INT; -- Variable to hold randomized seats for current hall
 
     WHILE i <= 10 DO
-        SELECT TotalCinemaHalls INTO total_halls FROM Cinema WHERE CinemaID = i;
+        SET total_halls_for_cinema = 1 + FLOOR(RAND() * 4); -- Random halls between 1 and 4 per cinema
         SET j = 1;
-        WHILE j <= total_halls DO
-            SET total_seats = 100 + FLOOR(RAND() * 50); -- Random seats between 100 and 150
-            INSERT INTO Cinema_Hall (CinemaHallID, Hall_Name, TotalSeats, CinemaID)
-            VALUES (hall_id, CONCAT('Hall ', j), total_seats, i);
+        WHILE j <= total_halls_for_cinema DO
+            SET seats_in_current_hall = 100 + FLOOR(RAND() * 50); -- Random seats between 100 and 150 for this hall
+            INSERT INTO Cinema_Hall (CinemaHallID, Hall_Name, CinemaID) -- Removed TotalSeats as per schema
+            VALUES (hall_id, CONCAT('Hall ', j), i);
 
             SET k = 1;
-            WHILE k <= total_seats DO
+            WHILE k <= seats_in_current_hall DO
                 INSERT INTO Cinema_Seat (CinemaSeatID, SeatNumber, Seat_Type, CinemaHallID)
                 VALUES (
                     seat_id,
                     k,
                     -- Use all 5 ENUM options to create realistic sections
                     CASE
-                        WHEN k <= 4 THEN 'Sofa'                         -- First 4 seats are Sofas
-                        WHEN k > 4 AND k <= 8 THEN 'Box'              -- Next 4 are exclusive Box seats
-                        WHEN k > total_seats - 10 THEN 'Recliner'      -- Last 10 seats are Recliners
-                        WHEN k > total_seats - 30 THEN 'Premium'       -- The 20 seats before that are Premium
-                        ELSE 'Standard'                               -- All others are Standard
+                        WHEN k <= 4 THEN 'Sofa'          -- First 4 seats are Sofas
+                        WHEN k > 4 AND k <= 8 THEN 'Box'       -- Next 4 are exclusive Box seats
+                        WHEN k > seats_in_current_hall - 10 THEN 'Recliner'    -- Last 10 seats are Recliners
+                        WHEN k > seats_in_current_hall - 30 THEN 'Premium'     -- The 20 seats before that are Premium
+                        ELSE 'Standard'                          -- All others are Standard
                     END,
                     hall_id
                 );
@@ -168,7 +168,9 @@ BEGIN
     WHILE show_id <= 200 DO
         -- 1. Create a Movie Show
         SET movie_id = 1 + FLOOR(RAND() * 15);
-        SET cinema_hall_id = 1 + FLOOR(RAND() * (SELECT COUNT(*) FROM Cinema_Hall));
+        -- Ensure cinema_hall_id exists by selecting from actual Cinema_Hall IDs
+        SELECT CinemaHallID INTO cinema_hall_id FROM Cinema_Hall ORDER BY RAND() LIMIT 1; 
+
         SET show_date = CURDATE() + INTERVAL FLOOR(RAND() * 14) DAY;
         SET start_time = MAKETIME(10 + FLOOR(RAND() * 13), FLOOR(RAND() * 4) * 15, 0);
         
@@ -199,17 +201,17 @@ BEGIN
             -- 3. Create Show_Seat entries for each seat in the booking
             SET seat_num = 1;
             WHILE seat_num <= num_seats DO
-                 -- Find a random, available cinema seat for this hall that hasn't been booked for this show yet
-                 SELECT CinemaSeatID INTO seat_id_val FROM Cinema_Seat 
-                 WHERE CinemaHallID = cinema_hall_id AND CinemaSeatID NOT IN (SELECT CinemaSeatID FROM Show_Seat WHERE ShowID = show_id) 
-                 ORDER BY RAND() LIMIT 1;
+                    -- Find a random, available cinema seat for this hall that hasn't been booked for this show yet
+                    SELECT CinemaSeatID INTO seat_id_val FROM Cinema_Seat 
+                    WHERE CinemaHallID = cinema_hall_id AND CinemaSeatID NOT IN (SELECT CinemaSeatID FROM Show_Seat WHERE ShowID = show_id) 
+                    ORDER BY RAND() LIMIT 1;
 
-                 IF seat_id_val IS NOT NULL THEN
-                    INSERT INTO Show_Seat (ShowSeatID, Seat_Status, Price, CinemaSeatID, ShowID, BookingID)
-                    VALUES (show_seat_id, 2, price, seat_id_val, show_id, booking_id); -- Status is always 2 (Booked)
-                    SET show_seat_id = show_seat_id + 1;
-                 END IF;
-                 SET seat_num = seat_num + 1;
+                    IF seat_id_val IS NOT NULL THEN
+                        INSERT INTO Show_Seat (ShowSeatID, Seat_Status, Price, CinemaSeatID, ShowID, BookingID)
+                        VALUES (show_seat_id, 2, price, seat_id_val, show_id, booking_id); -- Status is always 2 (Booked)
+                        SET show_seat_id = show_seat_id + 1;
+                    END IF;
+                    SET seat_num = seat_num + 1;
             END WHILE;
 
             -- 4. Create a Payment for the booking
@@ -221,7 +223,7 @@ BEGIN
                 INSERT INTO Review (ReviewID, UserID, MovieID, Rating, Comment, Review_Timestamp)
                 VALUES (review_id, user_id, movie_id, LEAST(ROUND(5 + RAND() * 5, 1), 9.9), 'This was a great movie!', NOW() - INTERVAL FLOOR(RAND() * 24) HOUR);
                 SET review_id = review_id + 1;
-            END IF; -- !!! CORRECTED: Added missing END IF !!!
+            END IF;
 
             -- Increment booking and payment IDs
             SET payment_id = payment_id + 1;
@@ -233,7 +235,7 @@ BEGIN
         SET show_id = show_id + 1;
     END WHILE;
 END$$
-DELIMITER ; -- !!! CORRECTED: Added missing DELIMITER reset !!!
+DELIMITER ;
 
 
 -- ### Execute Procedures and Clean Up ###
