@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const userModel = require('../models/userModel');
 const { db } = require('../config/db');
 require('dotenv').config();
+const { parseSeatRanges } = require('../utils/parse');
 
 
 exports.flushAllTables = async (req, res) => {
@@ -22,37 +23,40 @@ exports.flushAllTables = async (req, res) => {
   }
 };
 
-exports.createNewCity=(req,res)=>{
-  try {
-    const user=req.session.user;
-    const isAdmin=req.session.user.isAdmin
-    const {cityName,stateName,zip}=req.body;
-    if(!user || !isAdmin)return res.status(400).json({message:"Not Authorized"});
+// ... other functions
 
-    adminModel.findCityByName(cityName,(err,result)=>{
-      if(err){
-        return res.status(400).json({message:"Database Error"})
-      }
-      if(result){
-        return res.status(400).json({message:"City already exists"})
-      }
-      adminModel.addCity(cityName,stateName,zip,(err,result)=>{
-        if(err){
-        return res.status(400).json({message:"Database Error"})
+exports.createNewCity = (req, res) => {
+    const user = req.session.user;
+    // 1. Get all fields from the request body
+    const { cityName, cityState, zipCode } = req.body;
+
+    if (!user || !user?.isAdmin) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (!cityName || !cityName.trim() || !cityState || !cityState.trim() || !zipCode || !zipCode.trim()) {
+        return res.status(400).json({ message: "City name, state, and zip code are all required." });
+    }
+
+    // 2. Pass ALL THREE arguments to your model function
+    //    Also, match the variable names your model expects (name, state, code)
+    adminModel.addCity(cityName, cityState, zipCode, (err, result) => {
+        if (err) {
+            console.log(err);
+            // Check for duplicate city names if your DB has a UNIQUE constraint
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(409).json({ message: "A city with this name already exists." });
+            }
+            return res.status(500).json({ message: "A database error occurred." });
         }
-
-        if(result?.inserted){
-          console.log(result);
-          return res.status(200).json({message:"city added",id:result?.cityId});
+        
+        if (result && result.inserted) {
+            return res.status(201).json({ success: true, message: "City added successfully" });
         }
-        return res.status(400).json({message:"Couldnot add city"})
-      })
-    })
+    });
+};
 
-  } catch (error) {
-    
-  }
-}
+// ... other functions
 
 exports.getAllCities=(req,res)=>{
   const user=req.session.user;
@@ -100,13 +104,12 @@ exports.deleteCity=(req,res)=>{
 
 exports.addNewCinemas=(req,res)=>{
     const user=req.session.user;
-    const {name,totalHalls,cityId,facilities,cancellationAllowed}=req.body;
+    const {name,cityId,facilities,cancellationAllowed}=req.body;
 
     if(!user || !user?.isAdmin)return res.status(400).json({message:"Unauthorized"});
 
     if(!name.trim())return res.status(400).json({message:"Cinema name is required"});
     if(!cityId) return res.status(400).json({message:"Please choose a city"});
-    if(!totalHalls)return res.status(400).json({message:"Give no of halls"});
 
     adminModel.findCityById(cityId,(err,city)=>{
       if(err){
@@ -121,8 +124,8 @@ exports.addNewCinemas=(req,res)=>{
           return res.status(500).json({ message: "DB Error" });
         }
         const newCinemaId = (result[0].maxid || 0) + 1 ;
-        const sql='INSERT INTO Cinema(CinemaID,Cinema_Name,TotalCinemaHalls,CityID,Facilities,Cancellation_Allowed) values(?,?,?,?,?,?)'
-        db.query(sql,[newCinemaId,name.trim(),totalHalls,cityId,facilities,cancellationAllowed],(err,result)=>{
+        const sql='INSERT INTO Cinema(CinemaID,Cinema_Name,CityID,Facilities,Cancellation_Allowed) values(?,?,?,?,?)'
+        db.query(sql,[newCinemaId,name.trim(),cityId,facilities,cancellationAllowed],(err,result)=>{
           if(err){
             console.log(err);
             return res.status(500).json({error:"DB Error"});
@@ -185,75 +188,71 @@ exports.deleteCinemas=(req,res)=>{
 }
 
 
+exports.addNewCinemaHall = (req, res) => {
+    const user = req.session.user;
+    const { hallName, cinemaId, seatConfig } = req.body;
 
-exports.addNewCinemaHall=(req,res)=>{
-    const user=req.session.user;
-    const {hallName,totalSeats,cinemaId}=req.body;
-    //console.log(cinemaid)
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
+    if (!hallName || !hallName.trim()) return res.status(400).json({ message: "Hall name is required" });
+    if (!cinemaId) return res.status(400).json({ message: "Please choose a cinema" });
+    if (!seatConfig || seatConfig.length === 0) return res.status(400).json({ message: "Seat configuration is required" });
 
-    if(!user || !user?.isAdmin)return res.status(400).json({message:"Unauthorized"});
-
-    if(!hallName.trim())return res.status(400).json({message:"hallName is required"});
-    if(!cinemaId) return res.status(400).json({message:"Please choose a cinemas"});
-    if(!totalSeats)return res.status(400).json({message:"Give no of seats"});
-
-    adminModel.findCinemaById(cinemaId,(err,cinema)=>{
-      if(err){
-        console.log(err);
-        return res.status(401).json({message:"DB Error"});
-      }
-      if(!cinema)return res.status(401).json({message:"Cinema doesn't exist"});
-
-      //if(cinema?. TotalCinemaHalls)  
-
-        db.query('SELECT count(*) as count from Cinema_Hall where CinemaID=?',[cinemaId],(err,result)=>{
-          if(err){
+    db.beginTransaction(err => {
+        if (err) {
             console.log(err);
-            return res.status(500).json({ message: "DB Error" });
-          }
-          if(result){
-            const currentHalls=result[0].count;
-            if(currentHalls >= cinema?.TotalCinemaHalls)return res.status(401).json({message:"Hall Limit for the Theatre Reached"});
+            return res.status(500).json({ message: "Database transaction error" });
+        }
 
+        try {
+            // The seat parsing logic is still needed to validate and prepare seat data
+            const { allSeats } = parseSeatRanges(seatConfig);
+            if (allSeats.length === 0) {
+                throw new Error("Cannot create a hall with zero seats.");
+            }
 
-            adminModel.findCinemaHallByName(hallName,cinemaId,(err,existing)=>{
-              if(err){
-                console.log(err);
-                return res.status(500).json({ message: "DB Error" });
-              }
-              if(existing)return res.status(401).json({message:"Screen already exists"});
+            // 1. Insert the Cinema_Hall (without TotalSeats)
+            db.query('SELECT MAX(CinemaHallID) as maxid from Cinema_Hall', (err, result) => {
+                if (err) return db.rollback(() => { throw err; });
+                
+                const newCinemaHallId = (result[0].maxid || 0) + 1;
+                // --- CHANGE IS HERE: Removed TotalSeats from the query ---
+                const hallSql = 'INSERT INTO Cinema_Hall(CinemaHallID, Hall_Name, CinemaID) VALUES (?, ?, ?)';
+                
+                db.query(hallSql, [newCinemaHallId, hallName.trim(), cinemaId], (err, result) => {
+                    if (err) return db.rollback(() => { throw err; });
 
-              db.query('SELECT MAX(CinemaHallID) as maxid from Cinema_Hall',(err,result)=>{
-              if(err){
-                console.log(err);
-                return res.status(500).json({ message: "DB Error" });
-              }
-              const newCinemaHallId = (result[0].maxid || 0) + 1 ;
-              const sql='INSERT INTO Cinema_Hall(CinemaHallID,Hall_Name,TotalSeats,CinemaID) values(?,?,?,?)'
-              db.query(sql,[newCinemaHallId,hallName.trim().toLowerCase(),totalSeats,cinemaId],(err,result)=>{
-                if(err){
-                  console.log(err);
-                  return res.status(500).json({error:"DB Error"});
-                }
-                console.log(result);
-                return res.status(201).json({success:true,message:"Hall added successfully"});
-              })
+                    // 2. Prepare and Insert all Cinema_Seats (this part is unchanged)
+                    db.query('SELECT MAX(CinemaSeatID) as maxid from Cinema_Seat', (err, result) => {
+                        if (err) return db.rollback(() => { throw err; });
 
-            })
+                        let nextSeatId = (result[0].maxid || 0) + 1;
+                        const seatValues = allSeats.map(seat => {
+                            return [nextSeatId++, seat.number, seat.type, newCinemaHallId];
+                        });
+                        
+                        const seatSql = 'INSERT INTO Cinema_Seat (CinemaSeatID, SeatNumber, Seat_Type, CinemaHallID) VALUES ?';
 
-            })
+                        db.query(seatSql, [seatValues], (err, result) => {
+                            if (err) return db.rollback(() => { throw err; });
 
-           
-          }
-        })
-
-      
-
-      
-    })
-
-
-}
+                            // 3. Commit the transaction
+                            db.commit(err => {
+                                if (err) return db.rollback(() => { throw err; });
+                                
+                                return res.status(201).json({ success: true, message: "Hall and all seats added successfully" });
+                            });
+                        });
+                    });
+                });
+            });
+        } catch (error) {
+            db.rollback(() => {
+                console.log(error);
+                return res.status(400).json({ message: error.message });
+            });
+        }
+    });
+};
 
 exports.getAllCinemaHalls=(req,res)=>{
   const user=req.session.user;
@@ -268,104 +267,55 @@ exports.getAllCinemaHalls=(req,res)=>{
   })
 }
 
+exports.getCinemaSeats = (req, res) => {
+    const user = req.session.user;
 
-exports.addSeats = (req, res) => {
-  const user = req.session.user;
-  const { hallId, seatCount, seatType } = req.body;
-
-  if (!user || !user?.isAdmin) return res.status(400).json({ message: "Unauthorized" });
-
-  // 1) check if cinemaHall exists
-  adminModel.findCinemaHallById(hallId, (err, hall) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).json({ message: "DB Error" });
+    if (!user || !user?.isAdmin) {
+        return res.status(401).json({ message: "Unauthorized" });
     }
 
-    if (!hall) return res.status(400).json({ message: "Hall doesn't exist" });
+    const sql = "SELECT * FROM Cinema_Seat";
 
-    // 2) get currently occupied seats
-    adminModel.getOccupiedSeats(hallId, (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).json({ message: "DB Error" });
-      }
-
-      const totalOccupied = Number(result.total_occupied) || 0;
-
-      // 3) check if row exists for this seat_type
-      const sqlCheck =
-        "SELECT * FROM Cinema_Seat WHERE CinemaHallID=? AND Seat_Type=?";
-      db.query(sqlCheck, [hallId, seatType], (err, rows) => {
+    db.query(sql, (err, results) => {
         if (err) {
-          console.log(err);
-          return res.status(500).json({ message: "DB Error" });
+            console.log(err);
+            return res.status(500).json({ message: "DB Error" });
         }
-
-        if (rows.length > 0) {
-          // ✅ Row exists → update (override value)
-          const oldSeatCount = Number(rows[0].SeatNumber);
-
-          // recalc occupied seats: remove old, add new
-          const newTotal = totalOccupied - oldSeatCount + Number(seatCount);
-
-          if (newTotal > hall.TotalSeats)
-            return res
-              .status(401)
-              .json({ message: "Couldn't update, Seat limit will be exceeded" });
-
-          const sqlUpdate =
-            "UPDATE Cinema_Seat SET SeatNumber=? WHERE CinemaHallID=? AND Seat_Type=?";
-          db.query(sqlUpdate, [seatCount, hallId, seatType], (err, result) => {
-            if (err) {
-              console.log(err);
-              return res.status(500).json({ message: "DB Error" });
-            }
-            return res
-              .status(200)
-              .json({ success: true, message: "Seats updated successfully" });
-          });
-        } else {
-          // ✅ No row → insert new
-          if (totalOccupied + Number(seatCount) > hall.TotalSeats)
-            return res
-              .status(401)
-              .json({ message: "Couldn't add, Seat limit will be exceeded" });
-
-          db.query(
-            "SELECT MAX(CinemaSeatID) as maxid from Cinema_Seat",
-            (err, results) => {
-              if (err) {
-                console.log(err);
-                return res.status(500).json({ message: "DB Error" });
-              }
-
-              const newID = (results[0].maxid || 0) + 1;
-
-              const sql =
-                "INSERT INTO Cinema_Seat (CinemaSeatID,SeatNumber,Seat_Type,CinemaHallID) values(?,?,?,?)";
-              db.query(
-                sql,
-                [newID, seatCount, seatType, hallId],
-                (err, result) => {
-                  if (err) {
-                    console.log(err);
-                    return res.status(500).json({ message: "DB Error" });
-                  }
-                  return res.status(201).json({
-                    success: true,
-                    message: "Seats added successfully",
-                  });
-                }
-              );
-            }
-          );
-        }
-      });
+        return res.status(200).json({ success: true, seats: results });
     });
-  });
 };
 
+exports.deleteCinemaHall = (req, res) => {
+    const user = req.session.user;
+    const { id } = req.params; // Get the hall ID from the URL parameter
+
+    // 1. Authorization Check
+    if (!user || !user?.isAdmin) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+    if (!id) {
+        return res.status(400).json({ message: "Cinema Hall ID is required" });
+    }
+
+    // 2. SQL Query to Delete the Hall
+    const sql = 'DELETE FROM Cinema_Hall WHERE CinemaHallID = ?';
+
+    db.query(sql, [id], (err, result) => {
+        if (err) {
+            console.log(err);
+            // This could happen if other constraints exist that are not set to cascade
+            return res.status(500).json({ message: "Database error, could not delete hall." });
+        }
+
+        // 3. Check if a row was actually deleted
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Cinema Hall not found" });
+        }
+
+        // 4. Send success response
+        return res.status(200).json({ success: true, message: "Cinema Hall deleted successfully" });
+    });
+};
 
 exports.addMovie = (req, res) => {
   const { 
@@ -381,7 +331,7 @@ exports.addMovie = (req, res) => {
     imageUrl 
   } = req.body;
 
-  const country = "India"; // default
+  const country = "India";
 
   const user = req.session.user;
   if (!user || !user?.isAdmin)
@@ -493,88 +443,188 @@ exports.getHallPlusCinemaName=(req,res)=>{
   })
 }
 
-exports.addNewShow=(req,res)=>{
-  const {MovieID,CinemaHallID,Show_Date,StartTime,EndTime,Format,Show_Language}=req.body
+exports.getAllShows = (req, res) => {
+    const sql = `
+        SELECT 
+            ms.*, 
+            m.Title,
+            -- This subquery creates a JSON object of the prices for each show
+            (SELECT JSON_OBJECTAGG(cs.Seat_Type, ss.Price)
+             FROM Show_Seat ss
+             JOIN Cinema_Seat cs ON ss.CinemaSeatID = cs.CinemaSeatID
+             WHERE ss.ShowID = ms.ShowID
+             GROUP BY ss.ShowID
+            ) AS prices
+        FROM 
+            Movie_Show ms
+        JOIN 
+            Movie m ON ms.MovieID = m.MovieID
+        ORDER BY 
+            ms.Show_Date DESC, ms.StartTime DESC;
+    `;
+    
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ message: "DB Error" });
+        }
+        return res.status(200).json({ shows: results.length > 0 ? results : [] });
+    });
+};
 
-  const user=req.session.user;
-  if(!user || !user?.isAdmin)return res.status(400).json({message:"Unauthorized"});
+exports.addNewShow = (req, res) => {
+    const { MovieID, CinemaHallID, Show_Date, StartTime, Format, Show_Language, priceConfig } = req.body;
+    const user = req.session.user;
 
-
-  adminModel.findShow(StartTime,EndTime,CinemaHallID,(err,show)=>{
-    if(err){
-      console.log(err)
-      return res.status(500).json({message:"DB Error"});
-
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
+    if (!MovieID || !CinemaHallID || !Show_Date || !StartTime || !Format || !Show_Language || !priceConfig) {
+        return res.status(400).json({ message: "All fields, including price configuration, are required." });
     }
 
-    if (show[0]){
-      return res.status(401).json({success:false,message:"Already a show Scheduled"})
+    db.beginTransaction(err => {
+        if (err) return res.status(500).json({ message: "Transaction Error" });
+
+        // First, get the movie's duration to calculate EndTime
+        db.query('SELECT Duration FROM Movie WHERE MovieID = ?', [MovieID], (err, movieResult) => {
+            if (err) return db.rollback(() => res.status(500).json({ message: "DB error finding movie" }));
+            if (movieResult.length === 0) return db.rollback(() => res.status(404).json({ message: "Movie not found" }));
+
+            const movieDuration = movieResult[0].Duration;
+            const fullStartTime = `${Show_Date} ${StartTime}`;
+
+            // Find new ShowID
+            db.query("SELECT max(ShowID) as maxid from Movie_Show", (err, result) => {
+                if (err) return db.rollback(() => res.status(500).json({ message: "DB Error getting max ShowID" }));
+                
+                const newID = (result[0].maxid || 0) + 1;
+                const sqlShow = 'INSERT INTO Movie_Show(ShowID, Show_Date, StartTime, EndTime, CinemaHallID, MovieID, Format, Show_Language) VALUES(?, ?, ?, ADDTIME(?, ?), ?, ?, ?, ?)';
+                
+                // A. Insert the main show record
+                db.query(sqlShow, [newID, Show_Date, fullStartTime, fullStartTime, movieDuration, CinemaHallID, MovieID, Format, Show_Language], (err, result) => {
+                    if (err) return db.rollback(() => res.status(500).json({ message: "DB Error inserting show" }));
+                    
+                    // B. Call your procedure to populate seats with a default price (e.g., 0)
+                    db.query('CALL PopulateShowSeats(?, ?, 0)', [newID, CinemaHallID], (err, result) => {
+                          if (err) {
+                              // ADD THESE LOGS
+                              console.error("ERROR CALLING PopulateShowSeats:", err); 
+                              console.error("PARAMETERS USED:", { newID, CinemaHallID });
+
+                              return db.rollback(() => res.status(500).json({ message: "DB Error populating seats", details: err.message }));
+                          }
+
+                        // C. Prepare to update prices for each seat type
+                        const priceUpdates = Object.entries(priceConfig).map(([type, price]) => {
+                            return new Promise((resolve, reject) => {
+                                const updateSql = `
+                                    UPDATE Show_Seat 
+                                    SET Price = ? 
+                                    WHERE ShowID = ? AND CinemaSeatID IN (
+                                        SELECT CinemaSeatID FROM Cinema_Seat WHERE CinemaHallID = ? AND Seat_Type = ?
+                                    )
+                                `;
+                                db.query(updateSql, [price, newID, CinemaHallID, type], (err, updateResult) => {
+                                    if (err) return reject(err);
+                                    resolve(updateResult);
+                                });
+                            });
+                        });
+
+                        // D. Run all price updates
+                        Promise.all(priceUpdates)
+                            .then(() => {
+                                // E. If all updates succeed, commit the transaction
+                                db.commit(err => {
+                                    if (err) return db.rollback(() => res.status(500).json({ message: "Commit failed" }));
+                                    res.status(201).json({ success: true, message: "Show added successfully with custom prices" });
+                                });
+                            })
+                            .catch(err => db.rollback(() => res.status(500).json({ message: "Failed to update seat prices" })));
+                    });
+                });
+            });
+        });
+    });
+};
+
+exports.deleteShow = (req, res) => {
+    const user = req.session.user;
+    const { id } = req.params;
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
+    if (!id) return res.status(400).json({ message: "Bad request, show ID is required" });
+
+    // No need for a SELECT first, a direct DELETE is more efficient
+    db.query('DELETE FROM Movie_Show WHERE ShowID=?', [id], (err, response) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ message: "DB Error" });
+        }
+        if (response.affectedRows > 0) {
+            return res.status(200).json({ success: true, message: "Show Deleted" });
+        }
+        return res.status(404).json({ message: "Show not found" });
+    });
+};
+
+exports.editShow = (req, res) => {
+    const { id } = req.params; // The ID of the show to edit
+    const { MovieID, CinemaHallID, Show_Date, StartTime, Format, Show_Language, priceConfig } = req.body;
+    const user = req.session.user;
+
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
+    if (!id || !MovieID || !CinemaHallID || !Show_Date || !StartTime || !Format || !Show_Language || !priceConfig) {
+        return res.status(400).json({ message: "All fields, including price configuration, are required." });
     }
-    db.query("SELECT max(ShowID) as maxid from Movie_Show",(err,result)=>{
-      if(err){
-      console.log(err)
-      return res.status(500).json({message:"DB Error"});
 
-    }
+    db.beginTransaction(err => {
+        if (err) return res.status(500).json({ message: "Transaction Error" });
 
-      const newID= (result[0].maxid || 0 ) + 1;
+        // Get the movie's duration to recalculate EndTime
+        db.query('SELECT Duration FROM Movie WHERE MovieID = ?', [MovieID], (err, movieResult) => {
+            if (err) return db.rollback(() => res.status(500).json({ message: "DB error finding movie" }));
+            if (movieResult.length === 0) return db.rollback(() => res.status(404).json({ message: "Movie not found" }));
 
-      const sql='INSERT INTO Movie_Show(ShowID,Show_Date,StartTime,EndTime,CinemaHallID,MovieID,Format,Show_Language) VALUES(?,?,?,?,?,?,?,?)';
-      db.query(sql,[newID,Show_Date,StartTime,EndTime,CinemaHallID,MovieID,Format,Show_Language],(err,result)=>{
-        if(err){
-      console.log(err)
-      return res.status(500).json({message:"DB Error"});
-      }
+            const movieDuration = movieResult[0].Duration;
+            const fullStartTime = `${Show_Date} ${StartTime}`;
+            
+            // A. Update the main show record
+            const sqlShowUpdate = `
+                UPDATE Movie_Show 
+                SET Show_Date = ?, StartTime = ?, EndTime = ADDTIME(?, ?), CinemaHallID = ?, 
+                    MovieID = ?, Format = ?, Show_Language = ?
+                WHERE ShowID = ?
+            `;
+            db.query(sqlShowUpdate, [Show_Date, fullStartTime, fullStartTime, movieDuration, CinemaHallID, MovieID, Format, Show_Language, id], (err, result) => {
+                if (err) return db.rollback(() => res.status(500).json({ message: "DB Error updating show" }));
 
-      if(result.affectedRows){
-        return res.status(201).json({success:true,message:"Added show"});
-      };
-      })
+                // B. Prepare price updates for each seat type
+                const priceUpdates = Object.entries(priceConfig).map(([type, price]) => {
+                    return new Promise((resolve, reject) => {
+                        const updateSql = `
+                            UPDATE Show_Seat 
+                            SET Price = ? 
+                            WHERE ShowID = ? AND CinemaSeatID IN (
+                                SELECT CinemaSeatID FROM Cinema_Seat WHERE CinemaHallID = ? AND Seat_Type = ?
+                            )
+                        `;
+                        db.query(updateSql, [price, id, CinemaHallID, type], (err, updateResult) => {
+                            if (err) return reject(err);
+                            resolve(updateResult);
+                        });
+                    });
+                });
 
-    })
-  })
-
-}
-
-exports.getAllShows=(req,res)=>{
-  db.query("SELECT * FROM Movie_Show",(err,results)=>{
-    if(err){
-      console.log(err)
-      return res.status(500).json({message:"DB Error"});
-
-    }
-
-    return res.status(200).json({shows:results.length > 0 ? results:[]})
-  })
-}
-
-exports.deleteShow=(req,res)=>{
-  const user=req.session.user
-  const {id}=req.params
-  if(!user || !user?.isAdmin)return res.status(400).json({message:"Unauthorized"});
-  if(!id)return res.status(400).json({message:"Bad request, No id"});
-
-  db.query('SELECT * from Movie_Show WHERE ShowID=? ',[id],(err,result)=>{
-    if(err){
-      console.log(err)
-      return res.status(500).json({message:"DB Error"});
-
-    }
-
-    if(!result.length >0)return res.status(404).json({message:"No data found"});
-
-    db.query('DELETE FROM Movie_Show WHERE ShowID=?',[id],(err,response)=>{
-      if(err){
-      console.log(err)
-      return res.status(500).json({message:"DB Error"});
-
-    }
-
-    if(response.affectedRows>0){
-      return res.status(200).json({message:"Show Deleted"});
-    }
-    return res.status(400).json({message:"Some error Occurred"});
-    })
-  })
-
-}
+                // C. Run all price updates
+                Promise.all(priceUpdates)
+                    .then(() => {
+                        // D. If all updates succeed, commit the transaction
+                        db.commit(err => {
+                            if (err) return db.rollback(() => res.status(500).json({ message: "Commit failed" }));
+                            res.status(200).json({ success: true, message: "Show updated successfully" });
+                        });
+                    })
+                    .catch(err => db.rollback(() => res.status(500).json({ message: "Failed to update seat prices", error: err })));
+            });
+        });
+    });
+};

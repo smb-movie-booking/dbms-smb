@@ -6,7 +6,7 @@ const {upload, uploadToCloudinary } = require('../middlewares/multer');
 // Flush route: /admin/flush
 router.post('/flush', adminController.flushAllTables);
 //router.post('/register', adminController.registerAdmin);
-router.post('/addcity',adminController.createNewCity)
+router.post('/cities',adminController.createNewCity)
 router.get('/cities',adminController.getAllCities)
 router.delete('/cities/:id',adminController.deleteCity);
 
@@ -17,17 +17,19 @@ router.delete('/cinemas/:id',adminController.deleteCinemas);
 
 router.post('/cinema-halls',adminController.addNewCinemaHall);
 router.get('/cinema-halls',adminController.getAllCinemaHalls);
+router.delete('/cinema-halls/:id', adminController.deleteCinemaHall);
 router.get('/detail/halls',adminController.getHallPlusCinemaName);
 
-router.post('/cinema-seats',adminController.addSeats);
+router.get('/cinema-seats', adminController.getCinemaSeats);
 
 router.post('/movie',upload.single("file"),uploadToCloudinary,adminController.addMovie)
 router.get('/movie',adminController.getMovies)
 router.delete('/movie/:id',adminController.deleteMovie)
 
 
-router.post('/shows',adminController.addNewShow)
-router.get('/view-shows',adminController.getAllShows)
-router.delete('/delete-shows/:id',adminController.deleteShow)
+router.post('/shows', adminController.addNewShow);
+router.get('/view-shows', adminController.getAllShows); // The name is fine, it's what the frontend calls
+router.delete('/shows/:id', adminController.deleteShow); 
+router.put('/shows/:id', adminController.editShow);
 
 module.exports = router;

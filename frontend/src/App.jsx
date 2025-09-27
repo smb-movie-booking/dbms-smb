@@ -10,9 +10,9 @@ import toast, { Toaster } from 'react-hot-toast';
 import ResetPassword from './pages/ResetPassword/ResetPassword';
 import EditProfile from './pages/EditProfile/EditProfile';
 import ProtectedAdmin from './components/ProtectedAdmin';
-import { adminRoutes } from "./routes/adminRoutes";
 import MovieDetails from './pages/MovieDetails/MovieDetails';
 import Skeleton from './components/Skeleton/Skeleton';
+import AdminManagement from './pages/Admin/AdminManagement/AdminManagement'; 
 
 function App() {
   const { getUser } = useAuth();
@@ -38,16 +38,21 @@ function App() {
       <Navbar selectedCity={selectedCity} onCityChange={setSelectedCity} />
 
       <Routes>
-  <Route path='/' element={<Home selectedCity={selectedCity} />} />
-  <Route path='/login' element={!authUser ? <Login /> : <Navigate to="/" />} />
-  <Route path='/register' element={!authUser ? <Register /> : <Navigate to="/" />} />
-  <Route path='/reset-password' element={!authUser ? <ResetPassword /> : <Navigate to="/" />} />
-  <Route path='/:userid/edit' element={authUser ? <EditProfile /> : <Login />} />
-  <Route path='/movies/:movieId' element={<MovieDetails />} />
-  {adminRoutes.map(({ path, element }, index) => (
-    <Route key={index} path={path} element={<ProtectedAdmin>{element}</ProtectedAdmin>} />
-  ))}
-</Routes>
+        <Route path='/' element={<Home selectedCity={selectedCity} />} />
+        <Route path='/login' element={!authUser ? <Login /> : <Navigate to="/" />} />
+        <Route path='/register' element={!authUser ? <Register /> : <Navigate to="/" />} />
+        <Route path='/reset-password' element={!authUser ? <ResetPassword /> : <Navigate to="/" />} />
+        <Route path='/:userid/edit' element={authUser ? <EditProfile /> : <Login />} />
+        <Route path='/movies/:movieId' element={<MovieDetails />} />
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedAdmin>
+              <AdminManagement />
+            </ProtectedAdmin>
+          } 
+        />
+      </Routes>
 
     </>
   );

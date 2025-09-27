@@ -32,7 +32,6 @@ CREATE TABLE City (
 CREATE TABLE Cinema (
     CinemaID INT PRIMARY KEY,
     Cinema_Name VARCHAR(64),
-    TotalCinemaHalls INT,
     CityID INT,
     Facilities VARCHAR(255),
     Cancellation_Allowed BOOLEAN DEFAULT FALSE,
@@ -44,7 +43,6 @@ CREATE TABLE Cinema (
 CREATE TABLE Cinema_Hall (
     CinemaHallID INT PRIMARY KEY,
     Hall_Name VARCHAR(64),
-    TotalSeats INT,
     CinemaID INT,
     FOREIGN KEY (CinemaID) REFERENCES Cinema(CinemaID) ON DELETE CASCADE -- If a cinema is deleted, remove its halls
 );
@@ -52,9 +50,9 @@ CREATE TABLE Cinema_Hall (
 CREATE TABLE Cinema_Seat (
     CinemaSeatID INT PRIMARY KEY,
     SeatNumber INT,
-    Seat_Type INT,
+    Seat_Type ENUM('Standard', 'Premium', 'Recliner', 'Sofa', 'Box') NOT NULL,
     CinemaHallID INT,
-    FOREIGN KEY (CinemaHallID) REFERENCES Cinema_Hall(CinemaHallID) ON DELETE CASCADE -- If a hall is deleted, remove its seats
+    FOREIGN KEY (CinemaHallID) REFERENCES Cinema_Hall(CinemaHallID) ON DELETE CASCADE
 );
 
 CREATE TABLE Movie (
@@ -100,7 +98,7 @@ CREATE TABLE Booking (
 );
 
 CREATE TABLE Show_Seat (
-    ShowSeatID INT PRIMARY KEY,
+    ShowSeatID INT PRIMARY KEY AUTO_INCREMENT,
     Seat_Status INT,
     Price DECIMAL(10,2),
     CinemaSeatID INT,

@@ -35,17 +35,17 @@ INSERT INTO City (CityID, City_Name, City_State, ZipCode) VALUES
 (10, 'Kochi', 'Kerala', '395001');
 
 -- ### Data for Cinema Table ###
-INSERT INTO Cinema (CinemaID, Cinema_Name, TotalCinemaHalls, CityID, Facilities, Cancellation_Allowed) VALUES
-(1, 'PVR Icon', 5, 10, 'Parking,Dolby,Recliner', 1),
-(2, 'INOX Insignia', 4, 10, 'Parking,Dolby,Recliner,Cafe', 1),
-(3, 'Cinepolis VIP', 6, 10, 'Parking,IMAX,4DX,Recliner', 1),
-(4, 'Miraj Cinemas', 3, 10, 'Parking,Dolby', 0),
-(5, 'SPI Cinemas', 8, 10, 'Parking,Dolby Atmos,Recliner', 1),
-(6, 'Carnival Cinemas', 4, 10, 'Parking,Cafe', 0),
-(7, 'City Pride', 5, 10, 'Parking,Dolby', 1),
-(8, 'Mukta A2 Cinemas', 3, 10, 'Parking', 0),
-(9, 'Raj Mandir Cinema', 1, 10, 'Heritage,Cafe', 0),
-(10, 'PVR Cinemas', 7, 10, 'Parking,Dolby,Recliner', 1);
+INSERT INTO Cinema (CinemaID, Cinema_Name, CityID, Facilities, Cancellation_Allowed) VALUES
+(1, 'PVR Icon', 10, 'Parking,Dolby,Recliner', 1),
+(2, 'INOX Insignia', 10, 'Parking,Dolby,Recliner,Cafe', 1),
+(3, 'Cinepolis VIP', 10, 'Parking,IMAX,4DX,Recliner', 1),
+(4, 'Miraj Cinemas', 10, 'Parking,Dolby', 0),
+(5, 'SPI Cinemas', 10, 'Parking,Dolby Atmos,Recliner', 1),
+(6, 'Carnival Cinemas', 10, 'Parking,Cafe', 0),
+(7, 'City Pride', 10, 'Parking,Dolby', 1),
+(8, 'Mukta A2 Cinemas', 10, 'Parking', 0),
+(9, 'Raj Mandir Cinema', 10, 'Heritage,Cafe', 0),
+(10, 'PVR Cinemas', 10, 'Parking,Dolby,Recliner', 1);
 
 -- ### Data for Cinema_Hall and Cinema_Seat Tables ###
 DROP PROCEDURE IF EXISTS PopulateHallsAndSeats;
@@ -64,14 +64,26 @@ BEGIN
         SELECT TotalCinemaHalls INTO total_halls FROM Cinema WHERE CinemaID = i;
         SET j = 1;
         WHILE j <= total_halls DO
-            SET total_seats = 100 + FLOOR(RAND() * 50);
+            SET total_seats = 100 + FLOOR(RAND() * 50); -- Random seats between 100 and 150
             INSERT INTO Cinema_Hall (CinemaHallID, Hall_Name, TotalSeats, CinemaID)
             VALUES (hall_id, CONCAT('Hall ', j), total_seats, i);
 
             SET k = 1;
             WHILE k <= total_seats DO
                 INSERT INTO Cinema_Seat (CinemaSeatID, SeatNumber, Seat_Type, CinemaHallID)
-                VALUES (seat_id, k, IF(k > total_seats - 20, 2, 1), hall_id);
+                VALUES (
+                    seat_id,
+                    k,
+                    -- Use all 5 ENUM options to create realistic sections
+                    CASE
+                        WHEN k <= 4 THEN 'Sofa'                         -- First 4 seats are Sofas
+                        WHEN k > 4 AND k <= 8 THEN 'Box'              -- Next 4 are exclusive Box seats
+                        WHEN k > total_seats - 10 THEN 'Recliner'      -- Last 10 seats are Recliners
+                        WHEN k > total_seats - 30 THEN 'Premium'       -- The 20 seats before that are Premium
+                        ELSE 'Standard'                               -- All others are Standard
+                    END,
+                    hall_id
+                );
                 SET seat_id = seat_id + 1;
                 SET k = k + 1;
             END WHILE;
