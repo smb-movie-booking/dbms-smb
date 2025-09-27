@@ -50,7 +50,13 @@ export default function ViewMovies() {
           </thead>
           <tbody>
             {movies.map((m) => (
-              <tr key={m.MovieID}>
+              <tr
+                key={m.MovieID}
+                style={{
+                  opacity: m.isActive ? 1 : 0.5, // grey out if not active
+                  backgroundColor: m.isActive ? "inherit" : "#f5f5f5",
+                }}
+              >
                 <td>{m.MovieID}</td>
                 <td>{m.Title}</td>
                 <td>{m.Movie_Description}</td>
@@ -78,11 +84,14 @@ export default function ViewMovies() {
                   )}
                 </td>
                 <td>
-                  <button onClick={() => handleDelete(m.MovieID)}>Delete</button>
+                  <button onClick={() => handleDelete(m.MovieID)}>
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
+
         </table>
       </div>
     </>

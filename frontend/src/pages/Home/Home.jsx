@@ -75,177 +75,102 @@ const Home = ({ selectedCity }  ) => {
 
   return (
     <>
-    <style>{`
-        .cont {
-            background: #f5f5f5;
-            min-height: 100vh;
-            padding: 0 2rem;
-        }
+<style>{`
+/* ---------- Page + layout ---------- */
+.cont {
+  background: #f5f5f5;
+  min-height: 100vh;
+  padding: 0 2rem;
+  box-sizing: border-box;
+}
 
-        /* Secondary Navigation Bar Styles */
-        .home-secondary-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            background-color: #333545;
-            color: #cccccc;
-            font-size: 12px;
-        }
+/* Main content layout */
+.home-container {
+  display: flex;
+  gap: 2rem;
+  padding-top: 2rem;
+}
 
-        .home-secondary-nav .nav-left,
-        .home-secondary-nav .nav-right {
-            display: flex;
-            gap: 1.5rem;
-            padding: 0 24px;
-        }
+/* ---------- Filters (kept as before) ---------- */
+.filters-section { width: 280px; flex-shrink: 0; background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: fit-content; }
+.filters-section h2{ font-size:1.25rem; margin-bottom:1.5rem; color:#333; }
+.filter-group{ margin-bottom:1.5rem; }
+.filter-group h3{ font-size:0.9rem; color:#555; margin-bottom:0.75rem; font-weight:500; border-bottom:1px solid #eee; padding-bottom:0.5rem; }
+.filter-options { display:flex; flex-wrap:wrap; gap:.5rem; }
+.filter-btn { background:none; border:1px solid #f84464; color:#f84464; padding:.3rem .8rem; border-radius:20px; cursor:pointer; font-size:.8rem; transition:all .15s ease; }
+.filter-btn.active, .filter-btn:hover { background:#f84464; color:#fff; }
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem;
+  align-items: start; /* This is still good to have */
+  flex: 1;          /* ✅ Add this line to make the grid expand */
+}
 
-        .home-secondary-nav span {
-            cursor: pointer;
-        }
+.movies-section {
+  flex: 1;
+}
 
-        .home-secondary-nav span:hover {
-            color: #ffffff;
-        }
+.movie-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  position: relative;
+  /* REMOVE min-height or flex-grow */
+}
 
-        /* Main content layout */
-        .home-container {
-            display: flex;
-            gap: 2rem;
-            padding-top: 2rem;
-        }
 
-        /* Filters Section Styles */
-        .filters-section {
-            width: 280px;
-            flex-shrink: 0;
-            background: #fff;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            height: fit-content;
-        }
+.movie-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+  z-index: 10;
+}
 
-        .filters-section h2 {
-            font-size: 1.25rem;
-            margin-bottom: 1.5rem;
-            color: #333;
-        }
+.movie-card img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+}
 
-        .filter-group {
-            margin-bottom: 1.5rem;
-        }
+/* Info section */
+.movie-info {
+  padding: 1rem;
+  text-align: left; 
+}
+.movie-info h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-height: 2.4rem; /* ✅ Add this line */
+}
 
-        .filter-group h3 {
-            font-size: 0.9rem;
-            color: #555;
-            margin-bottom: 0.75rem;
-            font-weight: 500;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 0.5rem;
-        }
+.movie-info p {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
 
-        .filter-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
 
-        .filter-btn {
-            background: none;
-            border: 1px solid #f84464;
-            color: #f84464;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s ease;
-        }
+/* ---------- Responsive tweaks ---------- */
+@media (max-width: 600px) {
+  .movie-card img { height: 220px; }
+  .filters-section { display:none; } /* small screens hide filters (optional) */
+}
 
-        .filter-btn:hover {
-            background-color: #f84464;
-            color: #fff;
-        }
+/* ---------- Debugging helpers (temporary; remove if not needed) ---------- */
+/* .movie-card { outline: 1px solid rgba(0,0,0,0.03); } */
+`}</style>
 
-        .filter-btn.active {
-            background-color: #f84464;
-            color: #fff;
-        }
-
-        .browse-cinemas-btn {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 8px;
-            border: 1px solid #f84464;
-            background: transparent;
-            color: #f84464;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-top: 1rem;
-            transition: all 0.2s ease;
-        }
-
-        .browse-cinemas-btn:hover {
-             background-color: #f84464;
-            color: #fff;
-        }
-
-        /* Movies Section Styles */
-        .movies-section {
-            flex-grow: 1;
-        }
-
-        .movies-section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            color: #333;
-        }
-
-        .movie-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 2rem;
-        }
-
-        .movie-card {
-            background: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .movie-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        .movie-card img {
-            width: 100%;
-            height: 300px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .movie-info {
-            padding: 1rem;
-        }
-
-        .movie-info h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .movie-info p {
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: 0.25rem;
-        }
-    `}</style>
     <div className='cont'>
         
         {/* Main content area with filters and movie list */}

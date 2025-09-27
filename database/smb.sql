@@ -34,11 +34,11 @@ CREATE TABLE Cinema (
     Cinema_Name VARCHAR(64),
     TotalCinemaHalls INT,
     CityID INT,
-    Facilities VARCHAR(255),  -- e.g., 'Parking,Dolby,Recliner'
+    Facilities VARCHAR(255),
     Cancellation_Allowed BOOLEAN DEFAULT FALSE,
     Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
     Updated_At DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (CityID) REFERENCES City(CityID)
+    FOREIGN KEY (CityID) REFERENCES City(CityID) ON DELETE CASCADE -- If a city is deleted, remove its cinemas
 );
 
 CREATE TABLE Cinema_Hall (
@@ -46,15 +46,15 @@ CREATE TABLE Cinema_Hall (
     Hall_Name VARCHAR(64),
     TotalSeats INT,
     CinemaID INT,
-    FOREIGN KEY (CinemaID) REFERENCES Cinema(CinemaID)
+    FOREIGN KEY (CinemaID) REFERENCES Cinema(CinemaID) ON DELETE CASCADE -- If a cinema is deleted, remove its halls
 );
 
 CREATE TABLE Cinema_Seat (
     CinemaSeatID INT PRIMARY KEY,
     SeatNumber INT,
-    Seat_Type INT,  -- You can change this to ENUM if needed
+    Seat_Type INT,
     CinemaHallID INT,
-    FOREIGN KEY (CinemaHallID) REFERENCES Cinema_Hall(CinemaHallID)
+    FOREIGN KEY (CinemaHallID) REFERENCES Cinema_Hall(CinemaHallID) ON DELETE CASCADE -- If a hall is deleted, remove its seats
 );
 
 CREATE TABLE Movie (
@@ -70,7 +70,6 @@ CREATE TABLE Movie (
     Age_Format VARCHAR(8),  -- e.g., UA16, A, U
     Poster_Image_URL VARCHAR(255),
     Trailer_URL VARCHAR(255),
-    IsActive BOOLEAN DEFAULT TRUE,
     Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
     Updated_At DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -82,10 +81,11 @@ CREATE TABLE Movie_Show (
     EndTime DATETIME,
     CinemaHallID INT,
     MovieID INT,
-    Format VARCHAR(16),     -- e.g., '2D', '3D', 'IMAX'
-    Show_Language VARCHAR(16),   -- overrides Movie.Movie_Language if needed
-    FOREIGN KEY (CinemaHallID) REFERENCES Cinema_Hall(CinemaHallID),
-    FOREIGN KEY (MovieID) REFERENCES Movie(MovieID)
+    Format VARCHAR(16),
+    Show_Language VARCHAR(16),
+    isActive BOOLEAN NOT NULL DEFAULT FALSE, -- Added this line
+    FOREIGN KEY (CinemaHallID) REFERENCES Cinema_Hall(CinemaHallID) ON DELETE CASCADE,
+    FOREIGN KEY (MovieID) REFERENCES Movie(MovieID) ON DELETE CASCADE
 );
 
 CREATE TABLE Booking (
@@ -93,12 +93,11 @@ CREATE TABLE Booking (
     NumberOfSeats INT,
     Booking_Timestamp DATETIME,
     Booking_Status INT,
-    UserID INT,
+    UserID INT, -- Note: Made nullable for ON DELETE SET NULL
     ShowID INT,
-    FOREIGN KEY (UserID) REFERENCES User(UserID),
-    FOREIGN KEY (ShowID) REFERENCES Movie_Show(ShowID)
+    FOREIGN KEY (UserID) REFERENCES User(UserID) ON DELETE SET NULL, -- Safer: If a user is deleted, keep the booking record but unlink the user
+    FOREIGN KEY (ShowID) REFERENCES Movie_Show(ShowID) ON DELETE CASCADE -- If a show is deleted, remove its bookings
 );
-
 
 CREATE TABLE Show_Seat (
     ShowSeatID INT PRIMARY KEY,
@@ -106,10 +105,10 @@ CREATE TABLE Show_Seat (
     Price DECIMAL(10,2),
     CinemaSeatID INT,
     ShowID INT,
-    BookingID INT,
-    FOREIGN KEY (CinemaSeatID) REFERENCES Cinema_Seat(CinemaSeatID),
-    FOREIGN KEY (ShowID) REFERENCES Movie_Show(ShowID),
-    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID)
+    BookingID INT, -- This must be nullable (which it is by default)
+    FOREIGN KEY (CinemaSeatID) REFERENCES Cinema_Seat(CinemaSeatID) ON DELETE CASCADE,
+    FOREIGN KEY (ShowID) REFERENCES Movie_Show(ShowID) ON DELETE CASCADE,
+    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID) ON DELETE SET NULL -- ✅ Corrected Logic
 );
 
 
@@ -119,20 +118,20 @@ CREATE TABLE Payment (
     Payment_Timestamp DATETIME,
     DiscountCouponID INT,
     RemoteTransactionID INT,
-    PaymentMethod INT,  -- ENUM recommended for method
+    PaymentMethod INT,
     BookingID INT,
-    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID)
+    FOREIGN KEY (BookingID) REFERENCES Booking(BookingID) ON DELETE CASCADE -- If a booking is deleted, remove its payment record
 );
 
 CREATE TABLE Review (
     ReviewID INT PRIMARY KEY AUTO_INCREMENT,
-    UserID INT,
+    UserID INT NOT NULL, -- You can make this NOT NULL now
     MovieID INT,
     Rating DECIMAL(2,1),
     Comment VARCHAR(512),
     Review_Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (UserID) REFERENCES User(UserID),
-    FOREIGN KEY (MovieID) REFERENCES Movie(MovieID)
+    FOREIGN KEY (UserID) REFERENCES User(UserID) ON DELETE CASCADE, -- ✅ If a user is deleted, delete their reviews
+    FOREIGN KEY (MovieID) REFERENCES Movie(MovieID) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_movie_language ON Movie(Movie_Language);
@@ -183,3 +182,50 @@ END$$
 
 DELIMITER ;
 
+CREATE EVENT ev_update_show_status
+ON SCHEDULE EVERY 1 MINUTE
+DO
+  UPDATE Movie_Show
+  SET Format = 'EXPIRED'
+  WHERE EndTime < NOW();
+
+DELIMITER $$
+
+CREATE TRIGGER trg_after_review_insert
+AFTER INSERT ON Review
+FOR EACH ROW
+BEGIN
+    UPDATE Movie
+    SET Rating = (SELECT AVG(Rating) FROM Review WHERE MovieID = NEW.MovieID)
+    WHERE MovieID = NEW.MovieID;
+END$$
+
+DELIMITER ;
+
+
+
+DELIMITER $$
+
+CREATE TRIGGER trg_after_review_update
+AFTER UPDATE ON Review
+FOR EACH ROW
+BEGIN
+    UPDATE Movie
+    SET Rating = (SELECT AVG(Rating) FROM Review WHERE MovieID = NEW.MovieID)
+    WHERE MovieID = NEW.MovieID;
+END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_after_review_delete
+AFTER DELETE ON Review
+FOR EACH ROW
+BEGIN
+    UPDATE Movie
+    SET Rating = (SELECT AVG(Rating) FROM Review WHERE MovieID = OLD.MovieID)
+    WHERE MovieID = OLD.MovieID;
+END$$
+
+DELIMITER ;

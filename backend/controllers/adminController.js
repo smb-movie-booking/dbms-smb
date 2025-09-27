@@ -435,10 +435,18 @@ exports.addMovie = (req, res) => {
 exports.getMovies = (req, res) => {
   const sql = `
     SELECT 
-      MovieID, Title, Movie_Description, Duration, Movie_Language,
-      ReleaseDate, Country, Genre, Rating, Age_Format, Trailer_URL, Poster_Image_URL, IsActive
-    FROM Movie
-    ORDER BY Created_At DESC
+      m.MovieID, m.Title, m.Movie_Description, m.Duration, m.Movie_Language,
+      m.ReleaseDate, m.Country, m.Genre, m.Rating, m.Age_Format,
+      m.Trailer_URL, m.Poster_Image_URL,
+      CASE 
+        WHEN EXISTS (
+          SELECT 1 FROM Movie_Show s 
+          WHERE s.MovieID = m.MovieID AND s.EndTime > NOW()
+        ) 
+        THEN TRUE ELSE FALSE 
+      END AS isActive
+    FROM Movie m
+    ORDER BY m.Created_At DESC
   `;
 
   db.query(sql, (err, results) => {
@@ -450,6 +458,7 @@ exports.getMovies = (req, res) => {
     return res.status(200).json({ movies: results });
   });
 };
+
 
 
 exports.deleteMovie=(req,res)=>{
@@ -501,7 +510,7 @@ exports.addNewShow=(req,res)=>{
     if (show[0]){
       return res.status(401).json({success:false,message:"Already a show Scheduled"})
     }
-    db.query("SELECT max(ShowID) as maxid from movie_show",(err,result)=>{
+    db.query("SELECT max(ShowID) as maxid from Movie_Show",(err,result)=>{
       if(err){
       console.log(err)
       return res.status(500).json({message:"DB Error"});
@@ -510,7 +519,7 @@ exports.addNewShow=(req,res)=>{
 
       const newID= (result[0].maxid || 0 ) + 1;
 
-      const sql='INSERT INTO movie_show(ShowID,Show_Date,StartTime,EndTime,CinemaHallID,MovieID,Format,Show_Language) VALUES(?,?,?,?,?,?,?,?)';
+      const sql='INSERT INTO Movie_Show(ShowID,Show_Date,StartTime,EndTime,CinemaHallID,MovieID,Format,Show_Language) VALUES(?,?,?,?,?,?,?,?)';
       db.query(sql,[newID,Show_Date,StartTime,EndTime,CinemaHallID,MovieID,Format,Show_Language],(err,result)=>{
         if(err){
       console.log(err)
@@ -528,7 +537,7 @@ exports.addNewShow=(req,res)=>{
 }
 
 exports.getAllShows=(req,res)=>{
-  db.query("SELECT * FROM movie_show",(err,results)=>{
+  db.query("SELECT * FROM Movie_Show",(err,results)=>{
     if(err){
       console.log(err)
       return res.status(500).json({message:"DB Error"});
@@ -545,7 +554,7 @@ exports.deleteShow=(req,res)=>{
   if(!user || !user?.isAdmin)return res.status(400).json({message:"Unauthorized"});
   if(!id)return res.status(400).json({message:"Bad request, No id"});
 
-  db.query('SELECT * from movie_show WHERE ShowID=? ',[id],(err,result)=>{
+  db.query('SELECT * from Movie_Show WHERE ShowID=? ',[id],(err,result)=>{
     if(err){
       console.log(err)
       return res.status(500).json({message:"DB Error"});
@@ -554,7 +563,7 @@ exports.deleteShow=(req,res)=>{
 
     if(!result.length >0)return res.status(404).json({message:"No data found"});
 
-    db.query('DELETE FROM movie_show WHERE ShowID=?',[id],(err,response)=>{
+    db.query('DELETE FROM Movie_Show WHERE ShowID=?',[id],(err,response)=>{
       if(err){
       console.log(err)
       return res.status(500).json({message:"DB Error"});
