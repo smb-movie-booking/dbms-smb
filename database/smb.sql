@@ -184,7 +184,7 @@ CREATE EVENT ev_update_show_status
 ON SCHEDULE EVERY 1 MINUTE
 DO
   UPDATE Movie_Show
-  SET Format = 'EXPIRED'
+  SET Format = 'EXPIRED' , isActive = FALSE
   WHERE EndTime < NOW();
 
 DELIMITER $$

@@ -628,3 +628,28 @@ exports.editShow = (req, res) => {
         });
     });
 };
+
+exports.updateShowStatus = (req, res) => {
+    const { id } = req.params;
+    const { isActive } = req.body;
+        const user = req.session.user;
+
+     if (!user || !user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
+
+    if (typeof isActive !== 'boolean') {
+        return res.status(400).json({ message: 'Request body must include an `isActive` boolean property.' });
+    }
+
+    const sql = "UPDATE Movie_Show SET isActive = ? WHERE ShowID = ?";
+    
+    db.query(sql, [isActive, id], (err, result) => {
+        if (err) {
+            console.error("Error updating show status:", err);
+            return res.status(500).json({ message: "Database error while updating show status." });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Show not found." });
+        }
+        res.status(200).json({ message: "Show status updated successfully." });
+    });
+};

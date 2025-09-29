@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 import { axiosInstance } from '../../../utils/axios';
 import toast from 'react-hot-toast';
 
@@ -241,6 +241,7 @@ const AddMovieForm = ({ onMovieAdded, onCancel }) => {
 };
 
 const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialData }) => { 
+    const formRef = useRef(null);
     // Determine if we are in "edit" mode
     const isEditMode = Boolean(initialData);
 
@@ -268,12 +269,6 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
             // Fetch prices for the existing show to populate price fields
             const fetchShowPrices = async () => {
                 try {
-                    // NOTE: You might need to create a new backend endpoint for this
-                    // For now, we'll assume a simplified logic or placeholder
-                    // A proper implementation would be: GET /admin/shows/:id/prices
-                    // As a workaround, we can't easily get prices here without another API call.
-                    // For this example, we will leave prices blank to be re-entered.
-                    // A full solution would require a GET endpoint for a single show's seat prices.
                     toast.success("Editing show. Please re-enter all seat prices.");
                 } catch (error) {
                     toast.error("Could not fetch existing prices.");
@@ -282,6 +277,24 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
             fetchShowPrices();
         }
     }, [initialData, isEditMode]);
+
+    useEffect(() => {
+        // Function to handle clicks
+        const handleClickOutside = (event) => {
+            // If the ref is attached and the click was not inside the form
+            if (formRef.current && !formRef.current.contains(event.target)) {
+                onCancel(); // Call the onCancel function passed in props
+            }
+        };
+
+        // Add the event listener to the whole document
+        document.addEventListener("mousedown", handleClickOutside);
+
+        // This is the cleanup function that removes the listener
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [onCancel]); // The effect depends on the onCancel function
 
 
     const handlePriceChange = (type, value) => {
@@ -320,7 +333,7 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
     };
 
     return (
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px', marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
+        <form ref={formRef} onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px', marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
             {/* Change title based on mode */}
             <h4>{isEditMode ? `Edit Show in ${hall.Hall_Name}`: `Add New Show to ${hall.Hall_Name}`}</h4>
             {/* ... rest of the form is the same ... */}
@@ -458,6 +471,28 @@ export default function AdminManagement() {
       setEditingShow(null); // Clear editing state on success
   };
 
+    const handleToggleShowStatus = async (showId, currentStatus) => {
+    const newStatus = !currentStatus; // Invert the current status
+    try {
+      // You will need to create this backend endpoint: PUT /admin/shows/:id/status
+      await axiosInstance.put(`/admin/shows/${showId}/status`, { isActive: newStatus });
+      toast.success(`Show booking status updated to: ${newStatus ? 'ACTIVE' : 'INACTIVE'}`);
+      
+      // OPTION 1 (Simple): Refetch all data to see the change
+      fetchData(); 
+
+      // OPTION 2 (Advanced): Update state directly for a faster UI response
+      // setAllShows(prevShows => 
+      //   prevShows.map(show => 
+      //     show.ShowID === showId ? { ...show, isActive: newStatus } : show
+      //   )
+      // );
+
+    } catch (err) {
+      toast.error("Failed to update show status.");
+    }
+  };
+
   // --- FILTERED DATA & SELECTED OBJECTS ---
   const selectedMovie = selectedMovieId ? movies.find(m => m.MovieID === parseInt(selectedMovieId)) : null;
   const filteredCinemas = selectedCityId ? allCinemas.filter(c => c.CityID === parseInt(selectedCityId)) : [];
@@ -555,6 +590,7 @@ export default function AdminManagement() {
             {/* New Header for Language */}
             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Language</th>
             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', width: '20%' }}>Seat Prices</th>
+            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Start Booking</th>
             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Action</th>
         </tr>
     </thead>
@@ -582,6 +618,20 @@ export default function AdminManagement() {
                     <span style={{color: '#888'}}>Not Set</span>
                 )}
             </td>
+
+            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input 
+                                    type="checkbox"
+                                    checked={Boolean(s.isActive)} // Ensure it's a boolean
+                                    onChange={() => handleToggleShowStatus(s.ShowID, s.isActive)}
+                                    style={{ height: '18px', width: '18px' }}
+                                />
+                                <span style={{ marginLeft: '8px' }}>
+                                    {s.isActive ? 'Active' : 'Inactive'}
+                                </span>
+                            </label>
+                        </td>
 
             <td style={{ padding: '8px', border: '1px solid #ddd', display: 'flex', gap: '5px' }}>
                 <button onClick={() => handleEditClick(s)} style={{background: 'blue', color: 'white', cursor: 'pointer'}}>Edit</button>

@@ -18,6 +18,7 @@ exports.getShowsByMovieAndTheaters = (movieId, theaterIds, date, filters, callba
       AND ch.CinemaID IN (?)
       AND DATE(ms.Show_Date) = ?
       AND ms.isActive = TRUE
+      AND ms.EndTime >= NOW() /* This is the new line */
   `;
   
   const params = [movieId, theaterIds, date];
@@ -81,6 +82,7 @@ exports.fetchShowsByTheaterAndDate = (theaterID, showDate) => {
             LEFT JOIN Show_Seat ss ON ms.ShowID = ss.ShowID
             WHERE ch.CinemaID = ? 
               AND DATE(ms.Show_Date) = ?
+              AND ms.isActive = TRUE
             ORDER BY m.MovieName, ms.StartTime ASC
         `;
 

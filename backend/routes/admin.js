@@ -31,5 +31,6 @@ router.post('/shows', adminController.addNewShow);
 router.get('/view-shows', adminController.getAllShows); // The name is fine, it's what the frontend calls
 router.delete('/shows/:id', adminController.deleteShow); 
 router.put('/shows/:id', adminController.editShow);
+router.put('/shows/:id/status',  adminController.updateShowStatus);
 
 module.exports = router;

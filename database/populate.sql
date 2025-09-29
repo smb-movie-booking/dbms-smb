@@ -34,18 +34,128 @@ INSERT INTO City (CityID, City_Name, City_State, ZipCode) VALUES
 (9, 'Jaipur', 'Rajasthan', '302001'),
 (10, 'Kochi', 'Kerala', '395001');
 
--- ### Data for Cinema Table ###
+-- ### Data for Cinema Table (10 cinemas per city) ###
 INSERT INTO Cinema (CinemaID, Cinema_Name, CityID, Facilities, Cancellation_Allowed) VALUES
-(1, 'PVR Icon', 10, 'Parking,Dolby,Recliner', 1),
-(2, 'INOX Insignia', 10, 'Parking,Dolby,Recliner,Cafe', 1),
-(3, 'Cinepolis VIP', 10, 'Parking,IMAX,4DX,Recliner', 1),
-(4, 'Miraj Cinemas', 10, 'Parking,Dolby', 0),
-(5, 'SPI Cinemas', 10, 'Parking,Dolby Atmos,Recliner', 1),
-(6, 'Carnival Cinemas', 10, 'Parking,Cafe', 0),
-(7, 'City Pride', 10, 'Parking,Dolby', 1),
-(8, 'Mukta A2 Cinemas', 10, 'Parking', 0),
-(9, 'Raj Mandir Cinema', 10, 'Heritage,Cafe', 0),
-(10, 'PVR Cinemas', 10, 'Parking,Dolby,Recliner', 1);
+-- Mumbai (CityID 1)
+(1, 'PVR Mumbai Central', 1, 'Parking,Dolby,Recliner', 1),
+(2, 'INOX Phoenix', 1, 'Parking,Dolby,Recliner,Cafe', 1),
+(3, 'Cinepolis Mumbai', 1, 'Parking,IMAX,4DX,Recliner', 1),
+(4, 'Carnival Mumbai', 1, 'Parking,Cafe', 0),
+(5, 'Miraj Cinemas Mumbai', 1, 'Parking,Dolby', 1),
+(6, 'City Pride Mumbai', 1, 'Parking,Dolby,Recliner', 1),
+(7, 'Mukta A2 Mumbai', 1, 'Parking', 0),
+(8, 'Raj Mandir Mumbai', 1, 'Heritage,Cafe', 0),
+(9, 'PVR Juhu', 1, 'Parking,Dolby Atmos,Recliner', 1),
+(10, 'INOX Worli', 1, 'Parking,Dolby', 1),
+
+-- Delhi (CityID 2)
+(11, 'PVR Saket', 2, 'Parking,Dolby,Recliner', 1),
+(12, 'INOX Select Citywalk', 2, 'Parking,Dolby,Recliner,Cafe', 1),
+(13, 'Cinepolis Delhi', 2, 'Parking,IMAX,4DX,Recliner', 1),
+(14, 'Carnival Delhi', 2, 'Parking,Cafe', 0),
+(15, 'Miraj Cinemas Delhi', 2, 'Parking,Dolby', 1),
+(16, 'City Pride Delhi', 2, 'Parking,Dolby,Recliner', 1),
+(17, 'Mukta A2 Delhi', 2, 'Parking', 0),
+(18, 'Raj Mandir Delhi', 2, 'Heritage,Cafe', 0),
+(19, 'PVR Connaught Place', 2, 'Parking,Dolby Atmos,Recliner', 1),
+(20, 'INOX Vasant Kunj', 2, 'Parking,Dolby', 1),
+
+-- Bangalore (CityID 3)
+(21, 'PVR Bangalore Central', 3, 'Parking,Dolby,Recliner', 1),
+(22, 'INOX Orion', 3, 'Parking,Dolby,Recliner,Cafe', 1),
+(23, 'Cinepolis Bangalore', 3, 'Parking,IMAX,4DX,Recliner', 1),
+(24, 'Carnival Bangalore', 3, 'Parking,Cafe', 0),
+(25, 'Miraj Cinemas Bangalore', 3, 'Parking,Dolby', 1),
+(26, 'City Pride Bangalore', 3, 'Parking,Dolby,Recliner', 1),
+(27, 'Mukta A2 Bangalore', 3, 'Parking', 0),
+(28, 'Raj Mandir Bangalore', 3, 'Heritage,Cafe', 0),
+(29, 'PVR Whitefield', 3, 'Parking,Dolby Atmos,Recliner', 1),
+(30, 'INOX MG Road', 3, 'Parking,Dolby', 1),
+
+-- Hyderabad (CityID 4)
+(31, 'PVR Hyderabad Central', 4, 'Parking,Dolby,Recliner', 1),
+(32, 'INOX Hyderabad', 4, 'Parking,Dolby,Recliner,Cafe', 1),
+(33, 'Cinepolis Hyderabad', 4, 'Parking,IMAX,4DX,Recliner', 1),
+(34, 'Carnival Hyderabad', 4, 'Parking,Cafe', 0),
+(35, 'Miraj Cinemas Hyderabad', 4, 'Parking,Dolby', 1),
+(36, 'City Pride Hyderabad', 4, 'Parking,Dolby,Recliner', 1),
+(37, 'Mukta A2 Hyderabad', 4, 'Parking', 0),
+(38, 'Raj Mandir Hyderabad', 4, 'Heritage,Cafe', 0),
+(39, 'PVR Gachibowli', 4, 'Parking,Dolby Atmos,Recliner', 1),
+(40, 'INOX Banjara Hills', 4, 'Parking,Dolby', 1),
+
+-- Chennai (CityID 5)
+(41, 'PVR Chennai Central', 5, 'Parking,Dolby,Recliner', 1),
+(42, 'INOX Chennai', 5, 'Parking,Dolby,Recliner,Cafe', 1),
+(43, 'Cinepolis Chennai', 5, 'Parking,IMAX,4DX,Recliner', 1),
+(44, 'Carnival Chennai', 5, 'Parking,Cafe', 0),
+(45, 'Miraj Cinemas Chennai', 5, 'Parking,Dolby', 1),
+(46, 'City Pride Chennai', 5, 'Parking,Dolby,Recliner', 1),
+(47, 'Mukta A2 Chennai', 5, 'Parking', 0),
+(48, 'Raj Mandir Chennai', 5, 'Heritage,Cafe', 0),
+(49, 'PVR OMR', 5, 'Parking,Dolby Atmos,Recliner', 1),
+(50, 'INOX T Nagar', 5, 'Parking,Dolby', 1),
+
+-- Kolkata (CityID 6)
+(51, 'PVR Kolkata', 6, 'Parking,Dolby,Recliner', 1),
+(52, 'INOX Kolkata', 6, 'Parking,Dolby,Recliner,Cafe', 1),
+(53, 'Cinepolis Kolkata', 6, 'Parking,IMAX,4DX,Recliner', 1),
+(54, 'Carnival Kolkata', 6, 'Parking,Cafe', 0),
+(55, 'Miraj Cinemas Kolkata', 6, 'Parking,Dolby', 1),
+(56, 'City Pride Kolkata', 6, 'Parking,Dolby,Recliner', 1),
+(57, 'Mukta A2 Kolkata', 6, 'Parking', 0),
+(58, 'Raj Mandir Kolkata', 6, 'Heritage,Cafe', 0),
+(59, 'PVR Salt Lake', 6, 'Parking,Dolby Atmos,Recliner', 1),
+(60, 'INOX South City', 6, 'Parking,Dolby', 1),
+
+-- Pune (CityID 7)
+(61, 'PVR Pune Central', 7, 'Parking,Dolby,Recliner', 1),
+(62, 'INOX Pune', 7, 'Parking,Dolby,Recliner,Cafe', 1),
+(63, 'Cinepolis Pune', 7, 'Parking,IMAX,4DX,Recliner', 1),
+(64, 'Carnival Pune', 7, 'Parking,Cafe', 0),
+(65, 'Miraj Cinemas Pune', 7, 'Parking,Dolby', 1),
+(66, 'City Pride Pune', 7, 'Parking,Dolby,Recliner', 1),
+(67, 'Mukta A2 Pune', 7, 'Parking', 0),
+(68, 'Raj Mandir Pune', 7, 'Heritage,Cafe', 0),
+(69, 'PVR Hinjewadi', 7, 'Parking,Dolby Atmos,Recliner', 1),
+(70, 'INOX Kalyani Nagar', 7, 'Parking,Dolby', 1),
+
+-- Ahmedabad (CityID 8)
+(71, 'PVR Ahmedabad', 8, 'Parking,Dolby,Recliner', 1),
+(72, 'INOX Ahmedabad', 8, 'Parking,Dolby,Recliner,Cafe', 1),
+(73, 'Cinepolis Ahmedabad', 8, 'Parking,IMAX,4DX,Recliner', 1),
+(74, 'Carnival Ahmedabad', 8, 'Parking,Cafe', 0),
+(75, 'Miraj Cinemas Ahmedabad', 8, 'Parking,Dolby', 1),
+(76, 'City Pride Ahmedabad', 8, 'Parking,Dolby,Recliner', 1),
+(77, 'Mukta A2 Ahmedabad', 8, 'Parking', 0),
+(78, 'Raj Mandir Ahmedabad', 8, 'Heritage,Cafe', 0),
+(79, 'PVR SG Highway', 8, 'Parking,Dolby Atmos,Recliner', 1),
+(80, 'INOX Navrangpura', 8, 'Parking,Dolby', 1),
+
+-- Jaipur (CityID 9)
+(81, 'PVR Jaipur', 9, 'Parking,Dolby,Recliner', 1),
+(82, 'INOX Jaipur', 9, 'Parking,Dolby,Recliner,Cafe', 1),
+(83, 'Cinepolis Jaipur', 9, 'Parking,IMAX,4DX,Recliner', 1),
+(84, 'Carnival Jaipur', 9, 'Parking,Cafe', 0),
+(85, 'Miraj Cinemas Jaipur', 9, 'Parking,Dolby', 1),
+(86, 'City Pride Jaipur', 9, 'Parking,Dolby,Recliner', 1),
+(87, 'Mukta A2 Jaipur', 9, 'Parking', 0),
+(88, 'Raj Mandir Jaipur', 9, 'Heritage,Cafe', 0),
+(89, 'PVR MI Road', 9, 'Parking,Dolby Atmos,Recliner', 1),
+(90, 'INOX Malviya Nagar', 9, 'Parking,Dolby', 1),
+
+-- Kochi (CityID 10)
+(91, 'PVR Kochi', 10, 'Parking,Dolby,Recliner', 1),
+(92, 'INOX Kochi', 10, 'Parking,Dolby,Recliner,Cafe', 1),
+(93, 'Cinepolis Kochi', 10, 'Parking,IMAX,4DX,Recliner', 1),
+(94, 'Carnival Kochi', 10, 'Parking,Cafe', 0),
+(95, 'Miraj Cinemas Kochi', 10, 'Parking,Dolby', 1),
+(96, 'City Pride Kochi', 10, 'Parking,Dolby,Recliner', 1),
+(97, 'Mukta A2 Kochi', 10, 'Parking', 0),
+(98, 'Raj Mandir Kochi', 10, 'Heritage,Cafe', 0),
+(99, 'PVR Marine Drive', 10, 'Parking,Dolby Atmos,Recliner', 1),
+(100, 'INOX Lulu Mall', 10, 'Parking,Dolby', 1);
+
 
 -- ### Data for Cinema_Hall and Cinema_Seat Tables ###
 DROP PROCEDURE IF EXISTS PopulateHallsAndSeats;
@@ -60,7 +170,7 @@ BEGIN
     DECLARE total_halls_for_cinema INT; -- Renamed to avoid confusion with total_seats
     DECLARE seats_in_current_hall INT; -- Variable to hold randomized seats for current hall
 
-    WHILE i <= 10 DO
+    WHILE i <= 100 DO
         SET total_halls_for_cinema = 1 + FLOOR(RAND() * 4); -- Random halls between 1 and 4 per cinema
         SET j = 1;
         WHILE j <= total_halls_for_cinema DO
@@ -115,6 +225,7 @@ INSERT INTO Movie (MovieID, Title, Movie_Description, Duration, Movie_Language, 
 (13, 'Godzilla x Kong: The New Empire', 'Two ancient titans, Godzilla and Kong, clash in an epic battle as humans unravel their intertwined origins and connection to Skull Island''s mysteries.', '01:55:00', 'English', '2024-03-29 00:00:00', 'USA', 'Action', 6.5, 'UA', 'https://res.cloudinary.com/dwiphkazt/image/upload/v1758894100/godzilla-x-kong-the-new-empire-et00358147-1714992384_lowk07.avif', 'https://www.youtube.com/watch?v=qqrpMRDuPfc'),
 (14, 'Shaitaan', 'A man and his family''s fun weekend retreat takes a nightmarish turn when they let in a friendly, but mysterious stranger into their house.', '02:12:00', 'Hindi', '2024-03-08 00:00:00', 'India', 'Horror', 7.1, 'A', 'https://res.cloudinary.com/dwiphkazt/image/upload/v1758894100/shaitaan-et00384234-1706179766_pz2bxd.avif', 'https://www.youtube.com/watch?v=3-3s_4fBF0g'),
 (15, 'Captain Miller', 'A renegade Captain and his unconventional outlaws execute a series of heists in British India.', '02:37:00', 'Tamil', '2024-01-12 00:00:00', 'India', 'Action', 7.6, 'UA', 'https://res.cloudinary.com/dwiphkazt/image/upload/v1758894100/captain-miller-et00333139-1688130090_lkyb9o.avif', 'https://www.youtube.com/watch?v=p4ECg0-dF0g');
+
 -- ### Data for User Table ###
 INSERT INTO User (UserID, User_Name, User_Password, Email, Phone, IsAdmin) VALUES
 (1, 'Rohan Sharma', 'pass123', 'rohan.sharma@example.com', '9876543210', 0),
@@ -165,13 +276,13 @@ BEGIN
     DECLARE movie_duration TIME;
 
     -- == MAIN LOOP TO CREATE 200 SHOWS ==
-    WHILE show_id <= 200 DO
+    WHILE show_id <= 10000 DO
         -- 1. Create a Movie Show
         SET movie_id = 1 + FLOOR(RAND() * 15);
         -- Ensure cinema_hall_id exists by selecting from actual Cinema_Hall IDs
         SELECT CinemaHallID INTO cinema_hall_id FROM Cinema_Hall ORDER BY RAND() LIMIT 1; 
 
-        SET show_date = CURDATE() + INTERVAL FLOOR(RAND() * 14) DAY;
+        SET show_date = CURDATE() + INTERVAL FLOOR(RAND() * 7) DAY;
         SET start_time = MAKETIME(10 + FLOOR(RAND() * 13), FLOOR(RAND() * 4) * 15, 0);
         
         SET start_datetime = CONCAT(show_date, ' ', start_time);
@@ -218,10 +329,28 @@ BEGIN
             INSERT INTO Payment (PaymentID, Amount, Payment_Timestamp, DiscountCouponID, RemoteTransactionID, PaymentMethod, BookingID)
             VALUES (payment_id, total_amount, NOW() - INTERVAL FLOOR(RAND() * 71) HOUR, NULL, FLOOR(1000000 + RAND() * 9000000), 1, booking_id);
 
-            -- 5. Randomly create a Review for the movie
+           -- 5. Randomly create a Review for the movie
             IF RAND() > 0.5 AND review_id <= 100 THEN
                 INSERT INTO Review (ReviewID, UserID, MovieID, Rating, Comment, Review_Timestamp)
-                VALUES (review_id, user_id, movie_id, LEAST(ROUND(5 + RAND() * 5, 1), 9.9), 'This was a great movie!', NOW() - INTERVAL FLOOR(RAND() * 24) HOUR);
+                VALUES (
+                    review_id,
+                    user_id,
+                    movie_id,
+                    LEAST(ROUND(5 + RAND() * 5, 1), 9.9),
+                    ELT(FLOOR(RAND() * 10) + 1,
+                        'Amazing movie, loved it!',
+                        'Good story but could be better.',
+                        'Outstanding performance by the cast.',
+                        'Visual effects were top-notch!',
+                        'Not my type, but decent.',
+                        'Could watch it again!',
+                        'Script was weak but acting saved it.',
+                        'Loved the soundtrack!',
+                        'Plot twists were unexpected!',
+                        'One of the best movies this year!'
+                    ),
+                    NOW() - INTERVAL FLOOR(RAND() * 24) HOUR
+                );
                 SET review_id = review_id + 1;
             END IF;
 
