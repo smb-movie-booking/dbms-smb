@@ -83,7 +83,7 @@ const getMoviesBySearch=(req,res)=>{
     let cinemaResult=[]
     if(!searchString.trim())return res.status(400).json({message:"Invalid query"});
 
-    db.query('SELECT MovieID,Title from movie where lower(Title) LIKE ? ',[`%${searchString.toLowerCase()}%`],(err,movie)=>{
+    db.query('SELECT MovieID,Title from Movie where lower(Title) LIKE ? ',[`%${searchString.toLowerCase()}%`],(err,movie)=>{
         if(err){
             console.log(err);
             return res.status(500).json({message:"Db Error"});
@@ -92,7 +92,7 @@ const getMoviesBySearch=(req,res)=>{
         movieResult=movie;
         
 
-        db.query('SELECT CinemaID,Cinema_Name from cinema where lower(Cinema_Name) LIKE ?',[`%${searchString.toLowerCase()}%`],(err,cinema)=>{
+        db.query('SELECT CinemaID,Cinema_Name from Cinema where lower(Cinema_Name) LIKE ?',[`%${searchString.toLowerCase()}%`],(err,cinema)=>{
             if(err){
                 console.log(err);
                 return res.status(500).json({message:"Db Error"});
