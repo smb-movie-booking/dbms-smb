@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '../../utils/axios'; // adjust path if needed
 import toast from 'react-hot-toast'; 
 import Navbar from '../../components/Navbar/Navbar';
+import './home.css'
 
 
 const Home = ({ selectedCity }  ) => {
