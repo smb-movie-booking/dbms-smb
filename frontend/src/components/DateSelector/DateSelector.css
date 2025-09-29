@@ -1,0 +1,23 @@
+/* src/components/DateSelector/DateSelector.css */
+.date-selector-container {
+  display: flex;
+  gap: 15px;
+  padding: 10px 0;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.date-item {
+  cursor: pointer;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #ddd;
+  min-width: 60px;
+}
+.date-item.active {
+  background-color: var(--secondary-color);
+  color: white;
+  border-color: var(--secondary-color);
+}
+.date-item .day { font-weight: bold; }
+.date-item .date { font-size: 1.2rem; }

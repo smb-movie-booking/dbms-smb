@@ -1,0 +1,65 @@
+.show-list-group {
+  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.show-list-group:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.theater-title {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  color: #333;
+  cursor: pointer; /* Indicates the title is clickable */
+  display: inline-block; /* Ensures the click area is tight */
+  transition: color 0.2s ease;
+}
+
+.theater-title:hover {
+  color: var(--secondary-color); /* Uses your app's theme color on hover */
+}
+
+.showtimes-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.showtime-button {
+  cursor: pointer;
+  padding: 8px 12px;
+  border: 1px solid #28a745;
+  color: #28a745;
+  border-radius: 5px;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  min-width: 90px;
+}
+
+.showtime-button:hover {
+  background-color: #28a745;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.showtime-button .time {
+  font-weight: bold;
+}
+
+.showtime-button .format {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+.showtime-button:hover .format {
+  color: #eee;
+}
+

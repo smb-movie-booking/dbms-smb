@@ -73,6 +73,39 @@
   transform: translateY(-2px);
 }
 
+/* Remove the default underline from the link */
+.book-tickets-link {
+  text-decoration: none;
+}
+
+/* Base styles for the button (no changes here) */
+.book-tickets-btn {
+  background-color: var(--secondary-color);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+  display: inline-block;
+  text-align: center;
+  width: 100%; /* Makes the button fill the link's width */
+}
+
+/* --- THE FIX --- */
+/* This rule is more specific. It applies when the LINK is hovered. */
+.book-tickets-link:hover .book-tickets-btn {
+  background-color: #e6005c; /* Darker shade for hover */
+  transform: translateY(-2px); /* Lift effect */
+  color: #fff; /* Explicitly keep the text white */
+}
+
+.book-tickets-btn:active {
+  transform: translateY(0);
+}
+
 .review-section {
   margin-top: 40px;
 }

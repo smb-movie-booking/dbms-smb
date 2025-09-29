@@ -1,0 +1,131 @@
+.showtimes-page {
+  /* Use a variable from your root CSS for background if available, otherwise fallback */
+  background-color: var(--background-color, #f0f2f5);
+  padding-bottom: 40px;
+}
+
+/* --- MOVIE HEADER STYLES --- */
+.movie-header-bar {
+  color: white;
+  background-size: cover;
+  background-position: center 20%; /* Position the poster image nicely */
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  align-items: flex-end; /* Align content to the bottom */
+}
+
+.header-overlay {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 20%, rgba(0, 0, 0, 0.2) 100%); /* Gradient for a professional look */
+  padding: 25px 30px;
+  width: 100%;
+  height: 100%;
+}
+
+.movie-title-link {
+  color: white;
+  text-decoration: none;
+}
+
+.movie-header-bar h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  transition: color 0.2s ease;
+}
+
+.movie-title-link:hover h1 {
+  color: #ddd; /* Slight fade on hover */
+}
+
+.movie-tags {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.movie-tags span {
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+}
+/* --- END OF HEADER STYLES --- */
+
+/* --- FILTER BAR STYLES --- */
+.filter-bar, .time-filter-buttons, .theaters-list {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.filter-select {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: white;
+  font-size: 1rem;
+}
+
+.time-filter-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.time-filter-buttons button {
+  padding: 8px 15px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.time-filter-buttons button.active {
+  background-color: var(--secondary-color);
+  color: white;
+  border-color: var(--secondary-color);
+}
+/* --- END OF FILTER STYLES --- */
+
+/* --- THEATER LIST STYLES --- */
+.theaters-list {
+  margin-top: 20px;
+}
+
+.no-shows-found {
+  text-align: center;
+  padding: 50px;
+  background-color: #fff;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.no-shows-found h3 {
+  margin: 0;
+  color: #333;
+}
+
+.no-shows-found p {
+  color: #777;
+  margin-top: 10px;
+}
+

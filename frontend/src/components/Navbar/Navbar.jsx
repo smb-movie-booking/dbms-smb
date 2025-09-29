@@ -38,16 +38,16 @@ const Navbar = ({ selectedCity, onCityChange }) => {
     {isOpen&&<div className='backdrop' onClick={()=>setIsOpen(false)} />}
     <nav>
         <div
-        className="logoImg"
-        style={{ cursor: "pointer" }}
-        onClick={() => navigate("/")}
+          className="logoImg"
+          style={{ cursor: "pointer" }}
+          onClick={() => navigate("/")}
         >
-        <img
-            src="/M.png"
+          <img
+            src="/logo-smb.png" // 1. Use the new image name
             alt="Logo"
-            style={{ width: "50px", height: "auto", objectFit: "contain" }}
-            />
-
+            // 2. Updated styles for a rectangular logo
+            style={{ height: "60px", width: "auto", objectFit: "contain" }}
+          />
         </div>
 
         <div className='search-container'>
