@@ -13,7 +13,6 @@ import ProtectedAdmin from './components/ProtectedAdmin';
 import MovieDetails from './pages/MovieDetails/MovieDetails';
 import ShowtimesPage from './pages/Showtimes/ShowtimesPage';
 import AdminManagement from './pages/Admin/AdminManagement/AdminManagement';
-import TheaterDetailPage from './pages/Theaters/TheaterDetailPage';
 
 function App() {
   const { getUser } = useAuth();
