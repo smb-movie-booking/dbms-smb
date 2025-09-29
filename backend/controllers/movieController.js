@@ -77,4 +77,34 @@ const getCities = (req, res) => {
   });
 };
 
-module.exports = { handleExplore , getCities};
+const getMoviesBySearch=(req,res)=>{
+    const {searchString}=req.query;
+    let movieResult=[];
+    let cinemaResult=[]
+    if(!searchString.trim())return res.status(400).json({message:"Invalid query"});
+
+    db.query('SELECT MovieID,Title from movie where lower(Title) LIKE ? ',[`%${searchString.toLowerCase()}%`],(err,movie)=>{
+        if(err){
+            console.log(err);
+            return res.status(500).json({message:"Db Error"});
+        }
+
+        movieResult=movie;
+        
+
+        db.query('SELECT CinemaID,Cinema_Name from cinema where lower(Cinema_Name) LIKE ?',[`%${searchString.toLowerCase()}%`],(err,cinema)=>{
+            if(err){
+                console.log(err);
+                return res.status(500).json({message:"Db Error"});
+            }
+
+            cinemaResult=cinema;
+            const combined=[...movieResult,...cinemaResult];
+            return res.status(200).json({movies:combined});
+        })
+
+       
+
+    })
+}
+module.exports = { handleExplore , getCities,getMoviesBySearch};

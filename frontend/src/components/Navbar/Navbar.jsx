@@ -1,16 +1,36 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import './nav.css'
-import {Menu, Search} from 'lucide-react'
+import {Clapperboard, Menu, School, Search} from 'lucide-react'
 import Sidebar from '../Sidebar/Sidebar';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from '../../Context/AuthContext';
 import { axiosInstance } from '../../utils/axios';
+import { useDebounce } from '../../hooks/auth/useDebounce';
+import toast from 'react-hot-toast';
 
 const Navbar = ({ selectedCity, onCityChange }) => {
+    const searchRef=useRef(null);
     const [isOpen,setIsOpen]=useState(false);
     const navigate=useNavigate();
     const {authUser,setAuthUser}=useContext(Auth);
     const [cities, setCities] = useState([]);
+    const [searchText,setSearchText]=useState("");
+    const [searchResult,setSearchResult]=useState([]);
+    const [showsuggestion,setShowSuggestion]=useState(false);
+    const debouncedValue=useDebounce(searchText);
+
+    useEffect(()=>{
+
+        const handleMouseDown=(e)=>{
+            console.log(searchRef.current);
+            if(searchRef.current && !searchRef.current.contains(e.target)){
+                setShowSuggestion(false);
+            }
+        }
+        document.addEventListener("mousedown",handleMouseDown);
+
+        return ()=>document.removeEventListener("mousedown",handleMouseDown)
+    },[])
 
     useEffect(() => {
   const fetchCities = async () => {
@@ -33,9 +53,48 @@ const Navbar = ({ selectedCity, onCityChange }) => {
             document.body.style.overflow="auto";
         }
     },[isOpen])
+
+    const getMovies=async()=>{
+         try {
+            if(debouncedValue.length === 0){
+                setShowSuggestion(false);
+                return
+            }
+            setShowSuggestion(true)
+            const {data}=await axiosInstance.get("/movies/search",{
+                params:{
+                    searchString:debouncedValue
+                }
+            })
+            setSearchResult(data.movies);
+            console.log(data.movies);
+        } catch (error) {
+            toast.error(error.response.data.message || error.message);
+            
+        }finally{
+
+        }
+
+    }
+
+    useEffect(()=>{
+       getMovies();
+    },[debouncedValue])
+
+    const handleClick=(result)=>{
+        if(result.MovieID){
+            navigate(`movies/${result.MovieID}`);
+        }else{
+            navigate(`/`); //edit here theatre
+        }
+
+        setShowSuggestion(false);
+
+    }
+   
   return (
     <>
-    {isOpen&&<div className='backdrop' onClick={()=>setIsOpen(false)} />}
+    {isOpen  &&<div className='backdrop' onClick={()=>{setIsOpen(false)}} />}
     <nav>
         <div
         className="logoImg"
@@ -50,12 +109,32 @@ const Navbar = ({ selectedCity, onCityChange }) => {
 
         </div>
 
-        <div className='search-container'>
+        <div className='search-container' ref={searchRef}>
             <Search stroke='gray'/>
             <input
             type='text'
+            value={searchText}
+            onChange={(e)=>setSearchText(e.target.value)}
             placeholder='Search for your favorite movies'
             className='search-input'/>
+
+            {(searchText.length >0 && showsuggestion) && <div className='search-suggestions-container'>
+                    {searchResult.length >0 ? searchResult.map((result,index)=>{
+                        return <div onClick={()=>handleClick(result)} className="suggestions" key={result.MovieID || result?.CinemaID}>
+                            { result.MovieID ? 
+                            <div style={{display:'flex',justifyContent:"space-between"}}>
+                                <span>{result?.Title}</span><span><Clapperboard/></span>
+                            </div> :
+
+                            <div style={{display:'flex',justifyContent:"space-between"}}>
+                                <span>{result?.Cinema_Name}</span>
+                                <span><School/></span>
+                            </div>
+                            }
+                            
+                            </div>
+                    }):"No Result"}
+            </div>}
         </div>
 
         <div className='menu-cont'>
