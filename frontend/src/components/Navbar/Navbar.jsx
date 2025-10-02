@@ -85,7 +85,7 @@ const Navbar = ({ selectedCity, onCityChange }) => {
         if(result.MovieID){
             navigate(`movies/${result.MovieID}`);
         }else{
-            navigate(`/`); //edit here theatre
+            navigate(`/theatre/${result?.CinemaID}/movies`); //edit here theatre
         }
 
         setShowSuggestion(false);
@@ -120,7 +120,7 @@ const Navbar = ({ selectedCity, onCityChange }) => {
 
             {(searchText.length >0 && showsuggestion) && <div className='search-suggestions-container'>
                     {searchResult.length >0 ? searchResult.map((result,index)=>{
-                        return <div onClick={()=>handleClick(result)} className="suggestions" key={result.MovieID || result?.CinemaID}>
+                        return <div onClick={()=>handleClick(result)} className="suggestions" key={index}>
                             { result.MovieID ? 
                             <div style={{display:'flex',justifyContent:"space-between"}}>
                                 <span>{result?.Title}</span><span><Clapperboard/></span>

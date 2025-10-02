@@ -13,6 +13,7 @@ import ProtectedAdmin from './components/ProtectedAdmin';
 import MovieDetails from './pages/MovieDetails/MovieDetails';
 import ShowtimesPage from './pages/Showtimes/ShowtimesPage';
 import AdminManagement from './pages/Admin/AdminManagement/AdminManagement';
+import SeatSelect from './pages/SeatSelect/SeatSelect';
 
 function App() {
   const { getUser } = useAuth();
@@ -44,24 +45,25 @@ function App() {
     <>
       <Toaster />
       {/* Pass the stable selectedCity state and the new handler to the Navbar */}
-      <Navbar selectedCity={selectedCity} onCityChange={handleCityChange} />
+      
 
       <Routes>
         {/* --- THE FIX IS ON THIS LINE --- */}
         {/* Changed selected_City to selectedCity */}
-        <Route path='/' element={<Home selectedCity={selectedCity} />} />
+        <Route path='/' element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /><Home selectedCity={selectedCity}/></>} />
         
         <Route path='/login' element={!authUser ? <Login /> : <Navigate to="/" />} />
         <Route path='/register' element={!authUser ? <Register /> : <Navigate to="/" />} />
         <Route path='/reset-password' element={!authUser ? <ResetPassword /> : <Navigate to="/" />} />
-        <Route path='/:userid/edit' element={authUser ? <EditProfile /> : <Login />} />
+        <Route path='/:userid/edit' element={authUser ? <><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /> <EditProfile /></> : <Login />} />
         
         {/* Pass selectedCity down to build the correct link for 'Book Tickets' */}
-        <Route path='/movies/:movieId' element={<MovieDetails selectedCity={selectedCity} />} />
+        <Route path='/movies/:movieId' element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /> <MovieDetails selectedCity={selectedCity}/>   </>} />
         
         {/* Your flexible showtimes routes are now included */}
-        <Route path='/movie/:movieId/theaters' element={<ShowtimesPage />} />
-        <Route path='/theater/:theaterId/movies' element={<ShowtimesPage />} />
+        <Route path='/movie/:movieId/theaters' element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /> <ShowtimesPage /> </>} />
+        <Route path='/theater/:theaterId/movies'  element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /> <ShowtimesPage /> </>} />
+        <Route path='/seat/show/:showid' element={<SeatSelect/>}/>
 
         <Route 
           path="/admin" 
