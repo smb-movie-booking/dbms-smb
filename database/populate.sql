@@ -354,7 +354,7 @@ BEGIN
 
         -- == NESTED LOGIC: Create bookings FOR EACH show ==
         SET i = 1;
-        WHILE i <= (1 + FLOOR(RAND() * 5)) AND booking_id <= 500 DO
+        WHILE i <= (1 + FLOOR(RAND() * 20)) DO
             SET user_id = 1 + FLOOR(RAND() * 20);
             SET num_seats = 1 + FLOOR(RAND() * 5);
             
