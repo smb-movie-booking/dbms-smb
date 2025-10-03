@@ -1,4 +1,4 @@
-drop database smb;
+DROP DATABASE IF EXISTS smb;
 CREATE DATABASE IF NOT EXISTS smb;
 USE smb;
 
