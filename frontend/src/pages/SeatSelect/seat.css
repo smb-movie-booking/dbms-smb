@@ -74,7 +74,8 @@ footer{
     background-color: rgb(239, 242, 244);
     display: flex;
     justify-content: center;
-    position: sticky;
+    position: fixed;
+    z-index: 1;
     width: 100%;
     bottom: 0;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
