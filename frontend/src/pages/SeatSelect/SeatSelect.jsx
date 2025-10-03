@@ -8,7 +8,7 @@ const SeatSelect = () => {
     const [loading,setLoading]=useState(false);
     const [seatInfo,setSeatiInfo]=useState(null);
     const [seatLetter,setSeatLetter]=useState("A");
-    const [selectedSeats,setSelectedSeats]=useState([]);
+    const [selectedSeats,setSelectedSeats]=useState({ totalPrice:0,seats:[] });
     let seatCounter=0;
     useEffect(()=>{
         const fetchseats=async()=>{
@@ -29,6 +29,14 @@ const SeatSelect = () => {
         
     },[])
 
+    const dateTimeFormat=(value,type)=>{
+        const date=new Date(value);
+        if(type==="date"){
+            return date.toLocaleDateString("en",{day:"2-digit",month:"short",year:"numeric"})
+        }
+        return date.toLocaleTimeString("en",{hour:"2-digit",minute:"2-digit"})
+    }
+
     const setupSeats=(seatIn)=>{
         let seatsPerRow;
         let rowCount;
@@ -47,20 +55,20 @@ const SeatSelect = () => {
 
     const selectSeat=(seat)=>{
         //const temp=[...selectedSeats];
-        const isPresent=selectedSeats.some((s)=>s.seatId===seat.seatId);
+        const isPresent=selectedSeats.seats.some((s)=>s.seatId===seat.seatId);
         console.log(isPresent);
         if(isPresent){
             
-            const temp=selectedSeats.filter((s)=>s.seatId!==seat.seatId);
-            setSelectedSeats(temp);
+            const updatedSeats=selectedSeats.seats.filter((s)=>s.seatId!==seat.seatId);
+            setSelectedSeats({...selectedSeats,seats:updatedSeats});
             return
         }
 
-        if(selectedSeats.length===10){
+        if(selectedSeats.seats.length >= 10){
             return toast.error("Can Book Only 10 seats at a time")
         }
-        const temp=[...selectedSeats,seat];
-        setSelectedSeats(temp);
+        const temp=[...selectedSeats.seats,seat];
+        setSelectedSeats({...selectedSeats,seats:temp});
         return
 
 
@@ -75,10 +83,13 @@ const SeatSelect = () => {
       <header>
         <div>
             <h2>{seatInfo?.title}</h2>
+            <div>
+                <p className='show-info-sub'>{seatInfo?.cinema} | {dateTimeFormat(seatInfo?.showDate,"date")} | {dateTimeFormat(seatInfo?.startTime,"time")}</p>
+            </div>
         </div>
 
         <div>
-            <span>Seats Selected:{selectedSeats.length}</span>
+            <span>Seats Selected:{selectedSeats.seats.length}</span>
         </div>
       </header>
 
@@ -130,7 +141,7 @@ const SeatSelect = () => {
                                         if(index===mid && mid!==-1){
                                             return <>
                                             <span className="aisle"></span>
-                                            <button className={`seat-button ${seat.seatStatus==='available'&&"available"} ${selectedSeats.includes(seat)&&"locked"}`} 
+                                            <button className={`seat-button ${seat.seatStatus==='available'&&"available"} ${selectedSeats.seats.some((s)=>s.seatId===seat.seatId)&&"locked"}`} 
                                                 disabled={seat.seatStatus==="booked"}
                                                 onClick={()=>selectSeat(seat)}
                                                 key={seat.seatId}>
@@ -138,7 +149,7 @@ const SeatSelect = () => {
                                             </button>
                                         </>
                                         }
-                                        return <button className={`seat-button ${seat.seatStatus==='available'&&"available"} ${selectedSeats.includes(seat)&&"locked"}`} 
+                                        return <button className={`seat-button ${seat.seatStatus==='available'&&"available"}  ${selectedSeats.seats.some((s)=>s.seatId===seat.seatId)&&"locked"}`} 
                                                     
                                                     disabled={seat.seatStatus==="booked"} 
                                                     onClick={()=>selectSeat(seat)}
