@@ -13,6 +13,11 @@
     justify-content: space-between;
 }
 
+header .show-info-sub{
+    font-size: 13px;
+    font-weight: 400;
+}
+
 .main-banner{
     text-align:center; 
     margin:0.5rem 0 3rem 0;

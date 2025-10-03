@@ -34,7 +34,10 @@ exports.getSeatsByShowId = async (req, res) => {
   const response= {
     showid: seatsSelected[0].ShowID,
     movieid: seatsSelected[0].MovieID,
+    showDate:seatsSelected[0].showDate,
+    startTime:seatsSelected[0].startTime,
     title: seatsSelected[0].Title,
+    cinema:seatsSelected[0].Cinema_Name,
     seats: seats
   };
 
