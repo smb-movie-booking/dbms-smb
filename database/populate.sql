@@ -19,6 +19,8 @@ TRUNCATE TABLE OTP;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
+select 'tables truncated' as message;
+
 -- All tables are now empty.
 
 -- ### Data for City Table ###
@@ -156,6 +158,8 @@ INSERT INTO Cinema (CinemaID, Cinema_Name, CityID, Facilities, Cancellation_Allo
 (99, 'PVR Marine Drive', 10, 'Parking,Dolby Atmos,Recliner', 1),
 (100, 'INOX Lulu Mall', 10, 'Parking,Dolby', 1);
 
+SELECT 'cities and cinema added' as message;
+
 
 -- ### Data for Cinema_Hall and Cinema_Seat Tables ###
 DROP PROCEDURE IF EXISTS PopulateHallsAndSeats;
@@ -201,6 +205,9 @@ BEGIN
             SET hall_id = hall_id + 1;
             SET j = j + 1;
         END WHILE;
+        IF (i % 10 = 0) THEN
+            SELECT CONCAT('Progress: Processed cinema ', i, ' of 100...') AS message;
+        END IF;
         SET i = i + 1;
     END WHILE;
 END$$
@@ -249,6 +256,8 @@ INSERT INTO User (UserID, User_Name, User_Password, Email, Phone, IsAdmin) VALUE
 (19, 'Suresh Yadav', 'pass123', 'suresh.yadav@example.com', '9876543227', 0),
 (20, 'Anita Shah', 'pass123', 'anita.shah@example.com', '9876543228', 0);
 
+select 'movie and users added' as message;
+
 -- ### Procedure to Populate Bookings, Shows, etc. ###
 DROP PROCEDURE IF EXISTS PopulateBookingData;
 DELIMITER $$
@@ -259,28 +268,22 @@ BEGIN
     DECLARE booking_id INT DEFAULT 1;
     DECLARE payment_id INT DEFAULT 1;
     DECLARE review_id INT DEFAULT 1;
-    DECLARE show_seat_id INT DEFAULT 1;
     DECLARE i INT;
-    DECLARE seat_num INT;
-
     DECLARE movie_id INT;
     DECLARE cinema_hall_id INT;
     DECLARE user_id INT;
     DECLARE num_seats INT;
     DECLARE show_date DATE;
     DECLARE start_time TIME;
-    DECLARE price DECIMAL(10,2);
-    DECLARE total_amount DECIMAL(10,2);
-    DECLARE seat_id_val INT;
     DECLARE start_datetime DATETIME;
     DECLARE movie_duration TIME;
+    DECLARE booking_total_price DECIMAL(10,2);
 
-    -- == MAIN LOOP TO CREATE 200 SHOWS ==
+    -- == MAIN LOOP TO CREATE SHOWS ==
     WHILE show_id <= 10000 DO
         -- 1. Create a Movie Show
         SET movie_id = 1 + FLOOR(RAND() * 15);
-        -- Ensure cinema_hall_id exists by selecting from actual Cinema_Hall IDs
-        SELECT CinemaHallID INTO cinema_hall_id FROM Cinema_Hall ORDER BY RAND() LIMIT 1; 
+        SELECT CinemaHallID INTO cinema_hall_id FROM Cinema_Hall ORDER BY RAND() LIMIT 1;
 
         SET show_date = CURDATE() + INTERVAL FLOOR(RAND() * 7) DAY;
         SET start_time = MAKETIME(10 + FLOOR(RAND() * 13), FLOOR(RAND() * 4) * 15, 0);
@@ -297,70 +300,69 @@ BEGIN
             ROUND(RAND())
         );
 
-        -- == NESTED LOGIC: Create 1 to 5 bookings FOR EACH show ==
+        -- STEP 1: Call your existing procedure to populate all seats with a default price.
+        CALL PopulateShowSeats(show_id, cinema_hall_id, 0.00);
+
+        -- STEP 2: Mimic the application logic by updating prices based on seat type.
+        UPDATE Show_Seat ss
+        JOIN Cinema_Seat cs ON ss.CinemaSeatID = cs.CinemaSeatID
+        SET ss.Price = CASE cs.Seat_Type
+            WHEN 'Sofa' THEN 750.00
+            WHEN 'Box' THEN 600.00
+            WHEN 'Recliner' THEN 500.00
+            WHEN 'Premium' THEN 350.00
+            ELSE 200.00 -- Standard
+        END
+        WHERE ss.ShowID = show_id AND cs.CinemaHallID = cinema_hall_id;
+
+        -- == NESTED LOGIC: Create bookings FOR EACH show ==
         SET i = 1;
         WHILE i <= (1 + FLOOR(RAND() * 5)) AND booking_id <= 500 DO
             SET user_id = 1 + FLOOR(RAND() * 20);
             SET num_seats = 1 + FLOOR(RAND() * 5);
-            SET price = 150 + FLOOR(RAND() * 200);
-            SET total_amount = num_seats * price;
-
-            -- 2. Create a Booking for the show
+            
             INSERT INTO Booking (BookingID, NumberOfSeats, Booking_Timestamp, Booking_Status, UserID, ShowID)
             VALUES (booking_id, num_seats, NOW() - INTERVAL FLOOR(RAND() * 72) HOUR, 1, user_id, show_id);
 
-            -- 3. Create Show_Seat entries for each seat in the booking
-            SET seat_num = 1;
-            WHILE seat_num <= num_seats DO
-                    -- Find a random, available cinema seat for this hall that hasn't been booked for this show yet
-                    SELECT CinemaSeatID INTO seat_id_val FROM Cinema_Seat 
-                    WHERE CinemaHallID = cinema_hall_id AND CinemaSeatID NOT IN (SELECT CinemaSeatID FROM Show_Seat WHERE ShowID = show_id) 
-                    ORDER BY RAND() LIMIT 1;
+            CREATE TEMPORARY TABLE IF NOT EXISTS SeatsToBook (ShowSeatID INT, SeatPrice DECIMAL(10,2));
+            TRUNCATE TABLE SeatsToBook;
 
-                    IF seat_id_val IS NOT NULL THEN
-                        INSERT INTO Show_Seat (ShowSeatID, Seat_Status, Price, CinemaSeatID, ShowID, BookingID)
-                        VALUES (show_seat_id, 2, price, seat_id_val, show_id, booking_id); -- Status is always 2 (Booked)
-                        SET show_seat_id = show_seat_id + 1;
-                    END IF;
-                    SET seat_num = seat_num + 1;
-            END WHILE;
+            INSERT INTO SeatsToBook (ShowSeatID, SeatPrice)
+            SELECT ShowSeatID, Price FROM Show_Seat
+            WHERE ShowID = show_id AND Seat_Status = 0
+            ORDER BY RAND()
+            LIMIT num_seats;
+            
+            UPDATE Show_Seat ss JOIN SeatsToBook stb ON ss.ShowSeatID = stb.ShowSeatID
+            SET ss.Seat_Status = 2, ss.BookingID = booking_id;
 
-            -- 4. Create a Payment for the booking
-            INSERT INTO Payment (PaymentID, Amount, Payment_Timestamp, DiscountCouponID, RemoteTransactionID, PaymentMethod, BookingID)
-            VALUES (payment_id, total_amount, NOW() - INTERVAL FLOOR(RAND() * 71) HOUR, NULL, FLOOR(1000000 + RAND() * 9000000), 1, booking_id);
+            SELECT IFNULL(SUM(SeatPrice), 0) INTO booking_total_price FROM SeatsToBook;
+            DROP TEMPORARY TABLE SeatsToBook;
 
-           -- 5. Randomly create a Review for the movie
+            IF booking_total_price > 0 THEN
+                INSERT INTO Payment (PaymentID, Amount, Payment_Timestamp, RemoteTransactionID, PaymentMethod, BookingID)
+                VALUES (payment_id, booking_total_price, NOW() - INTERVAL FLOOR(RAND() * 71) HOUR, FLOOR(1000000 + RAND() * 9000000), 1, booking_id);
+                SET payment_id = payment_id + 1;
+            END IF;
+
             IF RAND() > 0.5 AND review_id <= 100 THEN
                 INSERT INTO Review (ReviewID, UserID, MovieID, Rating, Comment, Review_Timestamp)
                 VALUES (
-                    review_id,
-                    user_id,
-                    movie_id,
-                    LEAST(ROUND(5 + RAND() * 5, 1), 9.9),
-                    ELT(FLOOR(RAND() * 10) + 1,
-                        'Amazing movie, loved it!',
-                        'Good story but could be better.',
-                        'Outstanding performance by the cast.',
-                        'Visual effects were top-notch!',
-                        'Not my type, but decent.',
-                        'Could watch it again!',
-                        'Script was weak but acting saved it.',
-                        'Loved the soundtrack!',
-                        'Plot twists were unexpected!',
-                        'One of the best movies this year!'
-                    ),
+                    review_id, user_id, movie_id, LEAST(ROUND(5 + RAND() * 5, 1), 9.9),
+                    ELT(FLOOR(RAND() * 5) + 1, 'Amazing movie!', 'Good story.', 'Outstanding!', 'Visuals were top-notch!', 'Could watch it again!'),
                     NOW() - INTERVAL FLOOR(RAND() * 24) HOUR
                 );
                 SET review_id = review_id + 1;
             END IF;
-
-            -- Increment booking and payment IDs
-            SET payment_id = payment_id + 1;
             SET booking_id = booking_id + 1;
             SET i = i + 1;
         END WHILE;
 
-        -- Increment the main show counter
+        -- ✅ CORRECTED Progress reporting block
+        IF (show_id % 500 = 0) THEN
+            SELECT CONCAT('Progress: Processed show ', show_id, ' of 10000...') AS status;
+        END IF;
+
         SET show_id = show_id + 1;
     END WHILE;
 END$$
@@ -372,3 +374,5 @@ CALL PopulateBookingData();
 
 DROP PROCEDURE IF EXISTS PopulateHallsAndSeats;
 DROP PROCEDURE IF EXISTS PopulateBookingData;
+
+select 'completed' as message;
