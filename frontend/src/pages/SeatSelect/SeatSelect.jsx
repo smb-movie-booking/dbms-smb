@@ -53,14 +53,16 @@ const SeatSelect = () => {
 
     }
 
-    const selectSeat=(seat)=>{
+    const selectSeat=(seat,money)=>{
         //const temp=[...selectedSeats];
+        const price=Math.round(money);
         const isPresent=selectedSeats.seats.some((s)=>s.seatId===seat.seatId);
         console.log(isPresent);
         if(isPresent){
             
             const updatedSeats=selectedSeats.seats.filter((s)=>s.seatId!==seat.seatId);
-            setSelectedSeats({...selectedSeats,seats:updatedSeats});
+
+            setSelectedSeats({...selectedSeats,totalPrice:selectedSeats.totalPrice-price,seats:updatedSeats});
             return
         }
 
@@ -68,7 +70,7 @@ const SeatSelect = () => {
             return toast.error("Can Book Only 10 seats at a time")
         }
         const temp=[...selectedSeats.seats,seat];
-        setSelectedSeats({...selectedSeats,seats:temp});
+        setSelectedSeats({...selectedSeats,totalPrice:selectedSeats.totalPrice+price,seats:temp});
         return
 
 
@@ -118,7 +120,7 @@ const SeatSelect = () => {
                             rows.push(selectedSeats);
                         }
                         return <div style={{ marginBottom:"1rem"}}>
-                            <h3>{seatType.type}</h3>
+                            <h3>{seatType.type}({seatType.price}Rs)</h3>
                             {rows.map((row,idx)=>{
                                 const letter=String.fromCharCode(65+seatCounter);
                                 let mid;
@@ -143,7 +145,7 @@ const SeatSelect = () => {
                                             <span className="aisle"></span>
                                             <button className={`seat-button ${seat.seatStatus==='available'&&"available"} ${selectedSeats.seats.some((s)=>s.seatId===seat.seatId)&&"locked"}`} 
                                                 disabled={seat.seatStatus==="booked"}
-                                                onClick={()=>selectSeat(seat)}
+                                                onClick={()=>selectSeat(seat,seatType.price)}
                                                 key={seat.seatId}>
                                                     {letter}{index + 1}
                                             </button>
@@ -152,7 +154,7 @@ const SeatSelect = () => {
                                         return <button className={`seat-button ${seat.seatStatus==='available'&&"available"}  ${selectedSeats.seats.some((s)=>s.seatId===seat.seatId)&&"locked"}`} 
                                                     
                                                     disabled={seat.seatStatus==="booked"} 
-                                                    onClick={()=>selectSeat(seat)}
+                                                    onClick={()=>selectSeat(seat,seatType.price)}
                                                     key={seat.seatId}>
                                                         {letter}{index + 1}
                                                 </button>
@@ -178,7 +180,7 @@ const SeatSelect = () => {
 
                     <div style={{display:"flex",justifyContent:"center"}}>
 
-                        <button className='register-btn' style={{padding:"1px 1rem",marginTop:"12px"}}>Pay</button>
+                        <button className='register-btn' style={{padding:"1px 1rem",marginTop:"12px"}}>Pay({selectedSeats.totalPrice})</button>
                     </div>
                 </div>
       </footer>

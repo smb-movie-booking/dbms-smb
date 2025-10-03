@@ -17,8 +17,8 @@ exports.getSeatsByShowId = async (req, res) => {
 
   seatsSelected.forEach(seat => {
     const type = seat.seatType;
-    if (!seatTypeMap[type]) seatTypeMap[type] = [];
-    seatTypeMap[type].push({
+    if (!seatTypeMap[type]) seatTypeMap[type] = {price:seat.price,arr:[]};
+    seatTypeMap[type].arr.push({
       seatId: seat.seatId,
       seatStatus: seat.status // use 'seatStatus' as per your required format
     });
@@ -27,9 +27,12 @@ exports.getSeatsByShowId = async (req, res) => {
   // Assemble the final response
   const seats = Object.keys(seatTypeMap).map(type => ({
     type: type,
-    count: seatTypeMap[type].length,
-    value: seatTypeMap[type]
+    price:seatTypeMap[type].price,
+    count: seatTypeMap[type].arr.length,
+    value: seatTypeMap[type].arr
   }));
+
+  console.log(seats);
 
   const response= {
     showid: seatsSelected[0].ShowID,
