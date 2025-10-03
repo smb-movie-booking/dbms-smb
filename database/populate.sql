@@ -188,13 +188,50 @@ BEGIN
                 VALUES (
                     seat_id,
                     k,
-                    -- Use all 5 ENUM options to create realistic sections
-                    CASE
-                        WHEN k <= 4 THEN 'Sofa'          -- First 4 seats are Sofas
-                        WHEN k > 4 AND k <= 8 THEN 'Box'       -- Next 4 are exclusive Box seats
-                        WHEN k > seats_in_current_hall - 10 THEN 'Recliner'    -- Last 10 seats are Recliners
-                        WHEN k > seats_in_current_hall - 30 THEN 'Premium'     -- The 20 seats before that are Premium
-                        ELSE 'Standard'                          -- All others are Standard
+                    -- This logic creates one of 5 random layouts for each hall.
+                    -- The layout is determined by the hall_id, so it's consistent for all seats in the same hall.
+                    CASE FLOOR(1 + RAND(hall_id) * 5) -- Generates a random layout number (1 to 5) based on the hall
+                        
+                        -- Layout 1: Has Standard, Premium, and Recliners 🛋️
+                        WHEN 1 THEN 
+                            CASE
+                                WHEN k > seats_in_current_hall - 20 THEN 'Recliner'
+                                WHEN k > seats_in_current_hall - 50 THEN 'Premium'
+                                ELSE 'Standard'
+                            END
+
+                        -- Layout 2: Has Standard, Premium, and Sofas in the front 🛋️
+                        WHEN 2 THEN 
+                            CASE
+                                WHEN k <= 8 THEN 'Sofa'
+                                WHEN k <= seats_in_current_hall / 2 THEN 'Premium'
+                                ELSE 'Standard'
+                            END
+
+                        -- Layout 3: Has Standard, Premium, and a few exclusive Box seats 📦
+                        WHEN 3 THEN 
+                            CASE
+                                WHEN k <= 4 THEN 'Box'
+                                WHEN k > seats_in_current_hall - 40 THEN 'Premium'
+                                ELSE 'Standard'
+                            END
+
+                        -- Layout 4: A luxury hall with all 5 seat types ✨
+                        WHEN 4 THEN 
+                            CASE
+                                WHEN k <= 4 THEN 'Sofa'
+                                WHEN k > 4 AND k <= 8 THEN 'Box'
+                                WHEN k > seats_in_current_hall - 10 THEN 'Recliner'
+                                WHEN k > seats_in_current_hall - 30 THEN 'Premium'
+                                ELSE 'Standard'
+                            END
+
+                        -- Layout 5: The base case with only Standard and Premium seats ✅
+                        ELSE 
+                            CASE
+                                WHEN k > seats_in_current_hall - 30 THEN 'Premium'
+                                ELSE 'Standard'
+                            END
                     END,
                     hall_id
                 );
