@@ -1,6 +1,7 @@
 -- SQL Script to Clear All Data from All Tables
 -- Temporarily disables foreign key checks to allow truncation in any order.
 USE smb;
+SET @start_time = NOW();
 
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -413,3 +414,5 @@ DROP PROCEDURE IF EXISTS PopulateHallsAndSeats;
 DROP PROCEDURE IF EXISTS PopulateBookingData;
 
 select 'completed' as message;
+SET @end_time = NOW();
+SELECT TIMEDIFF(@end_time, @start_time) AS 'Total Execution Time';
