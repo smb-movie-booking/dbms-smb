@@ -37,7 +37,7 @@ INSERT INTO City (CityID, City_Name, City_State, ZipCode) VALUES
 (9, 'Jaipur', 'Rajasthan', '302001'),
 (10, 'Kochi', 'Kerala', '395001');
 
---- ### Data for Cinema Table (10 cinemas per city) ###
+-- ### Data for Cinema Table (10 cinemas per city) ###
 INSERT INTO Cinema (CinemaID, Cinema_Name, CityID, Facilities, Cancellation_Allowed) VALUES
 -- Mumbai (CityID 1)
 (1, 'PVR ICON, Phoenix Palladium', 1, 'Parking,Dolby,Recliner', 1),
