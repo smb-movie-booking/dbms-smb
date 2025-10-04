@@ -180,7 +180,7 @@ const SeatSelect = () => {
 
                     <div style={{display:"flex",justifyContent:"center"}}>
 
-                        <button className='register-btn' style={{padding:"1px 1rem",marginTop:"12px"}}>Pay({selectedSeats.totalPrice})</button>
+                        {selectedSeats.totalPrice ?<button className='register-btn' style={{padding:"1px 1rem",marginTop:"12px"}}>Pay({selectedSeats.totalPrice} Rs)</button> :<></>}
                     </div>
                 </div>
       </footer>
