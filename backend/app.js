@@ -15,6 +15,7 @@ const paymentRoutes = require('./routes/payment');
 const reviewRoutes = require('./routes/reviewRoutes');
 const theaterRoutes = require('./routes/theater'); 
 const seatRoutes=require('./routes/seat')
+const { startCleanupJob } = require('./utils/cleanupService');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use('/api/movies', reviewRoutes);
 app.use('/api/theaters', theaterRoutes);
 app.use('/api/seat',seatRoutes);
 
+startCleanupJob();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

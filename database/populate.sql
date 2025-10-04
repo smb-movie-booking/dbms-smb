@@ -380,6 +380,7 @@ BEGIN
             IF booking_total_price > 0 THEN
                 INSERT INTO Payment (PaymentID, Amount, Payment_Timestamp, RemoteTransactionID, PaymentMethod, BookingID)
                 VALUES (payment_id, booking_total_price, NOW() - INTERVAL FLOOR(RAND() * 71) HOUR, FLOOR(1000000 + RAND() * 9000000), 1, booking_id);
+                UPDATE Booking SET Booking_Status = 2 WHERE BookingID = booking_id;
                 SET payment_id = payment_id + 1;
             END IF;
 
