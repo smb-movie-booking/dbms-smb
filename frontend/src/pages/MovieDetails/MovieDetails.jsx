@@ -24,12 +24,12 @@ const MovieDetails = ({ selectedCity }) => {
     const fetchMovieAndReviews = async () => {
       try {
         // Fetch both movie details and reviews concurrently for better performance
-        const moviePromise = axiosInstance.get('/movies/explore', {
+        const moviePromise = axiosInstance.get('/api/movies/explore', {
           params: { movie: movieId }
         });
         
         // This is an example endpoint for reviews, adjust if yours is different
-        const reviewsPromise = axiosInstance.get(`/movies/${movieId}/reviews`);
+        const reviewsPromise = axiosInstance.get(`/api/movies/${movieId}/reviews`);
 
         const [movieResponse, reviewsResponse] = await Promise.all([moviePromise, reviewsPromise]);
 
