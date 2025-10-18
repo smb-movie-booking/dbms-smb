@@ -162,7 +162,6 @@ INSERT INTO Cinema (CinemaID, Cinema_Name, CityID, Facilities, Cancellation_Allo
 SELECT 'cities and cinema added' as message;
 
 
--- ### Data for Cinema_Hall and Cinema_Seat Tables ###
 DROP PROCEDURE IF EXISTS PopulateHallsAndSeats;
 DELIMITER $$
 CREATE PROCEDURE PopulateHallsAndSeats()
@@ -172,52 +171,99 @@ BEGIN
     DECLARE k INT DEFAULT 1;
     DECLARE hall_id INT DEFAULT 1;
     DECLARE seat_id INT DEFAULT 1;
-    DECLARE total_halls_for_cinema INT; -- Renamed to avoid confusion with total_seats
-    DECLARE seats_in_current_hall INT; -- Variable to hold randomized seats for current hall
+    DECLARE total_halls_for_cinema INT;
+    DECLARE seats_in_current_hall INT;
+
+    -- NEW: Variables for seat name generation
+    DECLARE layout_type INT;
+    DECLARE current_seat_type VARCHAR(10);
+    DECLARE generated_seat_name VARCHAR(10);
+    
+    -- NEW: Variables for pre-calculating totals for each type
+    DECLARE total_standard, total_premium, total_recliner, total_sofa, total_box INT DEFAULT 0;
+    
+    -- NEW: Variables to count seats as we add them
+    DECLARE current_standard_count, current_premium_count, current_recliner_count, current_sofa_count, current_box_count INT DEFAULT 1;
+    
+    -- NEW: Variables for row/seat number logic
+    DECLARE total_for_current_type, seat_num_within_type, seats_per_row, seat_num_in_row INT;
+    
+    -- NEW: Row letter 'A'
+    DECLARE row_letter_code INT DEFAULT 65;
 
     WHILE i <= 100 DO
-        SET total_halls_for_cinema = 1 + FLOOR(RAND() * 4); -- Random halls between 1 and 4 per cinema
+        SET total_halls_for_cinema = 1 + FLOOR(RAND() * 4);
         SET j = 1;
+        
         WHILE j <= total_halls_for_cinema DO
-            SET seats_in_current_hall = 100 + FLOOR(RAND() * 50); -- Random seats between 100 and 150 for this hall
-            INSERT INTO Cinema_Hall (CinemaHallID, Hall_Name, CinemaID) -- Removed TotalSeats as per schema
+            SET seats_in_current_hall = 100 + FLOOR(RAND() * 50);
+            INSERT INTO Cinema_Hall (CinemaHallID, Hall_Name, CinemaID)
             VALUES (hall_id, CONCAT('Hall ', j), i);
+
+            -- NEW: Reset all counters for the new hall
+            SET row_letter_code = 65; -- 'A'
+            SET total_standard = 0, total_premium = 0, total_recliner = 0, total_sofa = 0, total_box = 0;
+            SET current_standard_count = 1, current_premium_count = 1, current_recliner_count = 1, current_sofa_count = 1, current_box_count = 1;
+
+            -- NEW: PRE-CALCULATION STEP
+            -- We must know the *total* seats of each type *before* we can apply the 10/20 row logic.
+            SET layout_type = FLOOR(1 + RAND(hall_id) * 5); -- Get the layout number
+            
+            -- This block mirrors your seat-type logic to calculate the totals in advance
+            CASE layout_type
+                -- Layout 1: Standard, Premium, Recliners
+                WHEN 1 THEN 
+                    SET total_recliner = 20;
+                    SET total_premium = 30; -- (50 - 20)
+                    SET total_standard = seats_in_current_hall - 50;
+                -- Layout 2: Sofas, Premium, Standard
+                WHEN 2 THEN 
+                    SET total_sofa = 8;
+                    SET total_premium = FLOOR(seats_in_current_hall / 2) - 8;
+                    SET total_standard = seats_in_current_hall - FLOOR(seats_in_current_hall / 2);
+                -- Layout 3: Box, Standard, Premium
+                WHEN 3 THEN 
+                    SET total_box = 4;
+                    SET total_premium = 40;
+                    SET total_standard = seats_in_current_hall - 44;
+                -- Layout 4: All 5 types
+                WHEN 4 THEN 
+                    SET total_sofa = 4;
+                    SET total_box = 4; -- (8 - 4)
+                    SET total_recliner = 10;
+                    SET total_premium = 20; -- (30 - 10)
+                    SET total_standard = seats_in_current_hall - 38;
+                -- Layout 5: Standard, Premium
+                ELSE 
+                    SET total_premium = 30;
+                    SET total_standard = seats_in_current_hall - 30;
+            END CASE;
+            
 
             SET k = 1;
             WHILE k <= seats_in_current_hall DO
-                INSERT INTO Cinema_Seat (CinemaSeatID, SeatNumber, Seat_Type, CinemaHallID)
-                VALUES (
-                    seat_id,
-                    k,
-                    -- This logic creates one of 5 random layouts for each hall.
-                    -- The layout is determined by the hall_id, so it's consistent for all seats in the same hall.
-                    CASE FLOOR(1 + RAND(hall_id) * 5) -- Generates a random layout number (1 to 5) based on the hall
-                        
-                        -- Layout 1: Has Standard, Premium, and Recliners 🛋️
+            
+                -- 1. Determine the seat type (same logic as before)
+                SET current_seat_type = (
+                    CASE layout_type
                         WHEN 1 THEN 
                             CASE
                                 WHEN k > seats_in_current_hall - 20 THEN 'Recliner'
                                 WHEN k > seats_in_current_hall - 50 THEN 'Premium'
                                 ELSE 'Standard'
                             END
-
-                        -- Layout 2: Has Standard, Premium, and Sofas in the front 🛋️
                         WHEN 2 THEN 
                             CASE
                                 WHEN k <= 8 THEN 'Sofa'
                                 WHEN k <= seats_in_current_hall / 2 THEN 'Premium'
                                 ELSE 'Standard'
                             END
-
-                        -- Layout 3: Has Standard, Premium, and a few exclusive Box seats 📦
                         WHEN 3 THEN 
                             CASE
                                 WHEN k <= 4 THEN 'Box'
                                 WHEN k > seats_in_current_hall - 40 THEN 'Premium'
                                 ELSE 'Standard'
                             END
-
-                        -- Layout 4: A luxury hall with all 5 seat types ✨
                         WHEN 4 THEN 
                             CASE
                                 WHEN k <= 4 THEN 'Sofa'
@@ -226,16 +272,71 @@ BEGIN
                                 WHEN k > seats_in_current_hall - 30 THEN 'Premium'
                                 ELSE 'Standard'
                             END
-
-                        -- Layout 5: The base case with only Standard and Premium seats ✅
                         ELSE 
                             CASE
                                 WHEN k > seats_in_current_hall - 30 THEN 'Premium'
                                 ELSE 'Standard'
                             END
-                    END,
-                    hall_id
+                    END
                 );
+
+                -- 2. NEW: Get the total and current count for this seat's type
+                CASE current_seat_type
+                    WHEN 'Standard' THEN
+                        SET total_for_current_type = total_standard;
+                        SET seat_num_within_type = current_standard_count;
+                    WHEN 'Premium' THEN
+                        SET total_for_current_type = total_premium;
+                        SET seat_num_within_type = current_premium_count;
+                    WHEN 'Recliner' THEN
+                        SET total_for_current_type = total_recliner;
+                        SET seat_num_within_type = current_recliner_count;
+                    WHEN 'Sofa' THEN
+                        SET total_for_current_type = total_sofa;
+                        SET seat_num_within_type = current_sofa_count;
+                    WHEN 'Box' THEN
+                        SET total_for_current_type = total_box;
+                        SET seat_num_within_type = current_box_count;
+                END CASE;
+
+                -- 3. NEW: Apply your frontend logic to get seats_per_row
+                IF total_for_current_type >= 80 THEN
+                    SET seats_per_row = 20;
+                ELSE
+                    SET seats_per_row = 10;
+                END IF;
+
+                -- 4. NEW: Calculate the seat's number within its row (e.g., 1, 2, ... 10)
+                SET seat_num_in_row = ((seat_num_within_type - 1) % seats_per_row) + 1;
+
+                -- 5. NEW: Increment the row letter *if* this is the first seat of a new row
+                -- (But not if it's the very first seat of the type)
+                IF seat_num_in_row = 1 AND k > 1 THEN
+                    SET row_letter_code = row_letter_code + 1;
+                END IF;
+
+                -- 6. NEW: Generate the final name
+                SET generated_seat_name = CONCAT(CHAR(row_letter_code), seat_num_in_row);
+                
+                -- 7. NEW: Modified INSERT statement
+                INSERT INTO Cinema_Seat (CinemaSeatID, SeatNumber, Seat_Type, CinemaHallID, SeatName)
+                VALUES (
+                    seat_id,
+                    k,
+                    current_seat_type,
+                    hall_id,
+                    generated_seat_name -- <-- The new name
+                );
+
+                -- 8. NEW: Increment the counter for the type we just added
+                CASE current_seat_type
+                    WHEN 'Standard' THEN SET current_standard_count = current_standard_count + 1;
+                    WHEN 'Premium' THEN SET current_premium_count = current_premium_count + 1;
+                    WHEN 'Recliner' THEN SET current_recliner_count = current_recliner_count + 1;
+                    WHEN 'Sofa' THEN SET current_sofa_count = current_sofa_count + 1;
+                    WHEN 'Box' THEN SET current_box_count = current_box_count + 1;
+                END CASE;
+
                 SET seat_id = seat_id + 1;
                 SET k = k + 1;
             END WHILE;
@@ -362,7 +463,10 @@ BEGIN
             INSERT INTO Booking (BookingID, NumberOfSeats, Booking_Timestamp, Booking_Status, UserID, ShowID)
             VALUES (booking_id, num_seats, NOW() - INTERVAL FLOOR(RAND() * 72) HOUR, 1, user_id, show_id);
 
-            CREATE TEMPORARY TABLE IF NOT EXISTS SeatsToBook (ShowSeatID INT, SeatPrice DECIMAL(10,2));
+            CREATE TEMPORARY TABLE IF NOT EXISTS SeatsToBook (
+                ShowSeatID INT PRIMARY KEY,
+                SeatPrice DECIMAL(10,2)
+            );
             TRUNCATE TABLE SeatsToBook;
 
             INSERT INTO SeatsToBook (ShowSeatID, SeatPrice)
@@ -380,6 +484,7 @@ BEGIN
             IF booking_total_price > 0 THEN
                 INSERT INTO Payment (PaymentID, Amount, Payment_Timestamp, RemoteTransactionID, PaymentMethod, BookingID)
                 VALUES (payment_id, booking_total_price, NOW() - INTERVAL FLOOR(RAND() * 71) HOUR, FLOOR(1000000 + RAND() * 9000000), 1, booking_id);
+                UPDATE Booking SET Booking_Status = 2 WHERE BookingID = booking_id;
                 SET payment_id = payment_id + 1;
             END IF;
 

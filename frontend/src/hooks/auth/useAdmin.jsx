@@ -5,7 +5,7 @@ export const useAdmin=()=>{
 
     const addNewCity=async(cityData)=>{
         try {
-            const {data}=await axiosInstance.post("/admin/addcity",cityData);
+            const {data}=await axiosInstance.post("/api/admin/addcity",cityData);
             toast.success(data.message)
             console.log(data);
         } catch (error) {
@@ -18,7 +18,7 @@ export const useAdmin=()=>{
 
     const addCinemas=async(cinemaData)=>{
         try {
-            const {data}=await axiosInstance.post("/admin/cinemas",cinemaData);
+            const {data}=await axiosInstance.post("/api/admin/cinemas",cinemaData);
             if(data.success){
                 toast.success(data.message)
             }
@@ -30,7 +30,7 @@ export const useAdmin=()=>{
 
     const addCinemaHall=async(hallData)=>{
         try {
-            const {data}=await axiosInstance.post("/admin/cinema-halls",hallData);
+            const {data}=await axiosInstance.post("/api/admin/cinema-halls",hallData);
             if(data.success){
                 toast.success(data.message)
             }
@@ -42,7 +42,7 @@ export const useAdmin=()=>{
 
     const addMovie=async(movieInfo)=>{
         try {
-            const {data}=await axiosInstance.post("/admin/movie",movieInfo);
+            const {data}=await axiosInstance.post("/api/admin/movie",movieInfo);
             if(data.success){
                 return toast.success(data.message);
             }
@@ -54,7 +54,7 @@ export const useAdmin=()=>{
 
     const addShow=async(showInfo)=>{
         try {
-            const {data} = await axiosInstance.post("/admin/shows", showInfo);
+            const {data} = await axiosInstance.post("/api/admin/shows", showInfo);
             console.log(data);
             if(data.success){
                 return toast.success(data.message)

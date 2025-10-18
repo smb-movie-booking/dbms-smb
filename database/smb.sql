@@ -50,6 +50,7 @@ CREATE TABLE Cinema_Hall (
 CREATE TABLE Cinema_Seat (
     CinemaSeatID INT PRIMARY KEY,
     SeatNumber INT,
+    SeatName VARCHAR(10) NOT NULL,
     Seat_Type ENUM('Standard', 'Premium', 'Recliner', 'Sofa', 'Box') NOT NULL,
     CinemaHallID INT,
     FOREIGN KEY (CinemaHallID) REFERENCES Cinema_Hall(CinemaHallID) ON DELETE CASCADE

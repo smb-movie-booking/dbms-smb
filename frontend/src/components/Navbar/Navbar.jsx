@@ -35,7 +35,7 @@ const Navbar = ({ selectedCity, onCityChange }) => {
     useEffect(() => {
   const fetchCities = async () => {
     try {
-      const { data } = await axiosInstance.get("/movies/cities");
+      const { data } = await axiosInstance.get("/api/movies/cities");
       setCities(data);
     } catch (err) {
       console.error("Error fetching cities:", err);
@@ -61,7 +61,7 @@ const Navbar = ({ selectedCity, onCityChange }) => {
                 return
             }
             setShowSuggestion(true)
-            const {data}=await axiosInstance.get("/movies/search",{
+            const {data}=await axiosInstance.get("/api/movies/search",{
                 params:{
                     searchString:debouncedValue
                 }

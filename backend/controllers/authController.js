@@ -4,10 +4,8 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 require('dotenv').config();
 
-// POST /login
 exports.login = (req, res) => {
   const { identifier, password } = req.body;
-  console.log(identifier)
 
   if (!identifier || !password) {
     return res.status(400).json({ message: 'Email/Phone and password are required' });
@@ -16,15 +14,23 @@ exports.login = (req, res) => {
   const phoneRegex = /^[6-9]\d{9}$/;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+  // Wrap res.json to prevent multiple sends
+  let sent = false;
+  const sendOnce = (status, data) => {
+    if (!sent) {
+      sent = true;
+      res.status(status).json(data);
+    }
+  };
+
   const handleUser = (err, user) => {
     if (err || !user) {
-      return res.status(401).json({ message: 'User not found' });
+      return sendOnce(401, { message: 'User not found' });
     }
 
     bcrypt.compare(password, user.User_Password, (err, isMatch) => {
-      if (err || !isMatch) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
+      if (err) return sendOnce(500, { message: 'Server error' });
+      if (!isMatch) return sendOnce(401, { message: 'Invalid credentials' });
 
       req.session.user = {
         id: user.UserID,
@@ -34,8 +40,17 @@ exports.login = (req, res) => {
         isAdmin: user.IsAdmin === 1
       };
 
-      return res.status(200).json({success:true,
-        message: user.IsAdmin === 1 ? 'Admin logged in successfully' : 'User logged in successfully'
+      // Save session before sending response
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save failed:', err);
+          return sendOnce(500, { message: 'Session save failed' });
+        }
+
+        return sendOnce(200, {
+          success: true,
+          message: user.IsAdmin === 1 ? 'Admin logged in successfully' : 'User logged in successfully'
+        });
       });
     });
   };
@@ -45,9 +60,11 @@ exports.login = (req, res) => {
   } else if (emailRegex.test(identifier)) {
     userModel.getByEmail(identifier, handleUser);
   } else {
-    return res.status(400).json({ message: 'Invalid email or phone format' });
+    return sendOnce(400, { message: 'Invalid email or phone format' });
   }
 };
+
+
 
 
 

@@ -33,7 +33,7 @@ const Home = ({ selectedCity }  ) => {
       if (filters.formats.length > 0) queryParams.append('format', filters.formats.join(','));
       
 
-    const { data } = await axiosInstance.get('/movies/explore', {
+    const { data } = await axiosInstance.get('/api/movies/explore', {
       params: {
         city: selectedCity.id,
         language: filters.languages.join(','),
