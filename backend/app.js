@@ -24,7 +24,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://dbms-f11x04apo-aadithkichus-projects.vercel.app'
+    'https://dbms-smb.vercel.app'
   ],
   credentials: true,
 }));
