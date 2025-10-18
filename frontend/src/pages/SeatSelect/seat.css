@@ -69,15 +69,43 @@ header .show-info-sub{
 
 }
 
-footer{
-    padding: 0.5rem 0;
-    background-color: rgb(239, 242, 244);
-    display: flex;
-    justify-content: center;
-    position: fixed;
-    z-index: 1;
-    width: 100%;
-    bottom: 0;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+/* 1. Add padding to the *bottom of the main content* */
+.seat-wrapper main {
+  padding-bottom: 150px; 
+}
 
+/* 2. New footer style (replaces your old one) */
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08); 
+  box-sizing: border-box; 
+  /* DO NOT add display:flex here */
+}
+
+/* 3. Style for the legend (top part of footer) */
+.seat-legend {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee; 
+}
+
+/* 4. Style for the summary bar (bottom part of footer) */
+.seat-summary-bar {
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* This now works */
+}
+
+/* 5. Style for the total price */
+.total-price {
+  font-size: 1.2rem;
+  color: #333;
+  /* (flex-grow: 1 is removed) */
 }

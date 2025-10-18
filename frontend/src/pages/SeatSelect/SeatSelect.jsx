@@ -161,7 +161,37 @@ const SeatSelect = () => {
       </main>
 
       <footer>
-            {/* Footer is unchanged */}
+            {/* This div is just for the legend at the top of the footer */}
+        <div className="seat-legend">
+            <div style={{display:"flex", alignItems:"center"}}><span className='seat-button available '></span><span>Available</span></div>
+            <div style={{display:"flex", alignItems:"center"}}><span className='seat-button locked '></span><span>Selected</span></div>
+            <div style={{display:"flex", alignItems:"center"}}><span className='seat-button '></span><span>Booked</span></div>
+        </div>
+
+        {/* This is the new summary bar that only appears when seats are selected */}
+        {selectedSeats.seats.length > 0 && (
+            <div className="seat-summary-bar">
+                
+                {/* Here is the Total Price display */}
+                <div className="total-price">
+                    <strong>Total: {selectedSeats.totalPrice} Rs</strong>
+                </div>
+                
+                {/* Here is the View Summary button */}
+                <div className="summary-button">
+                    <button 
+                        className='register-btn' // Using your existing button style
+                        onClick={() => {
+                            // You can add navigation logic here, e.g.,
+                            // navigate('/booking-summary', { state: { selectedSeats, seatInfo } });
+                            toast.success(`Selected ${selectedSeats.seats.length} seats!`);
+                        }}
+                    >
+                        View Summary
+                    </button>
+                </div>
+            </div>
+        )}
       </footer>
     </div>
   )
