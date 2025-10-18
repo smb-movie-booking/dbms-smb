@@ -16,7 +16,7 @@ const SeatSelect = () => {
         const fetchseats=async()=>{
             try {
                 setLoading(true);
-                const {data}=await axiosInstance.get(`/seat/show/${showid}`);
+                const {data}=await axiosInstance.get(`/api/seat/show/${showid}`);
                 console.log(data); // This log confirms your data structure
                 setSeatiInfo(data);
             } catch (error) {
