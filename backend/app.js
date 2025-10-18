@@ -33,7 +33,10 @@ app.use(session({
 console.log(process.env.DB_USER);
 
 app.use(cors({
-  origin:"http://localhost:5173",
+  origin:[
+    'http://localhost:5173', // Your local React app
+    'https://dbms-smb.vercel.app/' // 👈 ADD YOUR LIVE URL HERE (you'll get this in Step 3)
+  ],
   credentials:true,
 }))
 
