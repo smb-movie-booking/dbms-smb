@@ -48,7 +48,7 @@ export const useAuth=()=>{
 
     const login=async(userData)=>{
         try {
-            const {data}=await axiosInstance.post("/api/auth/login",userData);
+            const {data}=await axiosInstance.post("/api/auth/login",userData,{ withCredentials: true });
             if(data.success){
                 await getUser();
                 return true
