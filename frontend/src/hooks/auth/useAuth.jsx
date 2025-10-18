@@ -10,7 +10,7 @@ export const useAuth=()=>{
 
     const getOtp=async(identifier)=>{
         try {
-            const {data}=await axiosInstance.post("/auth/send-otp",identifier)
+            const {data}=await axiosInstance.post("/api/auth/send-otp",identifier)
             console.log(data);
             return true
         } catch (error) {
@@ -22,7 +22,7 @@ export const useAuth=()=>{
 
     const verifyOtp=async(otpData)=>{
         try {
-            const {data}=await axiosInstance.post("/auth/verify-otp",otpData);
+            const {data}=await axiosInstance.post("/api/auth/verify-otp",otpData);
             console.log(data);
             if(data.success){
                 return true;
@@ -37,7 +37,7 @@ export const useAuth=()=>{
 
     const register=async(userData)=>{
         try {
-            const {data}=await axiosInstance.post("/auth/register",userData);
+            const {data}=await axiosInstance.post("/api/auth/register",userData);
             console.log(data);
             await getUser();
         } catch (error) {
@@ -48,7 +48,7 @@ export const useAuth=()=>{
 
     const login=async(userData)=>{
         try {
-            const {data}=await axiosInstance.post("/auth/login",userData);
+            const {data}=await axiosInstance.post("/api/auth/login",userData);
             if(data.success){
                 await getUser();
                 return true
@@ -65,7 +65,7 @@ export const useAuth=()=>{
 
     const getUser=async()=>{
         try {
-            const {data}=await axiosInstance.get("/users/me");
+            const {data}=await axiosInstance.get("/api/users/me");
             console.log(data);
             if(data){
                 setAuthUser(data);
@@ -78,7 +78,7 @@ export const useAuth=()=>{
 
     const logoutUser=async()=>{
         try {
-            const {data}=await axiosInstance.get("/auth/logout");
+            const {data}=await axiosInstance.get("/api/auth/logout");
             setAuthUser(null);
             toast.success(data);
         } catch (error) {
@@ -89,7 +89,7 @@ export const useAuth=()=>{
 
     const resetPassword=async(userData)=>{
         try {
-            const {data}=await axiosInstance.post("/auth/reset-password",userData);
+            const {data}=await axiosInstance.post("/api/auth/reset-password",userData);
             setAuthUser(null);
             console.log(data);
             toast.success("Password changed successfully");
@@ -106,7 +106,7 @@ export const useAuth=()=>{
 
     const updateEmail=async(userData)=>{
         try {
-            const {data}=await axiosInstance.put("/users/update-email",userData);
+            const {data}=await axiosInstance.put("/api/users/update-email",userData);
             if(data.success){
                 console.log(data);
                 toast.success(data.message);
@@ -119,7 +119,7 @@ export const useAuth=()=>{
 
     const updatePhone=async(userData)=>{
         try {
-            const {data}=await axiosInstance.put("/users/update-phone",userData);
+            const {data}=await axiosInstance.put("/api/users/update-phone",userData);
             if(data.success){
                 console.log(data);
                 toast.success(data.message);
@@ -132,7 +132,7 @@ export const useAuth=()=>{
 
     const updateName=async(userData)=>{
         try {
-            const {data}=await axiosInstance.put("/users/update-name",userData);
+            const {data}=await axiosInstance.put("/api/users/update-name",userData);
             if(data.success){
                 console.log(data);
                 toast.success(data.message);
@@ -147,7 +147,7 @@ export const useAuth=()=>{
 
     const deleteProfile=async()=>{
         try {
-            const {data}=await axiosInstance.delete("/users/me");
+            const {data}=await axiosInstance.delete("/api/users/me");
             console.log(data);
             if(data.success){
                 toast.success(data.message);
