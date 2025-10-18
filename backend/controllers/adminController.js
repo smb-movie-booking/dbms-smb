@@ -200,129 +200,124 @@ exports.addNewCinemaHall = (req, res) => {
     if (!cinemaId) return res.status(400).json({ message: "Please choose a cinema" });
     if (!seatConfig || seatConfig.length === 0) return res.status(400).json({ message: "Seat configuration is required" });
 
-    db.beginTransaction(err => {
+    // 1. Get a connection from the POOL (db)
+    db.getConnection((err, connection) => {
         if (err) {
             console.log(err);
-            return res.status(500).json({ message: "Database transaction error" });
+            return res.status(500).json({ message: "Database connection error" });
         }
 
-        try {
-            // This function gives us a flat array of all seat objects
-            const { allSeats } = parseSeatRanges(seatConfig);
-            if (allSeats.length === 0) {
-                throw new Error("Cannot create a hall with zero seats.");
+        // 2. Start the transaction using the new 'connection' object
+        connection.beginTransaction(err => {
+            if (err) {
+                console.log(err);
+                connection.release(); // Must release connection on error
+                return res.status(500).json({ message: "Database transaction error" });
             }
 
-            // --- NEW LOGIC: SEAT NAME GENERATION ---
-
-            // 1. Group the flat `allSeats` array by type
-            const seatsByType = allSeats.reduce((acc, seat) => {
-                if (!acc[seat.type]) {
-                    acc[seat.type] = [];
-                }
-                acc[seat.type].push(seat);
-                return acc;
-            }, {});
-
-            // 2. Get the order of types from the original seatConfig
-            const seatTypeOrder = seatConfig.map(config => config.type);
-
-            const seatsWithNames = []; // This will hold all seats with their new names
-            let rowLetterCode = 65; // 65 is the ASCII code for 'A'
-
-            // 3. Loop through each seat type *in order*
-            for (const seatType of seatTypeOrder) {
-                const seatsInThisType = seatsByType[seatType];
-                if (!seatsInThisType || seatsInThisType.length === 0) {
-                    continue; // Skip if this type has no seats
+            try {
+                // This synchronous logic is unchanged
+                const { allSeats } = parseSeatRanges(seatConfig);
+                if (allSeats.length === 0) {
+                    throw new Error("Cannot create a hall with zero seats.");
                 }
 
-                const count = seatsInThisType.length;
-
-                // 4. Apply the exact same logic from your frontend
-                let seatsPerRow;
-                if (count >= 80) {
-                    seatsPerRow = 20;
-                } else {
-                    seatsPerRow = 10;
-                }
-
-                const rowCount = Math.ceil(count / seatsPerRow);
-
-                // 5. Slice into rows and assign names
-                for (let i = 0; i < rowCount; i++) {
-                    const start = i * seatsPerRow;
-                    const end = start + seatsPerRow;
-                    const rowOfSeats = seatsInThisType.slice(start, end);
-
-                    const letter = String.fromCharCode(rowLetterCode);
-
-                    rowOfSeats.forEach((seat, index) => {
-                        const seatNumber = index + 1;
-                        const seatName = `${letter}${seatNumber}`;
-
-                        // Add the seat (with its new name) to our final array
-                        seatsWithNames.push({
-                            ...seat,       // Contains original 'number' and 'type'
-                            seatName: seatName // The new generated name "A1", "A2" etc.
+                // --- NEW LOGIC: SEAT NAME GENERATION (Unchanged) ---
+                const seatsByType = allSeats.reduce((acc, seat) => {
+                    if (!acc[seat.type]) acc[seat.type] = [];
+                    acc[seat.type].push(seat);
+                    return acc;
+                }, {});
+                const seatTypeOrder = seatConfig.map(config => config.type);
+                const seatsWithNames = [];
+                let rowLetterCode = 65;
+                for (const seatType of seatTypeOrder) {
+                    const seatsInThisType = seatsByType[seatType];
+                    if (!seatsInThisType || seatsInThisType.length === 0) continue;
+                    const count = seatsInThisType.length;
+                    let seatsPerRow = (count >= 80) ? 20 : 10;
+                    const rowCount = Math.ceil(count / seatsPerRow);
+                    for (let i = 0; i < rowCount; i++) {
+                        const start = i * seatsPerRow;
+                        const end = start + seatsPerRow;
+                        const rowOfSeats = seatsInThisType.slice(start, end);
+                        const letter = String.fromCharCode(rowLetterCode);
+                        rowOfSeats.forEach((seat, index) => {
+                            const seatNumber = seat.number;
+                            const seatName = `${letter}${seatNumber}`;
+                            seatsWithNames.push({ ...seat, seatName: seatName });
                         });
+                        rowLetterCode++;
+                    }
+                }
+                // --- END OF NEW LOGIC ---
+                
+                // 3. All queries must use 'connection.query' (not 'db.query')
+                connection.query('SELECT MAX(CinemaHallID) as maxid from Cinema_Hall', (err, result) => {
+                    // 4. All rollbacks must use 'connection.rollback' and 'connection.release'
+                    if (err) return connection.rollback(() => {
+                        connection.release();
+                        throw err; 
                     });
-
-                    rowLetterCode++; // Increment letter for the next row (B, C, D...)
-                }
-            }
-            // --- END OF NEW LOGIC ---
-            
-            // 1. Insert the Cinema_Hall (unchanged)
-            db.query('SELECT MAX(CinemaHallID) as maxid from Cinema_Hall', (err, result) => {
-                if (err) return db.rollback(() => { throw err; });
-                
-                const newCinemaHallId = (result[0].maxid || 0) + 1;
-                const hallSql = 'INSERT INTO Cinema_Hall(CinemaHallID, Hall_Name, CinemaID) VALUES (?, ?, ?)';
-                
-                db.query(hallSql, [newCinemaHallId, hallName.trim(), cinemaId], (err, result) => {
-                    if (err) return db.rollback(() => { throw err; });
-
-                    // 2. Prepare and Insert all Cinema_Seats (this part is CHANGED)
-                    db.query('SELECT MAX(CinemaSeatID) as maxid from Cinema_Seat', (err, result) => {
-                        if (err) return db.rollback(() => { throw err; });
-
-                        let nextSeatId = (result[0].maxid || 0) + 1;
-
-                        // --- MODIFIED: Use `seatsWithNames` and add `seat.seatName` ---
-                        const seatValues = seatsWithNames.map(seat => {
-                            return [
-                                nextSeatId++,
-                                seat.number,   // The original seat number (if you have one)
-                                seat.type,
-                                newCinemaHallId,
-                                seat.seatName  // The new "A1", "A2" name
-                            ];
+                    
+                    const newCinemaHallId = (result[0].maxid || 0) + 1;
+                    const hallSql = 'INSERT INTO Cinema_Hall(CinemaHallID, Hall_Name, CinemaID) VALUES (?, ?, ?)';
+                    
+                    connection.query(hallSql, [newCinemaHallId, hallName.trim(), cinemaId], (err, result) => {
+                        if (err) return connection.rollback(() => {
+                            connection.release();
+                            throw err;
                         });
-                        
-                        // --- MODIFIED: Added the `SeatName` column to the query ---
-                        const seatSql = 'INSERT INTO Cinema_Seat (CinemaSeatID, SeatNumber, Seat_Type, CinemaHallID, SeatName) VALUES ?';
 
-                        db.query(seatSql, [seatValues], (err, result) => {
-                            if (err) return db.rollback(() => { throw err; });
+                        connection.query('SELECT MAX(CinemaSeatID) as maxid from Cinema_Seat', (err, result) => {
+                            if (err) return connection.rollback(() => {
+                                connection.release();
+                                throw err;
+                            });
 
-                            // 3. Commit the transaction (unchanged)
-                            db.commit(err => {
-                                if (err) return db.rollback(() => { throw err; });
-                                
-                                return res.status(201).json({ success: true, message: "Hall and all seats added successfully" });
+                            let nextSeatId = (result[0].maxid || 0) + 1;
+                            const seatValues = seatsWithNames.map(seat => {
+                                return [
+                                    nextSeatId++,
+                                    seat.number,
+                                    seat.type,
+                                    newCinemaHallId,
+                                    seat.seatName
+                                ];
+                            });
+                            
+                            const seatSql = 'INSERT INTO Cinema_Seat (CinemaSeatID, SeatNumber, Seat_Type, CinemaHallID, SeatName) VALUES ?';
+
+                            connection.query(seatSql, [seatValues], (err, result) => {
+                                if (err) return connection.rollback(() => {
+                                    connection.release();
+                                    throw err;
+                                });
+
+                                // 5. Commit using 'connection.commit'
+                                connection.commit(err => {
+                                    if (err) return connection.rollback(() => {
+                                        connection.release();
+                                        throw err;
+                                    });
+                                    
+                                    // 6. Release the connection back to the pool on success
+                                    connection.release();
+                                    return res.status(201).json({ success: true, message: "Hall and all seats added successfully" });
+                                });
                             });
                         });
                     });
                 });
-            });
-        } catch (error) {
-            db.rollback(() => {
-                console.log(error);
-                // Use error.message if it's a custom error (like from parseSeatRanges)
-                return res.status(400).json({ message: error.message || "An error occurred" });
-            });
-        }
+            } catch (error) {
+                // 7. Rollback and release on synchronous errors
+                connection.rollback(() => {
+                    connection.release();
+                    console.log(error);
+                    return res.status(400).json({ message: error.message });
+                });
+            }
+        });
     });
 };
 
@@ -553,65 +548,102 @@ exports.addNewShow = (req, res) => {
         return res.status(400).json({ message: "All fields, including price configuration, are required." });
     }
 
-    db.beginTransaction(err => {
-        if (err) return res.status(500).json({ message: "Transaction Error" });
+    // 1. Get a connection from the pool
+    db.getConnection((err, connection) => {
+        if (err) {
+            console.error("Error getting DB connection:", err);
+            return res.status(500).json({ message: "Database connection error" });
+        }
 
-        // First, get the movie's duration to calculate EndTime
-        db.query('SELECT Duration FROM Movie WHERE MovieID = ?', [MovieID], (err, movieResult) => {
-            if (err) return db.rollback(() => res.status(500).json({ message: "DB error finding movie" }));
-            if (movieResult.length === 0) return db.rollback(() => res.status(404).json({ message: "Movie not found" }));
+        // 2. Start the transaction on the connection
+        connection.beginTransaction(err => {
+            if (err) {
+                connection.release();
+                return res.status(500).json({ message: "Transaction Error" });
+            }
 
-            const movieDuration = movieResult[0].Duration;
-            const fullStartTime = `${Show_Date} ${StartTime}`;
+            // First, get the movie's duration to calculate EndTime
+            // 3. Use connection.query for all operations
+            connection.query('SELECT Duration FROM Movie WHERE MovieID = ?', [MovieID], (err, movieResult) => {
+                // 4. Use connection.rollback for rollbacks
+                if (err) return connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({ message: "DB error finding movie" });
+                });
+                if (movieResult.length === 0) return connection.rollback(() => {
+                    connection.release();
+                    res.status(404).json({ message: "Movie not found" });
+                });
 
-            // Find new ShowID
-            db.query("SELECT max(ShowID) as maxid from Movie_Show", (err, result) => {
-                if (err) return db.rollback(() => res.status(500).json({ message: "DB Error getting max ShowID" }));
-                
-                const newID = (result[0].maxid || 0) + 1;
-                const sqlShow = 'INSERT INTO Movie_Show(ShowID, Show_Date, StartTime, EndTime, CinemaHallID, MovieID, Format, Show_Language) VALUES(?, ?, ?, ADDTIME(?, ?), ?, ?, ?, ?)';
-                
-                // A. Insert the main show record
-                db.query(sqlShow, [newID, Show_Date, fullStartTime, fullStartTime, movieDuration, CinemaHallID, MovieID, Format, Show_Language], (err, result) => {
-                    if (err) return db.rollback(() => res.status(500).json({ message: "DB Error inserting show" }));
+                const movieDuration = movieResult[0].Duration;
+                const fullStartTime = `${Show_Date} ${StartTime}`;
+
+                // Find new ShowID
+                connection.query("SELECT max(ShowID) as maxid from Movie_Show", (err, result) => {
+                    if (err) return connection.rollback(() => {
+                        connection.release();
+                        res.status(500).json({ message: "DB Error getting max ShowID" });
+                    });
                     
-                    // B. Call your procedure to populate seats with a default price (e.g., 0)
-                    db.query('CALL PopulateShowSeats(?, ?, 0)', [newID, CinemaHallID], (err, result) => {
-                          if (err) {
-                              // ADD THESE LOGS
-                              console.error("ERROR CALLING PopulateShowSeats:", err); 
-                              console.error("PARAMETERS USED:", { newID, CinemaHallID });
+                    const newID = (result[0].maxid || 0) + 1;
+                    const sqlShow = 'INSERT INTO Movie_Show(ShowID, Show_Date, StartTime, EndTime, CinemaHallID, MovieID, Format, Show_Language, isActive) VALUES(?, ?, ?, ADDTIME(?, ?), ?, ?, ?, ?, TRUE)'; // Set isActive to TRUE
+                    
+                    // A. Insert the main show record
+                    connection.query(sqlShow, [newID, Show_Date, fullStartTime, fullStartTime, movieDuration, CinemaHallID, MovieID, Format, Show_Language], (err, result) => {
+                        if (err) return connection.rollback(() => {
+                            connection.release();
+                            res.status(500).json({ message: "DB Error inserting show" });
+                        });
+                        
+                        // B. Call your procedure to populate seats
+                        connection.query('CALL PopulateShowSeats(?, ?, 0)', [newID, CinemaHallID], (err, result) => {
+                              if (err) {
+                                  console.error("ERROR CALLING PopulateShowSeats:", err); 
+                                  console.error("PARAMETERS USED:", { newID, CinemaHallID });
+                                  return connection.rollback(() => {
+                                      connection.release();
+                                      res.status(500).json({ message: "DB Error populating seats", details: err.message });
+                                  });
+                              }
 
-                              return db.rollback(() => res.status(500).json({ message: "DB Error populating seats", details: err.message }));
-                          }
-
-                        // C. Prepare to update prices for each seat type
-                        const priceUpdates = Object.entries(priceConfig).map(([type, price]) => {
-                            return new Promise((resolve, reject) => {
-                                const updateSql = `
-                                    UPDATE Show_Seat 
-                                    SET Price = ? 
-                                    WHERE ShowID = ? AND CinemaSeatID IN (
-                                        SELECT CinemaSeatID FROM Cinema_Seat WHERE CinemaHallID = ? AND Seat_Type = ?
-                                    )
-                                `;
-                                db.query(updateSql, [price, newID, CinemaHallID, type], (err, updateResult) => {
-                                    if (err) return reject(err);
-                                    resolve(updateResult);
+                            // C. Prepare to update prices for each seat type
+                            const priceUpdates = Object.entries(priceConfig).map(([type, price]) => {
+                                return new Promise((resolve, reject) => {
+                                    const updateSql = `
+                                        UPDATE Show_Seat 
+                                        SET Price = ? 
+                                        WHERE ShowID = ? AND CinemaSeatID IN (
+                                            SELECT CinemaSeatID FROM Cinema_Seat WHERE CinemaHallID = ? AND Seat_Type = ?
+                                        )
+                                    `;
+                                    // 5. Make sure queries inside Promises also use the 'connection'
+                                    connection.query(updateSql, [price, newID, CinemaHallID, type], (err, updateResult) => {
+                                        if (err) return reject(err);
+                                        resolve(updateResult);
+                                    });
                                 });
                             });
-                        });
 
-                        // D. Run all price updates
-                        Promise.all(priceUpdates)
-                            .then(() => {
-                                // E. If all updates succeed, commit the transaction
-                                db.commit(err => {
-                                    if (err) return db.rollback(() => res.status(500).json({ message: "Commit failed" }));
-                                    res.status(201).json({ success: true, message: "Show added successfully with custom prices" });
-                                });
-                            })
-                            .catch(err => db.rollback(() => res.status(500).json({ message: "Failed to update seat prices" })));
+                            // D. Run all price updates
+                            Promise.all(priceUpdates)
+                                .then(() => {
+                                    // E. If all updates succeed, commit the transaction
+                                    connection.commit(err => {
+                                        if (err) return connection.rollback(() => {
+                                            connection.release();
+                                            res.status(500).json({ message: "Commit failed" });
+                                        });
+                                        // 6. Release connection on success
+                                        connection.release();
+                                        res.status(201).json({ success: true, message: "Show added successfully with custom prices" });
+                                    });
+                                })
+                                .catch(err => connection.rollback(() => {
+                                    console.error("Error during price updates:", err);
+                                    connection.release();
+                                    res.status(500).json({ message: "Failed to update seat prices" });
+                                }));
+                        });
                     });
                 });
             });
