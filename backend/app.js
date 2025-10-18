@@ -39,6 +39,12 @@ app.use(cors({
   credentials:true,
 }))
 
+res.cookie("token", tokenValue, {
+  httpOnly: true,
+  secure: true,
+  sameSite: "None",
+});
+
 app.use(express.json());
 app.use('/api/movies', movieRoutes);
 app.use('/api/auth', authRoutes);
