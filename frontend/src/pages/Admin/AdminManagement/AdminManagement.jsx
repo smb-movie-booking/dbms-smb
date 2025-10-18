@@ -92,7 +92,7 @@ const AddCityForm = ({ onCityAdded, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axiosInstance.post('/admin/cities', { cityName, cityState, zipCode });
+      await axiosInstance.post('/api/admin/cities', { cityName, cityState, zipCode });
       toast.success('City added successfully!');
       onCityAdded();
     } catch (err) {
@@ -118,7 +118,7 @@ const AddCinemaForm = ({ cityId, onCinemaAdded, onCancel }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axiosInstance.post('/admin/cinemas', { name: cinemaName, cityId, facilities, cancellationAllowed });
+            await axiosInstance.post('/api/admin/cinemas', { name: cinemaName, cityId, facilities, cancellationAllowed });
             toast.success('Cinema added successfully!');
             onCinemaAdded();
         } catch (err) {
@@ -157,7 +157,7 @@ const AddHallForm = ({ cinemaId, onHallAdded, onCancel }) => {
         setError('');
         // ... (complex validation logic remains the same)
         try {
-            await axiosInstance.post('/admin/cinema-halls', { hallName, cinemaId, seatConfig });
+            await axiosInstance.post('/api/admin/cinema-halls', { hallName, cinemaId, seatConfig });
             toast.success('Hall and seats added successfully!');
             onHallAdded();
         } catch (err) {
@@ -213,7 +213,7 @@ const AddMovieForm = ({ onMovieAdded, onCancel }) => {
     data.append('trailerUrl', formData.trailerUrl);
 
     try {
-      await axiosInstance.post('/admin/movie', data);
+      await axiosInstance.post('/api/admin/movie', data);
       toast.success('Movie added successfully!');
       onMovieAdded();
     } catch (err) {
@@ -319,11 +319,11 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
         try {
             if (isEditMode) {
                 // UPDATE request
-                await axiosInstance.put(`/admin/shows/${initialData.ShowID}`, showData);
+                await axiosInstance.put(`/api/admin/shows/${initialData.ShowID}`, showData);
                 toast.success("Show updated successfully!");
             } else {
                 // CREATE request
-                await axiosInstance.post('/admin/shows', showData);
+                await axiosInstance.post('/api/admin/shows', showData);
                 toast.success("Show added successfully!");
             }
             onShowAdded();
@@ -400,12 +400,12 @@ export default function AdminManagement() {
   const fetchData = async () => {
     try {
       const [moviesRes, citiesRes, cinemasRes, hallsRes, showsRes, seatsRes] = await Promise.all([
-        axiosInstance.get("/admin/movie"),
-        axiosInstance.get("/admin/cities"),
-        axiosInstance.get("/admin/cinemas"),
-        axiosInstance.get("/admin/cinema-halls"),
-        axiosInstance.get("/admin/view-shows"),
-        axiosInstance.get("/admin/cinema-seats")
+        axiosInstance.get("/api/admin/movie"),
+        axiosInstance.get("/api/admin/cities"),
+        axiosInstance.get("/api/admin/cinemas"),
+        axiosInstance.get("/api/admin/cinema-halls"),
+        axiosInstance.get("/api/admin/view-shows"),
+        axiosInstance.get("/api/admin/cinema-seats")
       ]);
       setMovies(moviesRes.data.movies);
       setCities(citiesRes.data.cities);
@@ -437,11 +437,11 @@ export default function AdminManagement() {
   const handleDelete = async (type, id) => {
     let endpoint = '';
     switch (type) {
-        case 'movie': endpoint = `/admin/movie/${id}`; break;
-        case 'city': endpoint = `/admin/cities/${id}`; break;
-        case 'cinema': endpoint = `/admin/cinemas/${id}`; break;
-        case 'cinema-hall': endpoint = `/admin/cinema-halls/${id}`; break;
-        case 'show': endpoint = `/admin/shows/${id}`; break;
+        case 'movie': endpoint = `/api/admin/movie/${id}`; break;
+        case 'city': endpoint = `/api/admin/cities/${id}`; break;
+        case 'cinema': endpoint = `/api/admin/cinemas/${id}`; break;
+        case 'cinema-hall': endpoint = `/api/admin/cinema-halls/${id}`; break;
+        case 'show': endpoint = `/api/admin/shows/${id}`; break;
         default: toast.error(`Unknown type: ${type}`); return;
     }
     if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
@@ -474,8 +474,8 @@ export default function AdminManagement() {
     const handleToggleShowStatus = async (showId, currentStatus) => {
     const newStatus = !currentStatus; // Invert the current status
     try {
-      // You will need to create this backend endpoint: PUT /admin/shows/:id/status
-      await axiosInstance.put(`/admin/shows/${showId}/status`, { isActive: newStatus });
+      // You will need to create this backend endpoint: PUT /api/admin/shows/:id/status
+      await axiosInstance.put(`/api/admin/shows/${showId}/status`, { isActive: newStatus });
       toast.success(`Show booking status updated to: ${newStatus ? 'ACTIVE' : 'INACTIVE'}`);
       
       // OPTION 1 (Simple): Refetch all data to see the change
