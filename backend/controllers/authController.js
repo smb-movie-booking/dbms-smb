@@ -4,10 +4,8 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 require('dotenv').config();
 
-// POST /login
 exports.login = (req, res) => {
   const { identifier, password } = req.body;
-  console.log(identifier)
 
   if (!identifier || !password) {
     return res.status(400).json({ message: 'Email/Phone and password are required' });
@@ -22,7 +20,12 @@ exports.login = (req, res) => {
     }
 
     bcrypt.compare(password, user.User_Password, (err, isMatch) => {
-      if (err || !isMatch) {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Server error' });
+      }
+
+      if (!isMatch) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
@@ -34,14 +37,17 @@ exports.login = (req, res) => {
         isAdmin: user.IsAdmin === 1
       };
 
-      // Optional: force save to ensure MySQL store writes it
-req.session.save(err => {
-  if (err) console.log('Session save error:', err);
-  return res.status(500).json({ message: 'Session save failed' });
-});
+      // Save session and respond ONLY once
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save failed:', err);
+          return res.status(500).json({ message: 'Session save failed' });
+        }
 
-      return res.status(200).json({success:true,
-        message: user.IsAdmin === 1 ? 'Admin logged in successfully' : 'User logged in successfully'
+        return res.status(200).json({
+          success: true,
+          message: user.IsAdmin === 1 ? 'Admin logged in successfully' : 'User logged in successfully'
+        });
       });
     });
   };
@@ -54,6 +60,7 @@ req.session.save(err => {
     return res.status(400).json({ message: 'Invalid email or phone format' });
   }
 };
+
 
 
 
