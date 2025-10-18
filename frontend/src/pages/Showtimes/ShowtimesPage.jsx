@@ -56,11 +56,11 @@ const ShowtimesPage = () => {
 
         try {
           if (!movieDetails) {
-              const movieRes = await axiosInstance.get(`/movies/explore?movie=${movieId}`);
+              const movieRes = await axiosInstance.get(`/api/movies/explore?movie=${movieId}`);
               setMovieDetails(movieRes.data);
           }
 
-          const showsRes = await axiosInstance.get('/theaters/lookup', {
+          const showsRes = await axiosInstance.get('/api/theaters/lookup', {
             params: {
               movie: movieId, showDate: formattedDate, city: cityId,
               format: selectedFormat || undefined, language: selectedLanguage || undefined,
