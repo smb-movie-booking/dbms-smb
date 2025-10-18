@@ -9,7 +9,7 @@ const dbOptions = {
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  port: process.env.PORT,
+  port: Number(process.env.PORT),
   ssl: {
       ca: fs.readFileSync(__dirname + '/ca.pem')
     },
@@ -20,7 +20,7 @@ const dbOptions = {
 
 const db = mysql.createPool(dbOptions);
 
-const sessionStore = new MySQLStore({}, db.promise());
+const sessionStore = new MySQLStore({}, db);
 
 module.exports = {
   db,
