@@ -19,6 +19,9 @@ const app = express();
 
 // ✅ Define this before session & CORS
 const isProduction = process.env.NODE_ENV === 'production';
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('isProduction:', isProduction);
+
 
 // ✅ CORS setup (must come BEFORE routes and session if using credentials)
 app.use(cors({
