@@ -65,7 +65,7 @@ export const useAuth=()=>{
 
     const getUser=async()=>{
         try {
-            const {data}=await axiosInstance.get("/api/users/me");
+            const { data } = await axiosInstance.get("/api/users/me", { withCredentials: true });
             console.log(data);
             if(data){
                 setAuthUser(data);
