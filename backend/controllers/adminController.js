@@ -188,6 +188,9 @@ exports.deleteCinemas=(req,res)=>{
 }
 
 
+// Make sure you have the 'db' variable (your database connection)
+// and the 'parseSeatRanges' function imported or defined here.
+
 exports.addNewCinemaHall = (req, res) => {
     const user = req.session.user;
     const { hallName, cinemaId, seatConfig } = req.body;
@@ -204,38 +207,106 @@ exports.addNewCinemaHall = (req, res) => {
         }
 
         try {
-            // The seat parsing logic is still needed to validate and prepare seat data
+            // This function gives us a flat array of all seat objects
             const { allSeats } = parseSeatRanges(seatConfig);
             if (allSeats.length === 0) {
                 throw new Error("Cannot create a hall with zero seats.");
             }
 
-            // 1. Insert the Cinema_Hall (without TotalSeats)
+            // --- NEW LOGIC: SEAT NAME GENERATION ---
+
+            // 1. Group the flat `allSeats` array by type
+            const seatsByType = allSeats.reduce((acc, seat) => {
+                if (!acc[seat.type]) {
+                    acc[seat.type] = [];
+                }
+                acc[seat.type].push(seat);
+                return acc;
+            }, {});
+
+            // 2. Get the order of types from the original seatConfig
+            const seatTypeOrder = seatConfig.map(config => config.type);
+
+            const seatsWithNames = []; // This will hold all seats with their new names
+            let rowLetterCode = 65; // 65 is the ASCII code for 'A'
+
+            // 3. Loop through each seat type *in order*
+            for (const seatType of seatTypeOrder) {
+                const seatsInThisType = seatsByType[seatType];
+                if (!seatsInThisType || seatsInThisType.length === 0) {
+                    continue; // Skip if this type has no seats
+                }
+
+                const count = seatsInThisType.length;
+
+                // 4. Apply the exact same logic from your frontend
+                let seatsPerRow;
+                if (count >= 80) {
+                    seatsPerRow = 20;
+                } else {
+                    seatsPerRow = 10;
+                }
+
+                const rowCount = Math.ceil(count / seatsPerRow);
+
+                // 5. Slice into rows and assign names
+                for (let i = 0; i < rowCount; i++) {
+                    const start = i * seatsPerRow;
+                    const end = start + seatsPerRow;
+                    const rowOfSeats = seatsInThisType.slice(start, end);
+
+                    const letter = String.fromCharCode(rowLetterCode);
+
+                    rowOfSeats.forEach((seat, index) => {
+                        const seatNumber = index + 1;
+                        const seatName = `${letter}${seatNumber}`;
+
+                        // Add the seat (with its new name) to our final array
+                        seatsWithNames.push({
+                            ...seat,       // Contains original 'number' and 'type'
+                            seatName: seatName // The new generated name "A1", "A2" etc.
+                        });
+                    });
+
+                    rowLetterCode++; // Increment letter for the next row (B, C, D...)
+                }
+            }
+            // --- END OF NEW LOGIC ---
+            
+            // 1. Insert the Cinema_Hall (unchanged)
             db.query('SELECT MAX(CinemaHallID) as maxid from Cinema_Hall', (err, result) => {
                 if (err) return db.rollback(() => { throw err; });
                 
                 const newCinemaHallId = (result[0].maxid || 0) + 1;
-                // --- CHANGE IS HERE: Removed TotalSeats from the query ---
                 const hallSql = 'INSERT INTO Cinema_Hall(CinemaHallID, Hall_Name, CinemaID) VALUES (?, ?, ?)';
                 
                 db.query(hallSql, [newCinemaHallId, hallName.trim(), cinemaId], (err, result) => {
                     if (err) return db.rollback(() => { throw err; });
 
-                    // 2. Prepare and Insert all Cinema_Seats (this part is unchanged)
+                    // 2. Prepare and Insert all Cinema_Seats (this part is CHANGED)
                     db.query('SELECT MAX(CinemaSeatID) as maxid from Cinema_Seat', (err, result) => {
                         if (err) return db.rollback(() => { throw err; });
 
                         let nextSeatId = (result[0].maxid || 0) + 1;
-                        const seatValues = allSeats.map(seat => {
-                            return [nextSeatId++, seat.number, seat.type, newCinemaHallId];
+
+                        // --- MODIFIED: Use `seatsWithNames` and add `seat.seatName` ---
+                        const seatValues = seatsWithNames.map(seat => {
+                            return [
+                                nextSeatId++,
+                                seat.number,   // The original seat number (if you have one)
+                                seat.type,
+                                newCinemaHallId,
+                                seat.seatName  // The new "A1", "A2" name
+                            ];
                         });
                         
-                        const seatSql = 'INSERT INTO Cinema_Seat (CinemaSeatID, SeatNumber, Seat_Type, CinemaHallID) VALUES ?';
+                        // --- MODIFIED: Added the `SeatName` column to the query ---
+                        const seatSql = 'INSERT INTO Cinema_Seat (CinemaSeatID, SeatNumber, Seat_Type, CinemaHallID, SeatName) VALUES ?';
 
                         db.query(seatSql, [seatValues], (err, result) => {
                             if (err) return db.rollback(() => { throw err; });
 
-                            // 3. Commit the transaction
+                            // 3. Commit the transaction (unchanged)
                             db.commit(err => {
                                 if (err) return db.rollback(() => { throw err; });
                                 
@@ -248,7 +319,8 @@ exports.addNewCinemaHall = (req, res) => {
         } catch (error) {
             db.rollback(() => {
                 console.log(error);
-                return res.status(400).json({ message: error.message });
+                // Use error.message if it's a custom error (like from parseSeatRanges)
+                return res.status(400).json({ message: error.message || "An error occurred" });
             });
         }
     });

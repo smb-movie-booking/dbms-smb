@@ -12,6 +12,7 @@ exports.fetchSeatsByShowId = (showId) => {
 	 c.Cinema_Name,
          cs.CinemaSeatID AS seatId,
          cs.Seat_Type AS seatType,
+         cs.SeatName AS seatName,
          ss.Price as price,
          CASE
              WHEN ss.Seat_Status = 2 THEN 'booked'

@@ -2,28 +2,25 @@ const mysql = require('mysql2');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 require('dotenv').config();
+const fs = require('fs');
 
 const dbOptions = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
+  port: process.env.PORT,
+  ssl: {
+      ca: fs.readFileSync(__dirname + '/ca.pem')
+    },
+    waitForConnections: true,
+  connectionLimit: 10, // Max 10 connections
+  queueLimit: 0
 };
 
-const db = mysql.createConnection(dbOptions);
+const db = mysql.createPool(dbOptions);
 
-db.connect((err) => {
-  if (err) {
-    console.error('❌ Error connecting to MySQL:', err.message);
-    return;
-  }
-  console.log('✅ Connected to MySQL');
-});
-
-const sessionStore = new MySQLStore({
-  ...dbOptions,
-  createDatabaseTable: true  // ✅ this fixes the "table doesn't exist" error
-});
+const sessionStore = new MySQLStore({}, db.promise());
 
 module.exports = {
   db,
