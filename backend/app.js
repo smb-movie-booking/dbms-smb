@@ -24,8 +24,10 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: false,
-    maxAge: 1000 * 60 * 60
+    httpOnly: true,
+    secure: isProduction,            // ✅ must be true in production (HTTPS)
+    sameSite: isProduction ? "None" : "Lax", // ✅ allows cross-site cookies
+    maxAge: 1000 * 60 * 60,          // 1 hour
   }
 }));
 
@@ -38,12 +40,6 @@ app.use(cors({
   ],
   credentials:true,
 }))
-
-res.cookie("token", tokenValue, {
-  httpOnly: true,
-  secure: true,
-  sameSite: "None",
-});
 
 app.use(express.json());
 app.use('/api/movies', movieRoutes);
