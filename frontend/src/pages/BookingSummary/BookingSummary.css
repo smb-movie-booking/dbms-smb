@@ -1,5 +1,164 @@
-.booking-summary { max-width:720px; margin:30px auto; padding:20px; border:1px solid #eee; border-radius:8px; }
-.show-details div { margin:6px 0; }
-.seat-list ul { list-style:none; padding-left:0; }
-.summary-footer { display:flex; justify-content:space-between; align-items:center; margin-top:20px; }
-.summary-footer button { padding:8px 16px; border-radius:6px; cursor:pointer; }
+/* Import Font (assuming it's not already globally imported) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Main Page Container */
+.booking-summary-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align card to top */
+  padding: 40px 20px;
+  min-height: calc(100vh - 70px); /* Adjust based on your header height */
+  background: rgb(250, 249, 246); /* Light beige background */
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Summary Card */
+.booking-summary-card {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(195, 195, 195, 0.5); /* Light gray border */
+  max-width: 600px;
+  width: 100%;
+}
+
+/* Titles */
+.summary-title {
+  color: rgba(54, 52, 49, 1); /* Dark accent color */
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 30px;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(195, 195, 195, 0.5); /* Light gray border */
+  padding-bottom: 15px;
+}
+
+.section-title {
+  color: rgba(54, 52, 49, 0.9); /* Slightly lighter accent */
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-weight: 600;
+  font-size: 1.1em;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+/* Sections */
+.summary-section {
+  margin-bottom: 25px;
+}
+
+/* Show Details */
+.movie-details .detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 0.95em;
+  color: #333;
+}
+
+.detail-label {
+  color: rgba(54, 52, 49, 0.8); /* Dark accent, slightly transparent */
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.detail-value {
+  font-weight: 500;
+  text-align: right;
+}
+
+/* Seat Details */
+.seat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 150px; /* Limit height if many seats */
+  overflow-y: auto; /* Add scroll if needed */
+  padding-right: 5px; /* Space for scrollbar */
+}
+
+.seat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  font-size: 0.9em;
+}
+
+.seat-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.seat-price {
+  color: rgba(54, 52, 49, 1); /* Dark accent */
+  font-weight: 600;
+}
+
+/* Total Section */
+.total-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid rgba(54, 52, 49, 1); /* Dark accent border */
+}
+
+.total-label {
+  font-size: 1.2em;
+  font-weight: 700;
+  color: rgba(54, 52, 49, 1); /* Dark accent */
+  margin: 0;
+}
+
+.total-price {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: rgb(235, 95, 40); /* Orange color for total */
+}
+
+/* Payment Button Area */
+.payment-actions {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.proceed-button {
+  background-color: rgb(235, 95, 40); /* Orange button */
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: 'Poppins', sans-serif;
+}
+
+.proceed-button:hover {
+  background-color: rgba(235, 95, 40, 0.85); /* Slightly darker orange on hover */
+}
+
+/* Optional: Add some basic responsiveness */
+@media (max-width: 650px) {
+  .booking-summary-card {
+    padding: 20px;
+  }
+  .summary-title {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+  }
+  .total-label, .total-price {
+    font-size: 1.1em;
+  }
+  .proceed-button {
+     padding: 10px 25px;
+     font-size: 1em;
+  }
+}
