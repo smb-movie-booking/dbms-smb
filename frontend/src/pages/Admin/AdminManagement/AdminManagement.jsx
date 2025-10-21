@@ -3,7 +3,8 @@ import { axiosInstance } from '../../../utils/axios';
 import toast from 'react-hot-toast';
 
 // --- REUSABLE & DETAIL COMPONENTS ---
-
+// (No changes to ManagementSection, MovieDetails, CityDetails, CinemaDetails, HallDetails)
+// ... (Your components: ManagementSection, MovieDetails, CityDetails, CinemaDetails, HallDetails)
 const ManagementSection = ({ title, children }) => (
   <div style={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px', marginBottom: '24px', background: '#fff' }}>
     <h3 style={{ marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>{title}</h3>
@@ -36,7 +37,6 @@ const CityDetails = ({ city }) => (
     </div>
 );
 
-// ... (CinemaDetails and HallDetails components remain the same as before)
 const CinemaDetails = ({ cinema }) => (
     <div style={{ padding: '12px', background: '#f9f9f9', borderRadius: '4px' }}>
         <h4>Details for {cinema.Cinema_Name}</h4>
@@ -83,7 +83,8 @@ const HallDetails = ({ hall, allSeats }) => {
 
 
 // --- FORM COMPONENTS ---
-// ... (AddCityForm, AddCinemaForm, AddHallForm remain the same as before) ...
+// (No changes to AddCityForm, AddCinemaForm, AddHallForm, AddMovieForm, AddShowForm)
+// ... (Your components: AddCityForm, AddCinemaForm, AddHallForm, AddMovieForm, AddShowForm)
 const AddCityForm = ({ onCityAdded, onCancel }) => {
   const [cityName, setCityName] = useState('');
   const [cityState, setCityState] = useState('');
@@ -189,7 +190,6 @@ const AddHallForm = ({ cinemaId, onHallAdded, onCancel }) => {
     );
 };
 
-
 const AddMovieForm = ({ onMovieAdded, onCancel }) => {
   const [formData, setFormData] = useState({ title: '', description: '', duration: '02:30:00', language: '', releaseDate: '', genre: '', rating: '7.0', ageFormat: 'UA', trailerUrl: '' });
   const [posterFile, setPosterFile] = useState(null);
@@ -242,7 +242,6 @@ const AddMovieForm = ({ onMovieAdded, onCancel }) => {
 
 const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialData }) => { 
     const formRef = useRef(null);
-    // Determine if we are in "edit" mode
     const isEditMode = Boolean(initialData);
 
     const [movieId, setMovieId] = useState('');
@@ -256,45 +255,38 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
         seatTypesInHall.reduce((acc, type) => ({ ...acc, [type]: '' }), {})
     );
 
-    // NEW: useEffect to populate form when in edit mode
     useEffect(() => {
         if (isEditMode) {
             setMovieId(initialData.MovieID);
-            // Dates and times need careful formatting to work with input fields
             setShowDate(new Date(initialData.Show_Date).toISOString().split('T')[0]);
             setStartTime(new Date(initialData.StartTime).toTimeString().substring(0, 5));
             setFormat(initialData.Format);
             setLanguage(initialData.Show_Language);
-
-            // Fetch prices for the existing show to populate price fields
-            const fetchShowPrices = async () => {
-                try {
-                    toast.success("Editing show. Please re-enter all seat prices.");
-                } catch (error) {
-                    toast.error("Could not fetch existing prices.");
-                }
-            };
-            fetchShowPrices();
+            
+            // In edit mode, we get prices from the `initialData.prices` object
+            if (initialData.prices) {
+                // Pre-fill priceConfig with existing prices
+                const existingPrices = seatTypesInHall.reduce((acc, type) => {
+                    return { ...acc, [type]: initialData.prices[type] || '' };
+                }, {});
+                setPriceConfig(existingPrices);
+            } else {
+                 toast.success("Editing show. Please re-enter all seat prices.");
+            }
         }
-    }, [initialData, isEditMode]);
+    }, [initialData, isEditMode, seatTypesInHall]); // Add seatTypesInHall dependency
 
     useEffect(() => {
-        // Function to handle clicks
         const handleClickOutside = (event) => {
-            // If the ref is attached and the click was not inside the form
             if (formRef.current && !formRef.current.contains(event.target)) {
-                onCancel(); // Call the onCancel function passed in props
+                onCancel(); 
             }
         };
-
-        // Add the event listener to the whole document
         document.addEventListener("mousedown", handleClickOutside);
-
-        // This is the cleanup function that removes the listener
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [onCancel]); // The effect depends on the onCancel function
+    }, [onCancel]); 
 
 
     const handlePriceChange = (type, value) => {
@@ -318,11 +310,9 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
 
         try {
             if (isEditMode) {
-                // UPDATE request
                 await axiosInstance.put(`/api/admin/shows/${initialData.ShowID}`, showData);
                 toast.success("Show updated successfully!");
             } else {
-                // CREATE request
                 await axiosInstance.post('/api/admin/shows', showData);
                 toast.success("Show added successfully!");
             }
@@ -334,9 +324,7 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
 
     return (
         <form ref={formRef} onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px', marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
-            {/* Change title based on mode */}
             <h4>{isEditMode ? `Edit Show in ${hall.Hall_Name}`: `Add New Show to ${hall.Hall_Name}`}</h4>
-            {/* ... rest of the form is the same ... */}
              <select value={movieId} onChange={e => setMovieId(e.target.value)} required>
                 <option value="">Select a Movie</option>
                 {movies.map(m => <option key={m.MovieID} value={m.MovieID}>{m.Title}</option>)}
@@ -379,10 +367,19 @@ export default function AdminManagement() {
   // --- STATE MANAGEMENT ---
   const [movies, setMovies] = useState([]);
   const [cities, setCities] = useState([]);
-  const [allCinemas, setAllCinemas] = useState([]);
-  const [allHalls, setAllHalls] = useState([]);
-  const [allShows, setAllShows] = useState([]);
-  const [allSeats, setAllSeats] = useState([]);
+  
+  // --- REFACTORED STATE (Lazy Loaded) ---
+  const [cinemas, setCinemas] = useState([]); // Replaces allCinemas
+  const [halls, setHalls] = useState([]);     // Replaces allHalls
+  const [shows, setShows] = useState([]);     // Replaces allShows
+  const [seats, setSeats] = useState([]);     // Replaces allSeats
+
+  // Loading state for UI feedback
+  const [loading, setLoading] = useState({
+      cinemas: false,
+      halls: false,
+      shows: false
+  });
 
   const [selectedMovieId, setSelectedMovieId] = useState(null);
   const [selectedCityId, setSelectedCityId] = useState(null);
@@ -396,42 +393,120 @@ export default function AdminManagement() {
   const [showAddShowForm, setShowAddShowForm] = useState(false);
   const [editingShow, setEditingShow] = useState(null);
   
-  // --- DATA FETCHING ---
-  const fetchData = async () => {
-    try {
-      const [moviesRes, citiesRes, cinemasRes, hallsRes, showsRes, seatsRes] = await Promise.all([
-        axiosInstance.get("/api/admin/movie"),
-        axiosInstance.get("/api/admin/cities"),
-        axiosInstance.get("/api/admin/cinemas"),
-        axiosInstance.get("/api/admin/cinema-halls"),
-        axiosInstance.get("/api/admin/view-shows"),
-        axiosInstance.get("/api/admin/cinema-seats")
-      ]);
-      setMovies(moviesRes.data.movies);
-      setCities(citiesRes.data.cities);
-      setAllCinemas(cinemasRes.data.cinemas);
-      setAllHalls(hallsRes.data.halls);
-      setAllShows(showsRes.data.shows);
-      setAllSeats(seatsRes.data.seats);
-    } catch (error) {
-      toast.error("Failed to fetch all management data.");
+  // --- CACHE-BUSTING CONFIG ---
+  // Headers to prevent the browser from caching GET requests
+  const cacheBustConfig = {
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     }
   };
 
+  // --- DATA FETCHING (REFACTORED) ---
+
+  // Specific fetch functions for on-demand loading
+  const fetchMovies = async () => {
+      try {
+          const res = await axiosInstance.get("/api/admin/movie", cacheBustConfig);
+          setMovies(res.data.movies);
+      } catch (e) { toast.error("Failed to fetch movies."); }
+  };
+
+  const fetchCities = async () => {
+      try {
+          const res = await axiosInstance.get("/api/admin/cities", cacheBustConfig);
+          setCities(res.data.cities);
+      } catch (e) { toast.error("Failed to fetch cities."); }
+  };
+
+  const fetchCinemas = async (cityId) => {
+      if (!cityId) return;
+      setLoading(prev => ({ ...prev, cinemas: true }));
+      try {
+          const res = await axiosInstance.get(`/api/admin/cinemas?cityId=${cityId}`, cacheBustConfig);
+          setCinemas(res.data.cinemas);
+      } catch (e) { toast.error("Failed to fetch cinemas."); }
+      finally { setLoading(prev => ({ ...prev, cinemas: false })); }
+  };
+
+  const fetchHalls = async (cinemaId) => {
+      if (!cinemaId) return;
+      setLoading(prev => ({ ...prev, halls: true }));
+      try {
+          const res = await axiosInstance.get(`/api/admin/cinema-halls?cinemaId=${cinemaId}`, cacheBustConfig);
+          setHalls(res.data.halls);
+      } catch (e) { toast.error("Failed to fetch halls."); }
+      finally { setLoading(prev => ({ ...prev, halls: false })); }
+  };
+
+  const fetchShowsAndSeats = async (hallId) => {
+      if (!hallId) return;
+      setLoading(prev => ({ ...prev, shows: true }));
+      try {
+          const [showsRes, seatsRes] = await Promise.all([
+              axiosInstance.get(`/api/admin/view-shows?hallId=${hallId}`, cacheBustConfig),
+              axiosInstance.get(`/api/admin/cinema-seats?hallId=${hallId}`, cacheBustConfig)
+          ]);
+          setShows(showsRes.data.shows);
+          setSeats(seatsRes.data.seats);
+      } catch (e) { toast.error("Failed to fetch hall details."); }
+      finally { setLoading(prev => ({ ...prev, shows: false })); }
+  };
+
+  // --- CHAINED useEffect HOOKS ---
+
+  // 1. Initial load: Fetch top-level items
   useEffect(() => {
-    fetchData();
+    fetchMovies();
+    fetchCities();
   }, []);
 
-// --- EVENT HANDLERS ---
+  // 2. When city changes: Fetch cinemas and clear all children
+  useEffect(() => {
+      setCinemas([]);
+      setHalls([]);
+      setShows([]);
+      setSeats([]);
+      setSelectedCinemaId(null);
+      setSelectedHallId(null);
+      
+      if (selectedCityId) {
+          fetchCinemas(selectedCityId);
+      }
+  }, [selectedCityId]);
+
+  // 3. When cinema changes: Fetch halls and clear children
+  useEffect(() => {
+      setHalls([]);
+      setShows([]);
+      setSeats([]);
+      setSelectedHallId(null);
+
+      if (selectedCinemaId) {
+          fetchHalls(selectedCinemaId);
+      }
+  }, [selectedCinemaId]);
+
+  // 4. When hall changes: Fetch shows & seats
+  useEffect(() => {
+      setShows([]);
+      setSeats([]);
+
+      if (selectedHallId) {
+          fetchShowsAndSeats(selectedHallId);
+      }
+  }, [selectedHallId]);
+
+
+// --- EVENT HANDLERS (REFACTORED) ---
   const handleCitySelect = (cityId) => {
     setSelectedCityId(cityId);
-    setSelectedCinemaId(null);
-    setSelectedHallId(null);
+    // No longer need to clear state here, the useEffect does it
   };
   
   const handleCinemaSelect = (cinemaId) => {
     setSelectedCinemaId(cinemaId);
-    setSelectedHallId(null);
   };
 
   const handleDelete = async (type, id) => {
@@ -445,10 +520,35 @@ export default function AdminManagement() {
         default: toast.error(`Unknown type: ${type}`); return;
     }
     if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
+
     try {
         await axiosInstance.delete(endpoint);
         toast.success(`${type} deleted successfully!`);
-        fetchData();
+
+        // --- NEW REFETCH LOGIC ---
+        // Only refetch the data that actually changed
+        switch (type) {
+            case 'movie':
+                fetchMovies();
+                if (selectedMovieId === id) setSelectedMovieId(null);
+                break;
+            case 'city':
+                fetchCities();
+                if (selectedCityId === id) setSelectedCityId(null);
+                break;
+            case 'cinema':
+                fetchCinemas(selectedCityId); // Refetch cinemas for current city
+                if (selectedCinemaId === id) setSelectedCinemaId(null);
+                break;
+            case 'cinema-hall':
+                fetchHalls(selectedCinemaId); // Refetch halls for current cinema
+                if (selectedHallId === id) setSelectedHallId(null);
+                break;
+            case 'show':
+                fetchShowsAndSeats(selectedHallId); // Refetch shows for current hall
+                break;
+        }
+
     } catch (err) {
         toast.error(`Could not delete: ${err.response?.data?.message || err.message}`);
     }
@@ -464,29 +564,37 @@ export default function AdminManagement() {
       setEditingShow(null); // Clear editing state on cancel
   };
 
-  // Correct, single definition of handleDataAdded
-  const handleDataAdded = (formSetter) => {
-      fetchData();
-      formSetter(false);
-      setEditingShow(null); // Clear editing state on success
+  // --- NEW SPECIFIC "ADDED" HANDLERS ---
+  const handleMovieAdded = () => {
+      fetchMovies();
+      setShowAddMovieForm(false);
+  };
+  const handleCityAdded = () => {
+      fetchCities();
+      setShowAddCityForm(false);
+  };
+  const handleCinemaAdded = () => {
+      fetchCinemas(selectedCityId); // Only refetch cinemas for the current city
+      setShowAddCinemaForm(false);
+  };
+  const handleHallAdded = () => {
+      fetchHalls(selectedCinemaId); // Only refetch halls for the current cinema
+      setShowAddHallForm(false);
+  };
+  const handleShowAdded = () => {
+      fetchShowsAndSeats(selectedHallId); // Only refetch shows for the current hall
+      setShowAddShowForm(false);
+      setEditingShow(null);
   };
 
-    const handleToggleShowStatus = async (showId, currentStatus) => {
-    const newStatus = !currentStatus; // Invert the current status
+  const handleToggleShowStatus = async (showId, currentStatus) => {
+    const newStatus = !currentStatus;
     try {
-      // You will need to create this backend endpoint: PUT /api/admin/shows/:id/status
       await axiosInstance.put(`/api/admin/shows/${showId}/status`, { isActive: newStatus });
       toast.success(`Show booking status updated to: ${newStatus ? 'ACTIVE' : 'INACTIVE'}`);
       
-      // OPTION 1 (Simple): Refetch all data to see the change
-      fetchData(); 
-
-      // OPTION 2 (Advanced): Update state directly for a faster UI response
-      // setAllShows(prevShows => 
-      //   prevShows.map(show => 
-      //     show.ShowID === showId ? { ...show, isActive: newStatus } : show
-      //   )
-      // );
+      // --- NEW REFETCH LOGIC ---
+      fetchShowsAndSeats(selectedHallId); // Only refetch shows for this hall
 
     } catch (err) {
       toast.error("Failed to update show status.");
@@ -494,13 +602,13 @@ export default function AdminManagement() {
   };
 
   // --- FILTERED DATA & SELECTED OBJECTS ---
+  // Selected objects are still needed for titles and details
   const selectedMovie = selectedMovieId ? movies.find(m => m.MovieID === parseInt(selectedMovieId)) : null;
-  const filteredCinemas = selectedCityId ? allCinemas.filter(c => c.CityID === parseInt(selectedCityId)) : [];
   const selectedCity = selectedCityId ? cities.find(c => c.CityID === parseInt(selectedCityId)) : null;
-  const filteredHalls = selectedCinemaId ? allHalls.filter(h => h.CinemaID === parseInt(selectedCinemaId)) : [];
-  const selectedCinema = selectedCinemaId ? allCinemas.find(c => c.CinemaID === parseInt(selectedCinemaId)) : null;
-  const filteredShows = selectedHallId ? allShows.filter(s => s.CinemaHallID === parseInt(selectedHallId)) : [];
-  const selectedHall = selectedHallId ? allHalls.find(h => h.CinemaHallID === parseInt(selectedHallId)) : null;
+  const selectedCinema = selectedCinemaId ? cinemas.find(c => c.CinemaID === parseInt(selectedCinemaId)) : null;
+  const selectedHall = selectedHallId ? halls.find(h => h.CinemaHallID === parseInt(selectedHallId)) : null;
+  
+  // No more "filtered..." variables are needed
   
   return (
     <div style={{ padding: 24 }}>
@@ -519,7 +627,8 @@ export default function AdminManagement() {
                 {!showAddMovieForm ? (
                     <button onClick={() => setShowAddMovieForm(true)} style={{marginTop: '10px'}}>+ Add New Movie</button>
                 ) : (
-                    <AddMovieForm onMovieAdded={() => handleDataAdded(setShowAddMovieForm)} onCancel={() => setShowAddMovieForm(false)} />
+                    /* UPDATED PROP */
+                    <AddMovieForm onMovieAdded={handleMovieAdded} onCancel={() => setShowAddMovieForm(false)} />
                 )}
             </div>
             <div style={{flex: 1}}>
@@ -538,7 +647,8 @@ export default function AdminManagement() {
                         <button onClick={(e) => { e.stopPropagation(); handleDelete('city', city.CityID); }} style={{background:'red', color:'white'}}>Delete</button>
                     </div>
                 ))}
-                {!showAddCityForm ? <button onClick={() => setShowAddCityForm(true)} style={{marginTop: '10px'}}>+ Add City</button> : <AddCityForm onCityAdded={() => handleDataAdded(setShowAddCityForm)} onCancel={() => setShowAddCityForm(false)} />}
+                {/* UPDATED PROP */}
+                {!showAddCityForm ? <button onClick={() => setShowAddCityForm(true)} style={{marginTop: '10px'}}>+ Add City</button> : <AddCityForm onCityAdded={handleCityAdded} onCancel={() => setShowAddCityForm(false)} />}
             </div>
             {selectedCity && <div style={{flex: 1}}><CityDetails city={selectedCity} /></div>}
         </div>
@@ -546,15 +656,18 @@ export default function AdminManagement() {
 
       {selectedCityId && (
         <ManagementSection title={`Cinemas in ${selectedCity?.City_Name}`}>
+            { loading.cinemas && <p>Loading cinemas...</p> }
             <div style={{display: 'flex', gap: '20px'}}>
                 <div style={{flex: 1}}>
-                    {filteredCinemas.map(cinema => (
+                    {/* UPDATED: Use `cinemas` state directly */}
+                    {cinemas.map(cinema => (
                         <div key={cinema.CinemaID} onClick={() => handleCinemaSelect(cinema.CinemaID)} style={{ padding: '10px', cursor: 'pointer', background: selectedCinemaId == cinema.CinemaID ? '#eef4ff' : 'transparent', border: '1px solid #ddd', marginBottom:'5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>{cinema.Cinema_Name}</span>
                             <button onClick={(e) => { e.stopPropagation(); handleDelete('cinema', cinema.CinemaID); }} style={{background:'red', color:'white'}}>Delete</button>
                         </div>
                     ))}
-                    {!showAddCinemaForm ? <button onClick={() => setShowAddCinemaForm(true)} style={{marginTop: '10px'}}>+ Add Cinema</button> : <AddCinemaForm cityId={selectedCityId} onCinemaAdded={() => handleDataAdded(setShowAddCinemaForm)} onCancel={() => setShowAddCinemaForm(false)} />}
+                    {/* UPDATED PROP */}
+                    {!showAddCinemaForm ? <button onClick={() => setShowAddCinemaForm(true)} style={{marginTop: '10px'}}>+ Add Cinema</button> : <AddCinemaForm cityId={selectedCityId} onCinemaAdded={handleCinemaAdded} onCancel={() => setShowAddCinemaForm(false)} />}
                 </div>
                 {selectedCinema && <div style={{flex: 1}}><CinemaDetails cinema={selectedCinema} /></div>}
             </div>
@@ -563,31 +676,36 @@ export default function AdminManagement() {
 
       {selectedCinemaId && (
         <ManagementSection title={`Halls in ${selectedCinema?.Cinema_Name}`}>
+            { loading.halls && <p>Loading halls...</p> }
             <div style={{display: 'flex', gap: '20px'}}>
                 <div style={{flex: 1}}>
-                    {filteredHalls.map(hall => (
+                    {/* UPDATED: Use `halls` state directly */}
+                    {halls.map(hall => (
                         <div key={hall.CinemaHallID} onClick={() => setSelectedHallId(hall.CinemaHallID)} style={{ padding: '10px', cursor: 'pointer', background: selectedHallId == hall.CinemaHallID ? '#eef4ff' : 'transparent', border: '1px solid #ddd', marginBottom:'5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>{hall.Hall_Name}</span>
                             <button onClick={(e) => { e.stopPropagation(); handleDelete('cinema-hall', hall.CinemaHallID); }} style={{background:'red', color:'white'}}>Delete</button>
                         </div>
                     ))}
-                    {!showAddHallForm ? <button onClick={() => setShowAddHallForm(true)} style={{marginTop: '10px'}}>+ Add Hall</button> : <AddHallForm cinemaId={selectedCinemaId} onHallAdded={() => handleDataAdded(setShowAddHallForm)} onCancel={() => setShowAddHallForm(false)} />}
+                    {/* UPDATED PROP */}
+                    {!showAddHallForm ? <button onClick={() => setShowAddHallForm(true)} style={{marginTop: '10px'}}>+ Add Hall</button> : <AddHallForm cinemaId={selectedCinemaId} onHallAdded={handleHallAdded} onCancel={() => setShowAddHallForm(false)} />}
                 </div>
-                {selectedHall && <div style={{flex: 1}}><HallDetails hall={selectedHall} allSeats={allSeats} /></div>}
+                {/* UPDATED: Pass `seats` state instead of `allSeats` */}
+                {selectedHall && <div style={{flex: 1}}><HallDetails hall={selectedHall} allSeats={seats} /></div>}
             </div>
         </ManagementSection>
       )}
 
       {selectedHallId && (
 <ManagementSection title={`Shows in ${selectedHall?.Hall_Name}`}>
-    {filteredShows.length > 0 ? (
+    { loading.shows && <p>Loading shows...</p> }
+    {/* UPDATED: Use `shows` state directly */}
+    {shows.length > 0 ? (
             <table style={{ width: "100%", borderCollapse: 'collapse', tableLayout: 'fixed' }}>
     <thead>
         <tr style={{ background: '#f4f4f4' }}>
             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', width: '25%' }}>Movie</th>
             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', width: '25%' }}>Date & Time</th>
             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Format</th>
-            {/* New Header for Language */}
             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Language</th>
             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', width: '20%' }}>Seat Prices</th>
             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Start Booking</th>
@@ -595,17 +713,15 @@ export default function AdminManagement() {
         </tr>
     </thead>
     <tbody>
-        {filteredShows.map(s => (
+        {/* UPDATED: Map `shows` state */}
+        {shows.map(s => (
         <tr key={s.ShowID}>
             <td style={{ padding: '8px', border: '1px solid #ddd' }}>{s.Title}</td>
             <td style={{ padding: '8px', border: '1px solid #ddd' }}>
                 {new Date(s.Show_Date).toLocaleDateString()} at {new Date(s.StartTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </td>
             <td style={{ padding: '8px', border: '1px solid #ddd' }}>{s.Format}</td>
-            
-            {/* New Cell to Display Language */}
             <td style={{ padding: '8px', border: '1px solid #ddd' }}>{s.Show_Language}</td>
-            
             <td style={{ padding: '8px', border: '1px solid #ddd' }}>
                 {s.prices ? (
                     Object.entries(s.prices).map(([type, price]) => (
@@ -618,21 +734,19 @@ export default function AdminManagement() {
                     <span style={{color: '#888'}}>Not Set</span>
                 )}
             </td>
-
             <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                <input 
-                                    type="checkbox"
-                                    checked={Boolean(s.isActive)} // Ensure it's a boolean
-                                    onChange={() => handleToggleShowStatus(s.ShowID, s.isActive)}
-                                    style={{ height: '18px', width: '18px' }}
-                                />
-                                <span style={{ marginLeft: '8px' }}>
-                                    {s.isActive ? 'Active' : 'Inactive'}
-                                </span>
-                            </label>
-                        </td>
-
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <input 
+                        type="checkbox"
+                        checked={Boolean(s.isActive)} 
+                        onChange={() => handleToggleShowStatus(s.ShowID, s.isActive)}
+                        style={{ height: '18px', width: '18px' }}
+                    />
+                    <span style={{ marginLeft: '8px' }}>
+                        {s.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                </label>
+            </td>
             <td style={{ padding: '8px', border: '1px solid #ddd', display: 'flex', gap: '5px' }}>
                 <button onClick={() => handleEditClick(s)} style={{background: 'blue', color: 'white', cursor: 'pointer'}}>Edit</button>
                 <button onClick={() => handleDelete('show', s.ShowID)} style={{background:'red', color: 'white', cursor: 'pointer'}}>Delete</button>
@@ -641,7 +755,7 @@ export default function AdminManagement() {
         ))}
     </tbody>
 </table>
-    ): <p>No shows scheduled for this hall.</p>}
+    ): !loading.shows && <p>No shows scheduled for this hall.</p>}
 
     {!showAddShowForm ? (
         <button onClick={() => setShowAddShowForm(true)} style={{marginTop: '10px'}}>+ Add Show</button>
@@ -649,10 +763,10 @@ export default function AdminManagement() {
         <AddShowForm 
             hall={selectedHall} 
             movies={movies}
-            allSeats={allSeats}
-            initialData={editingShow} // Pass the show to be edited
-            onShowAdded={() => handleDataAdded(setShowAddShowForm)}
-            onCancel={handleCancelForm} // Use the updated cancel handler
+            allSeats={seats} /* UPDATED: Pass `seats` state */
+            initialData={editingShow}
+            onShowAdded={handleShowAdded} /* UPDATED PROP */
+            onCancel={handleCancelForm}
         />
     )}
 </ManagementSection>

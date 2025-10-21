@@ -142,20 +142,26 @@ exports.addNewCinemas=(req,res)=>{
 
 }
 
+exports.getAllCinemas = (req, res) => {
+    const user = req.session.user;
+    const { cityId } = req.query; // Get cityId from query parameter
 
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
 
-exports.getAllCinemas=(req,res)=>{
-  const user=req.session.user;
-  if(!user || !user?.isAdmin)return res.status(400).json({message:"Not Authorized"});
+    let sql = 'SELECT * FROM Cinema';
+    const params = [];
 
-  db.query('select * from Cinema',(err,results)=>{
-    if(err)return res.status(400).json({error:err});
+    // If a cityId is provided, add a WHERE clause
+    if (cityId) {
+        sql += ' WHERE CityID = ?';
+        params.push(cityId);
+    }
 
-    if(results)return res.status(200).json({success:true,cinemas:results.length>0?results:[]})
-
-    
-  })
-}
+    db.query(sql, params, (err, results) => {
+        if (err) return res.status(500).json({ error: err });
+        return res.status(200).json({ success: true, cinemas: results.length > 0 ? results : [] });
+    });
+};
 
 
 exports.deleteCinemas=(req,res)=>{
@@ -321,29 +327,45 @@ exports.addNewCinemaHall = (req, res) => {
     });
 };
 
-exports.getAllCinemaHalls=(req,res)=>{
-  const user=req.session.user;
-  if(!user || !user?.isAdmin)return res.status(400).json({message:"Not Authorized"});
+exports.getAllCinemaHalls = (req, res) => {
+    const user = req.session.user;
+    const { cinemaId } = req.query; // Get cinemaId from query parameter
 
-  db.query('select * from Cinema_Hall',(err,results)=>{
-    if(err)return res.status(400).json({error:err});
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
 
-    if(results)return res.status(200).json({success:true,halls:results.length>0?results:[]})
+    let sql = 'SELECT * FROM Cinema_Hall';
+    const params = [];
 
-    
-  })
-}
+    // If a cinemaId is provided, add a WHERE clause
+    if (cinemaId) {
+        sql += ' WHERE CinemaID = ?';
+        params.push(cinemaId);
+    }
+
+    db.query(sql, params, (err, results) => {
+        if (err) return res.status(500).json({ error: err });
+        return res.status(200).json({ success: true, halls: results.length > 0 ? results : [] });
+    });
+};
 
 exports.getCinemaSeats = (req, res) => {
     const user = req.session.user;
+    const { hallId } = req.query; // Get hallId from query parameter
 
     if (!user || !user?.isAdmin) {
         return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const sql = "SELECT * FROM Cinema_Seat";
+    let sql = "SELECT * FROM Cinema_Seat";
+    const params = [];
 
-    db.query(sql, (err, results) => {
+    // If a hallId is provided, add a WHERE clause
+    if (hallId) {
+        sql += ' WHERE CinemaHallID = ?';
+        params.push(hallId);
+    }
+
+    db.query(sql, params, (err, results) => {
         if (err) {
             console.log(err);
             return res.status(500).json({ message: "DB Error" });
@@ -511,11 +533,14 @@ exports.getHallPlusCinemaName=(req,res)=>{
 }
 
 exports.getAllShows = (req, res) => {
-    const sql = `
+    const { hallId } = req.query; // Get hallId from query parameter
+    const params = [];
+
+    // Base query
+    let sql = `
         SELECT 
             ms.*, 
             m.Title,
-            -- This subquery creates a JSON object of the prices for each show
             (SELECT JSON_OBJECTAGG(cs.Seat_Type, ss.Price)
              FROM Show_Seat ss
              JOIN Cinema_Seat cs ON ss.CinemaSeatID = cs.CinemaSeatID
@@ -526,11 +551,18 @@ exports.getAllShows = (req, res) => {
             Movie_Show ms
         JOIN 
             Movie m ON ms.MovieID = m.MovieID
-        ORDER BY 
-            ms.Show_Date DESC, ms.StartTime DESC;
     `;
+
+    // If a hallId is provided, add a WHERE clause
+    if (hallId) {
+        sql += ' WHERE ms.CinemaHallID = ?';
+        params.push(hallId);
+    }
+
+    // Add ordering
+    sql += ' ORDER BY ms.Show_Date DESC, ms.StartTime DESC';
     
-    db.query(sql, (err, results) => {
+    db.query(sql, params, (err, results) => {
         if (err) {
             console.log(err);
             return res.status(500).json({ message: "DB Error" });
@@ -675,59 +707,93 @@ exports.editShow = (req, res) => {
     const { MovieID, CinemaHallID, Show_Date, StartTime, Format, Show_Language, priceConfig } = req.body;
     const user = req.session.user;
 
+    // 1. Validation
     if (!user || !user?.isAdmin) return res.status(401).json({ message: "Unauthorized" });
     if (!id || !MovieID || !CinemaHallID || !Show_Date || !StartTime || !Format || !Show_Language || !priceConfig) {
         return res.status(400).json({ message: "All fields, including price configuration, are required." });
     }
 
-    db.beginTransaction(err => {
-        if (err) return res.status(500).json({ message: "Transaction Error" });
+    // 2. Get a dedicated connection from the pool
+    db.getConnection((err, connection) => {
+        if (err) {
+            console.error("Error getting DB connection:", err);
+            return res.status(500).json({ message: "Database connection error" });
+        }
 
-        // Get the movie's duration to recalculate EndTime
-        db.query('SELECT Duration FROM Movie WHERE MovieID = ?', [MovieID], (err, movieResult) => {
-            if (err) return db.rollback(() => res.status(500).json({ message: "DB error finding movie" }));
-            if (movieResult.length === 0) return db.rollback(() => res.status(404).json({ message: "Movie not found" }));
+        // 3. Start the transaction on this connection
+        connection.beginTransaction(err => {
+            if (err) {
+                connection.release();
+                return res.status(500).json({ message: "Transaction Error" });
+            }
 
-            const movieDuration = movieResult[0].Duration;
-            const fullStartTime = `${Show_Date} ${StartTime}`;
-            
-            // A. Update the main show record
-            const sqlShowUpdate = `
-                UPDATE Movie_Show 
-                SET Show_Date = ?, StartTime = ?, EndTime = ADDTIME(?, ?), CinemaHallID = ?, 
-                    MovieID = ?, Format = ?, Show_Language = ?
-                WHERE ShowID = ?
-            `;
-            db.query(sqlShowUpdate, [Show_Date, fullStartTime, fullStartTime, movieDuration, CinemaHallID, MovieID, Format, Show_Language, id], (err, result) => {
-                if (err) return db.rollback(() => res.status(500).json({ message: "DB Error updating show" }));
-
-                // B. Prepare price updates for each seat type
-                const priceUpdates = Object.entries(priceConfig).map(([type, price]) => {
-                    return new Promise((resolve, reject) => {
-                        const updateSql = `
-                            UPDATE Show_Seat 
-                            SET Price = ? 
-                            WHERE ShowID = ? AND CinemaSeatID IN (
-                                SELECT CinemaSeatID FROM Cinema_Seat WHERE CinemaHallID = ? AND Seat_Type = ?
-                            )
-                        `;
-                        db.query(updateSql, [price, id, CinemaHallID, type], (err, updateResult) => {
-                            if (err) return reject(err);
-                            resolve(updateResult);
-                        });
-                    });
+            // 4. Get the movie's duration to recalculate EndTime
+            connection.query('SELECT Duration FROM Movie WHERE MovieID = ?', [MovieID], (err, movieResult) => {
+                // On error, rollback and release
+                if (err) return connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({ message: "DB error finding movie" });
+                });
+                if (movieResult.length === 0) return connection.rollback(() => {
+                    connection.release();
+                    res.status(404).json({ message: "Movie not found" });
                 });
 
-                // C. Run all price updates
-                Promise.all(priceUpdates)
-                    .then(() => {
-                        // D. If all updates succeed, commit the transaction
-                        db.commit(err => {
-                            if (err) return db.rollback(() => res.status(500).json({ message: "Commit failed" }));
-                            res.status(200).json({ success: true, message: "Show updated successfully" });
+                const movieDuration = movieResult[0].Duration;
+                const fullStartTime = `${Show_Date} ${StartTime}`;
+                
+                // 5. (A) Update the main show record
+                const sqlShowUpdate = `
+                    UPDATE Movie_Show 
+                    SET Show_Date = ?, StartTime = ?, EndTime = ADDTIME(?, ?), CinemaHallID = ?, 
+                        MovieID = ?, Format = ?, Show_Language = ?
+                    WHERE ShowID = ?
+                `;
+                connection.query(sqlShowUpdate, [Show_Date, fullStartTime, fullStartTime, movieDuration, CinemaHallID, MovieID, Format, Show_Language, id], (err, result) => {
+                    if (err) return connection.rollback(() => {
+                        connection.release();
+                        res.status(500).json({ message: "DB Error updating show" });
+                    });
+
+                    // 5. (B) Prepare price updates for each seat type
+                    const priceUpdates = Object.entries(priceConfig).map(([type, price]) => {
+                        return new Promise((resolve, reject) => {
+                            const updateSql = `
+                                UPDATE Show_Seat 
+                                SET Price = ? 
+                                WHERE ShowID = ? AND CinemaSeatID IN (
+                                    SELECT CinemaSeatID FROM Cinema_Seat WHERE CinemaHallID = ? AND Seat_Type = ?
+                                )
+                            `;
+                            // IMPORTANT: Use the 'connection' object inside the Promise
+                            connection.query(updateSql, [price, id, CinemaHallID, type], (err, updateResult) => {
+                                if (err) return reject(err);
+                                resolve(updateResult);
+                            });
                         });
-                    })
-                    .catch(err => db.rollback(() => res.status(500).json({ message: "Failed to update seat prices", error: err })));
+                    });
+
+                    // 5. (C) Run all price updates
+                    Promise.all(priceUpdates)
+                        .then(() => {
+                            // 5. (D) If all updates succeed, commit the transaction
+                            connection.commit(err => {
+                                if (err) return connection.rollback(() => {
+                                    connection.release();
+                                    res.status(500).json({ message: "Commit failed" });
+                                });
+                                
+                                // 6. Success: Release connection
+                                connection.release();
+                                res.status(200).json({ success: true, message: "Show updated successfully" });
+                            });
+                        })
+                        .catch(err => connection.rollback(() => {
+                            console.error("Error during price updates:", err);
+                            connection.release();
+                            res.status(500).json({ message: "Failed to update seat prices", error: err.message });
+                        }));
+                });
             });
         });
     });
