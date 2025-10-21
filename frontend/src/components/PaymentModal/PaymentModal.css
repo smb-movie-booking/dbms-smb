@@ -1,0 +1,6 @@
+.payment-modal-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:9999; }
+.payment-modal { background:#fff; padding:20px; border-radius:8px; width:360px; box-shadow:0 6px 18px rgba(0,0,0,0.2); }
+.payment-actions { display:flex; gap:10px; margin-top:12px; }
+.payment-actions button { flex:1; padding:8px 10px; border-radius:6px; cursor:pointer; }
+
+.payment-actions .confirm { background-color:#28a745; color:#fff; border:none; }
