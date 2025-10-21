@@ -16,6 +16,7 @@ import AdminManagement from './pages/Admin/AdminManagement/AdminManagement';
 import SeatSelect from './pages/SeatSelect/SeatSelect';
 import BookingSummary from './pages/BookingSummary/BookingSummary';
 import PaymentPage from "./pages/Payment/PaymentPage";
+import Skeleton from './components/Skeleton/Skeleton';
 
 function App() {
   const { getUser } = useAuth();
@@ -41,7 +42,7 @@ function App() {
     navigate('/');
   };
 
-  if (loading) return <p>Loading application...</p>;
+  if (loading) return <Skeleton/>;
 
   return (
     <>
