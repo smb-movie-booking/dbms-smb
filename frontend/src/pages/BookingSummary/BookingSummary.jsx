@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 // Assuming you will create BookingSummary.css later
-// import "./BookingSummary.css"; 
+import "./BookingSummary.css"; 
 import toast from "react-hot-toast";
 
 const BookingSummary = () => {
