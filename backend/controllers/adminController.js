@@ -11,11 +11,11 @@ const buildWhereClause = (params, searchFields, filterFields) => {
     let whereClauses = [];
     let queryParams = [];
     
-    // 1. Add search query
+    // 1. Add search query (no change)
     const { search } = params;
     if (search && searchFields.length > 0) {
+        // ... (same as before)
         const searchClauses = searchFields.map(field => {
-            // Check if search term is a number for ID fields
             if (field.endsWith('ID') && !isNaN(search)) {
                 queryParams.push(search);
                 return `${field} = ?`;
@@ -28,25 +28,45 @@ const buildWhereClause = (params, searchFields, filterFields) => {
 
     // 2. Add specific filters
     for (const [key, field] of Object.entries(filterFields)) {
-        if (params[key]) {
+        if (params[key] && params[key].length > 0) { // Check if param exists and is not empty
+            
+             // --- THIS IS THE UPDATED LOGIC ---
              if (key === 'facilities') {
-                // Special case for comma-separated facilities
-                whereClauses.push(`${field} LIKE ?`);
-                queryParams.push(`%${params[key]}%`);
+                
+                // Check if req.query.facilities is an array (multi-select)
+                if (Array.isArray(params[key])) {
+                    const facilitiesClauses = params[key].map(facility => {
+                        queryParams.push(`%${facility}%`);
+                        return `${field} LIKE ?`;
+                    });
+                    // Join with AND to find cinemas that have ALL selected facilities
+                    whereClauses.push(`(${facilitiesClauses.join(' AND ')})`);
+                
+                // Else, it's a single string (or a single-item array, though less likely)
+                } else {
+                    whereClauses.push(`${field} LIKE ?`);
+                    queryParams.push(`%${params[key]}%`);
+                }
+            // --- END OF UPDATED LOGIC ---
+
             } else if (key === 'cancellation') {
+                // ... (same as before)
                 whereClauses.push(`${field} = ?`);
                 queryParams.push(params[key] === 'true' ? 1 : 0);
             } else if (key === 'minRating') {
+                // ... (same as before)
                 whereClauses.push(`${field} >= ?`);
                 queryParams.push(params[key]);
             } else if (key === 'releaseDateStart') {
+                 // ... (same as before)
                  whereClauses.push(`${field} >= ?`);
                 queryParams.push(params[key]);
             } else if (key === 'releaseDateEnd') {
+                // ... (same as before)
                 whereClauses.push(`${field} <= ?`);
                 queryParams.push(params[key]);
             } else {
-                // Default case (genre, language, etc.)
+                // ... (same as before)
                 whereClauses.push(`${field} = ?`);
                 queryParams.push(params[key]);
             }

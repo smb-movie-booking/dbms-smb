@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { axiosInstance } from '../../../utils/axios';
 import toast from 'react-hot-toast';
-
+import Select, { components } from 'react-select';
 // --- (1) HELPER HOOK & COMPONENTS ---
 
 // Debounce hook for search inputs
@@ -376,7 +376,7 @@ const MovieForm = ({ onSave, onCancel, initialData }) => {
       <label>Poster Image:</label>
       {isEditMode && <img src={initialData.Poster_Image_URL} alt="poster" style={{width: '100px'}} />}
       <input name="posterFile" type="file" onChange={handleFileChange} accept="image/*" required={!isEditMode} />
-      {isEditMode && <small>Select a new file to replace the current poster (Note: This is a demo limitation).</small>}
+      {isEditMode && <small>Select a new file to replace the current poster.</small>}
       
       <input name="title" value={formData.title} onChange={handleChange} placeholder="Title" required />
       <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
@@ -557,7 +557,7 @@ export default function AdminManagement() {
   // --- NEW STATE for Search, Filter, Sort, Pagination ---
   const [movieParams, setMovieParams] = useState({ search: '', genre: '', language: '', minRating: '', sortKey: 'ReleaseDate', sortOrder: 'DESC', page: 1, limit: 5 });
   const [cityParams, setCityParams] = useState({ search: '', sortKey: 'City_Name', sortOrder: 'ASC', page: 1, limit: 10 });
-  const [cinemaParams, setCinemaParams] = useState({ search: '', facilities: '', cancellation: '', sortKey: 'Cinema_Name', sortOrder: 'ASC', page: 1, limit: 10 });
+  const [cinemaParams, setCinemaParams] = useState({ search: '', facilities: [], cancellation: '', sortKey: 'Cinema_Name', sortOrder: 'ASC', page: 1, limit: 10 });
   const [showParams, setShowParams] = useState({ movieId: '', date: '', language: '', status: '', sortKey: 'ms.StartTime', sortOrder: 'DESC', page: 1, limit: 10 });
 
   const [pagination, setPagination] = useState({
@@ -725,6 +725,11 @@ export default function AdminManagement() {
       }
   };
 
+  const handleMultiSelectChange = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    handleParamChange(setCinemaParams, 'facilities', selectedOptions);
+};
+
   const handleDelete = async (type, id) => {
     // ... (Your existing delete logic is fine)
     let endpoint = '';
@@ -829,6 +834,36 @@ export default function AdminManagement() {
   const selectedCity = selectedCityId ? cities.find(c => c.CityID === parseInt(selectedCityId)) : null;
   const selectedCinema = selectedCinemaId ? cinemas.find(c => c.CinemaID === parseInt(selectedCinemaId)) : null;
   const selectedHall = selectedHallId ? halls.find(h => h.CinemaHallID === parseInt(selectedHallId)) : null;
+
+  const facilityOptions = [
+      { value: "Parking", label: "Parking" },
+      { value: "Dolby", label: "Dolby" },
+      { value: "Dolby Atmos", label: "Dolby Atmos" },
+      { value: "Recliner", label: "Recliner" },
+      { value: "Cafe", label: "Cafe" },
+      { value: "IMAX", label: "IMAX" },
+      { value: "4DX", label: "4DX" },
+      { value: "Heritage", label: "Heritage" }
+  ];
+
+  // Custom component for the checkbox
+  const CustomOption = ({ children, ...props }) => (
+    <components.Option {...props}>
+      <input
+        type="checkbox"
+        checked={props.isSelected}
+        onChange={() => null} 
+        style={{ marginRight: '10px' }}
+      />
+      <label>{children}</label>
+    </components.Option>
+  );
+
+  // New handler for react-select
+  const handleReactSelectChange = (selectedOptions) => {
+      const newFacilities = selectedOptions ? selectedOptions.map(option => option.value) : [];
+      handleParamChange(setCinemaParams, 'facilities', newFacilities);
+  };
   
   // --- (8) JSX RENDER (with new UI) ---
   
@@ -967,12 +1002,24 @@ export default function AdminManagement() {
                     onChange={e => handleParamChange(setCinemaParams, 'search', e.target.value)}
                     style={{ flex: 1 }}
                 />
-                 <input 
-                    type="text" 
-                    placeholder="Filter by facility..."
-                    value={cinemaParams.facilities}
-                    onChange={e => handleParamChange(setCinemaParams, 'facilities', e.target.value)}
-                    style={{ flex: 1 }}
+                 <Select
+                    isMulti
+                    options={facilityOptions}
+                    placeholder="Filter by facilities..."
+                    // Tell react-select to use your new checkbox component
+                    components={{ Option: CustomOption }}
+                    // Keep the dropdown open after clicking an item
+                    closeMenuOnSelect={false}
+                    // Hide the selected items from the list so they don't appear twice
+                    hideSelectedOptions={false}
+                    // Read the current state
+                    value={facilityOptions.filter(opt => 
+                        cinemaParams.facilities.includes(opt.value)
+                    )}
+                    // Use the handler
+                    onChange={handleReactSelectChange}
+                    // Style
+                    styles={{ container: (base) => ({ ...base, flex: 1 }) }}
                 />
                 <select value={cinemaParams.cancellation} onChange={e => handleParamChange(setCinemaParams, 'cancellation', e.target.value)}>
                     <option value="">Cancellation (All)</option>
@@ -1149,7 +1196,6 @@ export default function AdminManagement() {
     </div>
   );
 }
-
 
 // --- (9) STYLES ---
 // (Added some simple styles for readability)
