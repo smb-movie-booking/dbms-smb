@@ -1,0 +1,81 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background-color: #f7f9fc;
+  color: #222;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.header h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.search {
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 280px;
+  font-size: 0.95rem;
+}
+
+.cinema-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.cinema-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 18px;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cinema-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.heart {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+}
+
+.cinema-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-left: 0px;
+  margin-bottom: 6px;
+}
+
+.cinema-card p {
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+  margin-left: 30px;
+}

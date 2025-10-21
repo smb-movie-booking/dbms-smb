@@ -14,6 +14,7 @@ import MovieDetails from './pages/MovieDetails/MovieDetails';
 import ShowtimesPage from './pages/Showtimes/ShowtimesPage';
 import AdminManagement from './pages/Admin/AdminManagement/AdminManagement';
 import SeatSelect from './pages/SeatSelect/SeatSelect';
+import { SearchMovie } from './pages/SearchMovie/SearchMovie';
 
 function App() {
   const { getUser } = useAuth();
@@ -64,6 +65,7 @@ function App() {
         <Route path='/movie/:movieId/theaters' element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /> <ShowtimesPage /> </>} />
         <Route path='/theater/:theaterId/movies'  element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /> <ShowtimesPage /> </>} />
         <Route path='/seat/show/:showid' element={<SeatSelect/>}/>
+        <Route path='/searchmovie' element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange}/><SearchMovie/></>}/>
 
         <Route 
           path="/admin" 
