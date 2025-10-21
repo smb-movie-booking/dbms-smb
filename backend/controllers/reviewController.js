@@ -16,8 +16,9 @@ exports.getReviews = (req, res) => {
 // Add a new review
 exports.addReview = (req, res) => {
   const { UserID, MovieID, Rating, Comment } = req.body;
-  if (!UserID || !MovieID || !Rating || !Comment) {
-    return res.status(400).json({ error: 'Missing required fields' });
+  if(!UserID)return res.status(401).json({message:'Please Login First'});
+  if (!UserID || !MovieID  || !Comment) {
+    return res.status(400).json({ message: 'Missing required fields' });
   }
 
   reviewModel.addReview({ UserID, MovieID, Rating, Comment }, (err, result) => {
