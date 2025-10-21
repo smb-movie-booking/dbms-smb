@@ -33,7 +33,7 @@ router.delete('/shows/:id', adminController.deleteShow);
 router.put('/shows/:id', adminController.editShow);
 router.put('/shows/:id/status',  adminController.updateShowStatus);
 
-router.put('/movie/:id', adminController.editMovie);
+router.put('/movie/:id', upload.single("file"), uploadToCloudinary, adminController.editMovie);
 router.put('/city/:id', adminController.editCity);
 router.put('/cinema/:id', adminController.editCinema);
 router.put('/cinema-hall/:id', adminController.editHall);
