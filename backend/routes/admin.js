@@ -41,4 +41,17 @@ router.put('/cinema-hall/:id', adminController.editHall);
 router.put('/shows/:id', adminController.editShow);
 router.put('/shows/:id/status',  adminController.updateShowStatus);
 
+router.get('/users', adminController.getAllUsers);
+router.get('/users/:id/details', adminController.getUserDetails);
+router.put('/users/:id/toggle-admin', adminController.toggleAdminStatus);
+router.delete('/reviews/:id', adminController.deleteReview);
+
+router.get('/bookings/search', adminController.searchBookings);
+router.put('/bookings/:id/cancel', adminController.cancelBooking);
+
+router.get('/analytics/kpis', adminController.getDashboardKPIs);
+router.get('/analytics/revenue-over-time', adminController.getRevenueOverTime);
+router.get('/analytics/revenue-by-movie', adminController.getRevenueByMovie);
+router.get('/analytics/revenue-by-theater', adminController.getRevenueByTheater);
+
 module.exports = router;

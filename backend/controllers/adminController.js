@@ -1029,3 +1029,486 @@ exports.updateShowStatus = (req, res) => {
         res.status(200).json({ message: "Show status updated successfully." });
     });
 };
+
+exports.getAllUsers = (req, res) => {
+    const user = req.session.user;
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+
+    // 1. Get params
+    const { search, sortKey = 'User_Name', sortOrder = 'ASC', page = 1, limit = 10 } = req.query;
+
+    // 2. Build WHERE
+    let whereClauses = [];
+    let queryParams = [];
+    if (search) {
+        whereClauses.push('(User_Name LIKE ? OR Email LIKE ? OR Phone LIKE ?)');
+        queryParams.push(`%${search}%`);
+        queryParams.push(`%${search}%`);
+        queryParams.push(`%${search}%`);
+    }
+    const clause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    
+    // 3. Whitelist sorting
+    const allowedSortKeys = ['UserID', 'User_Name', 'Email', 'Phone', 'IsAdmin'];
+    const safeSortKey = allowedSortKeys.includes(sortKey) ? sortKey : 'User_Name';
+    const safeSortOrder = sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+    // 4. Pagination
+    const offset = (page - 1) * limit;
+    const limitInt = parseInt(limit);
+
+    // 5. Queries
+    // IMPORTANT: Never select the User_Password, even for an admin
+    const dataSql = `
+        SELECT UserID, User_Name, Email, Phone, IsAdmin 
+        FROM User 
+        ${clause}
+        ORDER BY ${safeSortKey} ${safeSortOrder} 
+        LIMIT ? OFFSET ?
+    `;
+    const countSql = `SELECT COUNT(*) as total FROM User ${clause}`;
+
+    db.query(countSql, queryParams, (err, countResult) => {
+        if (err) { console.error(err); return res.status(500).json({ error: err }); }
+        
+        const total = countResult[0].total;
+        const totalPages = Math.ceil(total / limitInt);
+        
+        db.query(dataSql, [...queryParams, limitInt, offset], (err, results) => {
+            if (err) { console.error(err); return res.status(500).json({ error: err }); }
+            
+            res.status(200).json({
+                success: true,
+                users: results,
+                pagination: {
+                    total,
+                    totalPages,
+                    currentPage: parseInt(page),
+                    limit: limitInt
+                }
+            });
+        });
+    });
+};
+
+exports.toggleAdminStatus = (req, res) => {
+    const user = req.session.user;
+    const { id } = req.params;
+
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+
+    // Critical safety check: Prevent an admin from demoting themselves
+    if (user.UserID === parseInt(id)) {
+        return res.status(403).json({ message: "You cannot change your own admin status." });
+    }
+
+    const sql = "UPDATE User SET IsAdmin = NOT IsAdmin WHERE UserID = ?";
+    db.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({ success: true, message: "User admin status updated." });
+    });
+};
+
+exports.getUserDetails = (req, res) => {
+    const user = req.session.user;
+    const { id } = req.params;
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+
+    const bookingsSql = `
+        SELECT b.BookingID, b.Booking_Timestamp, b.Booking_Status, m.Title, ms.StartTime
+        FROM Booking b
+        JOIN Movie_Show ms ON b.ShowID = ms.ShowID
+        JOIN Movie m ON ms.MovieID = m.MovieID
+        WHERE b.UserID = ?
+        ORDER BY b.Booking_Timestamp DESC
+    `;
+    
+    const reviewsSql = `
+        SELECT r.ReviewID, r.Rating, r.Comment, r.Review_Timestamp, m.Title
+        FROM Review r
+        JOIN Movie m ON r.MovieID = m.MovieID
+        WHERE r.UserID = ?
+        ORDER BY r.Review_Timestamp DESC
+    `;
+
+    Promise.all([
+        db.promise().query(bookingsSql, [id]),
+        db.promise().query(reviewsSql, [id])
+    ])
+    .then(([[bookings], [reviews]]) => {
+        res.status(200).json({
+            success: true,
+            bookings: bookings,
+            reviews: reviews
+        });
+    })
+    .catch(err => {
+        console.error(err);
+        res.status(500).json({ message: "Database error fetching user details." });
+    });
+};
+
+// --- (NEW) REVIEW MANAGEMENT FUNCTION ---
+
+exports.deleteReview = (req, res) => {
+    const user = req.session.user;
+    const { id } = req.params; // This is the ReviewID
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+
+    // Your database trigger 'trg_after_review_delete' will
+    // automatically recalculate the movie rating, so we just need to delete.
+    const sql = "DELETE FROM Review WHERE ReviewID = ?";
+    db.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Review not found" });
+        }
+        res.status(200).json({ success: true, message: "Review deleted successfully." });
+    });
+};
+
+// ... (all your existing functions, including deleteReview)
+
+// --- (NEW) BOOKING MANAGEMENT FUNCTIONS ---
+
+exports.searchBookings = (req, res) => {
+    const user = req.session.user;
+    const { term } = req.query; // Search term (ID, email, or phone)
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+    if (!term) return res.status(400).json({ message: "Search term is required." });
+
+    // This query is complex. It searches for:
+    // 1. A direct match on BookingID
+    // 2. A match on a User's Email, then finds their bookings
+    // 3. A match on a User's Phone, then finds their bookings
+    // It ONLY returns 'Confirmed' (Status=2) bookings, as those are the only ones to cancel.
+    const sql = `
+        SELECT 
+            b.BookingID, b.NumberOfSeats, b.Booking_Timestamp, b.Booking_Status,
+            u.User_Name, u.Email, u.Phone,
+            m.Title,
+            ms.StartTime,
+            c.Cinema_Name,
+            ch.Hall_Name,
+            (SELECT SUM(ss.Price) FROM Show_Seat ss WHERE ss.BookingID = b.BookingID) AS TotalPrice,
+            (SELECT GROUP_CONCAT(cs.SeatName SEPARATOR ', ') FROM Show_Seat ss JOIN Cinema_Seat cs ON ss.CinemaSeatID = cs.CinemaSeatID WHERE ss.BookingID = b.BookingID) AS SeatNames
+        FROM Booking b
+        LEFT JOIN User u ON b.UserID = u.UserID
+        JOIN Movie_Show ms ON b.ShowID = ms.ShowID
+        JOIN Movie m ON ms.MovieID = m.MovieID
+        JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
+        JOIN Cinema c ON ch.CinemaID = c.CinemaID
+        WHERE 
+            b.Booking_Status = 2 AND (
+                b.BookingID = ? 
+                OR u.Email = ? 
+                OR u.Phone = ?
+            )
+        ORDER BY b.Booking_Timestamp DESC
+    `;
+
+    db.query(sql, [term, term, term], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: "Database error." });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "No 'Confirmed' bookings found matching that ID, email, or phone number." });
+        }
+        
+        // We are renaming the result for clarity on the frontend
+        res.status(200).json({ success: true, bookings: results });
+    });
+};
+
+exports.cancelBooking = (req, res) => {
+    const user = req.session.user;
+    const { id } = req.params; // BookingID
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+
+    // Use a transaction to ensure both tables are updated or neither is
+    db.getConnection((err, connection) => {
+        if (err) return res.status(500).json({ message: "Database connection error." });
+
+        connection.beginTransaction(err => {
+            if (err) {
+                connection.release();
+                return res.status(500).json({ message: "Transaction start error." });
+            }
+
+            // 1. Check the booking status first
+            connection.query('SELECT Booking_Status FROM Booking WHERE BookingID = ?', [id], (err, results) => {
+                if (err) return connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({ message: "DB error checking status." });
+                });
+
+                if (results.length === 0) return connection.rollback(() => {
+                    connection.release();
+                    res.status(404).json({ message: "Booking not found." });
+                });
+                
+                const currentStatus = results[0].Booking_Status;
+                // Status 2 is 'Confirmed'
+                if (currentStatus !== 2) {
+                    return connection.rollback(() => {
+                        connection.release();
+                        res.status(400).json({ message: "Booking is not 'Confirmed' and cannot be cancelled." });
+                    });
+                }
+
+                // 2. Update Booking table status (e.g., 3 = 'Cancelled by Admin')
+                const bookingUpdateSql = "UPDATE Booking SET Booking_Status = 3 WHERE BookingID = ?";
+                connection.query(bookingUpdateSql, [id], (err, result) => {
+                    if (err) return connection.rollback(() => {
+                        connection.release();
+                        res.status(500).json({ message: "DB error updating Booking." });
+                    });
+
+                    // 3. Update Show_Seat table to free up the seats
+                    const seatsUpdateSql = "UPDATE Show_Seat SET Seat_Status = 0, BookingID = NULL WHERE BookingID = ?";
+                    connection.query(seatsUpdateSql, [id], (err, result) => {
+                        if (err) return connection.rollback(() => {
+                            connection.release();
+                            res.status(500).json({ message: "DB error updating Show_Seat." });
+                        });
+
+                        // 4. Commit the transaction
+                        connection.commit(err => {
+                            if (err) return connection.rollback(() => {
+                                connection.release();
+                                res.status(500).json({ message: "Transaction commit error." });
+                            });
+
+                            connection.release();
+                            res.status(200).json({ success: true, message: "Booking successfully cancelled." });
+                        });
+                    });
+                });
+            });
+        });
+    });
+};
+
+// ... (all your existing functions, including cancelBooking)
+
+// --- (NEW) ANALYTICS FUNCTIONS ---
+
+exports.getDashboardKPIs = async (req, res) => {
+    const user = req.session.user;
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+
+    // Define time ranges
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of current week (Sunday)
+    weekStart.setHours(0, 0, 0, 0);
+
+    const monthStart = new Date();
+    monthStart.setDate(1); // Start of current month
+    monthStart.setHours(0, 0, 0, 0);
+
+    try {
+        const [
+            revenueTodayResult,
+            revenueWeekResult,
+            revenueMonthResult,
+            bookingsTodayResult,
+            occupancyResult,
+            topMovieResult,
+            topTheaterResult
+        ] = await Promise.all([
+            // 1. Revenue Today
+            db.promise().query(
+                `SELECT SUM(Amount) as total FROM Payment WHERE Payment_Timestamp >= ? AND Payment_Timestamp <= ?`,
+                [todayStart, todayEnd]
+            ),
+            // 2. Revenue This Week
+            db.promise().query(
+                `SELECT SUM(Amount) as total FROM Payment WHERE Payment_Timestamp >= ?`,
+                [weekStart]
+            ),
+            // 3. Revenue This Month
+            db.promise().query(
+                `SELECT SUM(Amount) as total FROM Payment WHERE Payment_Timestamp >= ?`,
+                [monthStart]
+            ),
+            // 4. Bookings Today
+            db.promise().query(
+                `SELECT COUNT(BookingID) as count FROM Booking WHERE Booking_Timestamp >= ? AND Booking_Timestamp <= ? AND Booking_Status = 2`,
+                [todayStart, todayEnd]
+            ),
+            // 5. Average Occupancy (approximate for recent shows)
+            // This is complex. We'll simplify: % of booked seats in shows started in the last 7 days.
+            db.promise().query(`
+                SELECT AVG(booked_seats / total_seats) * 100 AS avg_occupancy
+                FROM (
+                    SELECT 
+                        ms.ShowID,
+                        (SELECT COUNT(*) FROM Cinema_Seat cs WHERE cs.CinemaHallID = ms.CinemaHallID) AS total_seats,
+                        COUNT(ss.ShowSeatID) AS booked_seats
+                    FROM Movie_Show ms
+                    JOIN Show_Seat ss ON ms.ShowID = ss.ShowID
+                    WHERE ms.StartTime >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND ss.BookingID IS NOT NULL
+                    GROUP BY ms.ShowID
+                ) AS ShowOccupancy;
+            `),
+            // 6. Top Movie (Revenue, This Week)
+            db.promise().query(`
+                SELECT m.Title, SUM(p.Amount) as totalRevenue
+                FROM Payment p
+                JOIN Booking b ON p.BookingID = b.BookingID
+                JOIN Movie_Show ms ON b.ShowID = ms.ShowID
+                JOIN Movie m ON ms.MovieID = m.MovieID
+                WHERE p.Payment_Timestamp >= ?
+                GROUP BY m.MovieID, m.Title
+                ORDER BY totalRevenue DESC
+                LIMIT 1
+            `, [weekStart]),
+            // 7. Top Theater (Revenue, This Week)
+            db.promise().query(`
+                SELECT c.Cinema_Name, SUM(p.Amount) as totalRevenue
+                FROM Payment p
+                JOIN Booking b ON p.BookingID = b.BookingID
+                JOIN Movie_Show ms ON b.ShowID = ms.ShowID
+                JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
+                JOIN Cinema c ON ch.CinemaID = c.CinemaID
+                WHERE p.Payment_Timestamp >= ?
+                GROUP BY c.CinemaID, c.Cinema_Name
+                ORDER BY totalRevenue DESC
+                LIMIT 1
+            `, [weekStart]),
+        ]);
+
+        res.status(200).json({
+            success: true,
+            kpis: {
+                revenueToday: revenueTodayResult[0][0].total || 0,
+                revenueWeek: revenueWeekResult[0][0].total || 0,
+                revenueMonth: revenueMonthResult[0][0].total || 0,
+                bookingsToday: bookingsTodayResult[0][0].count || 0,
+                averageOccupancy: occupancyResult[0][0].avg_occupancy || 0,
+                topMovieWeek: topMovieResult[0][0] || { Title: 'N/A', totalRevenue: 0 },
+                topTheaterWeek: topTheaterResult[0][0] || { Cinema_Name: 'N/A', totalRevenue: 0 }
+            }
+        });
+
+    } catch (err) {
+        console.error("Error fetching KPIs:", err);
+        res.status(500).json({ message: "Database error fetching dashboard KPIs." });
+    }
+};
+
+// ... (after getDashboardKPIs)
+
+// --- (NEW) DETAILED REPORT FUNCTIONS ---
+
+exports.getRevenueOverTime = async (req, res) => {
+    const user = req.session.user;
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+
+    // Get date range (default to last 30 days if not provided)
+    const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
+    const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(new Date().setDate(endDate.getDate() - 30));
+    endDate.setHours(23, 59, 59, 999); // Ensure end date includes the whole day
+    startDate.setHours(0, 0, 0, 0);   // Ensure start date includes the whole day
+
+    const sql = `
+        SELECT 
+            DATE(Payment_Timestamp) as date, 
+            SUM(Amount) as dailyRevenue
+        FROM Payment
+        WHERE Payment_Timestamp >= ? AND Payment_Timestamp <= ?
+        GROUP BY DATE(Payment_Timestamp)
+        ORDER BY date ASC;
+    `;
+
+    try {
+        const [results] = await db.promise().query(sql, [startDate, endDate]);
+        res.status(200).json({ success: true, revenueData: results });
+    } catch (err) {
+        console.error("Error fetching revenue over time:", err);
+        res.status(500).json({ message: "Database error fetching revenue data." });
+    }
+};
+
+exports.getRevenueByMovie = async (req, res) => {
+    const user = req.session.user;
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+
+    const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
+    const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(new Date().setDate(endDate.getDate() - 30));
+    endDate.setHours(23, 59, 59, 999);
+    startDate.setHours(0, 0, 0, 0);
+
+    const sql = `
+        SELECT 
+            m.Title, 
+            SUM(p.Amount) as totalRevenue
+        FROM Payment p
+        JOIN Booking b ON p.BookingID = b.BookingID
+        JOIN Movie_Show ms ON b.ShowID = ms.ShowID
+        JOIN Movie m ON ms.MovieID = m.MovieID
+        WHERE p.Payment_Timestamp >= ? AND p.Payment_Timestamp <= ?
+        GROUP BY m.MovieID, m.Title
+        ORDER BY totalRevenue DESC
+        LIMIT 15; -- Limit to top 15 for chart readability
+    `;
+
+    try {
+        const [results] = await db.promise().query(sql, [startDate, endDate]);
+        res.status(200).json({ success: true, movieRevenue: results });
+    } catch (err) {
+        console.error("Error fetching revenue by movie:", err);
+        res.status(500).json({ message: "Database error fetching movie revenue data." });
+    }
+};
+
+exports.getRevenueByTheater = async (req, res) => {
+    const user = req.session.user;
+    if (!user || !user?.isAdmin) return res.status(401).json({ message: "Not Authorized" });
+
+    const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
+    const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date(new Date().setDate(endDate.getDate() - 30));
+    endDate.setHours(23, 59, 59, 999);
+    startDate.setHours(0, 0, 0, 0);
+
+    const sql = `
+        SELECT 
+            c.Cinema_Name, 
+            SUM(p.Amount) as totalRevenue
+        FROM Payment p
+        JOIN Booking b ON p.BookingID = b.BookingID
+        JOIN Movie_Show ms ON b.ShowID = ms.ShowID
+        JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
+        JOIN Cinema c ON ch.CinemaID = c.CinemaID
+        WHERE p.Payment_Timestamp >= ? AND p.Payment_Timestamp <= ?
+        GROUP BY c.CinemaID, c.Cinema_Name
+        ORDER BY totalRevenue DESC
+        LIMIT 15; -- Limit to top 15
+    `;
+
+    try {
+        const [results] = await db.promise().query(sql, [startDate, endDate]);
+        res.status(200).json({ success: true, theaterRevenue: results });
+    } catch (err) {
+        console.error("Error fetching revenue by theater:", err);
+        res.status(500).json({ message: "Database error fetching theater revenue data." });
+    }
+};
+
+// ... (existing User/Booking/Review functions)
