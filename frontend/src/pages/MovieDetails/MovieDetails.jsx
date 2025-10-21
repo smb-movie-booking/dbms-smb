@@ -97,7 +97,7 @@ const MovieDetails = ({ selectedCity }) => {
       }
 
       setReviews((prevReviews)=>[newReview,...prevReviews]);
-      setCurrentReview({...currReview,Comment:"",Rating:-1});
+      setCurrentReview({...currReview,Comment:"",Rating:""});
       
     } catch (error) {
       toast.error(error.response.data.message || "Failed to add review");
