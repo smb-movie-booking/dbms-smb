@@ -5,7 +5,7 @@ import "./MovieDetails.css"; // Make sure this CSS file exists for styling
 import { useContext } from "react";
 import { Auth } from "../../Context/AuthContext";
 import toast from "react-hot-toast";
-
+import { useNavigate } from "react-router-dom";
 // The component now accepts `selectedCity` as a prop from App.jsx
 const MovieDetails = ({ selectedCity }) => {
   const { movieId } = useParams();
@@ -19,6 +19,8 @@ const MovieDetails = ({ selectedCity }) => {
     Comment:"",
     Rating:"",
   });
+
+  const navigate=useNavigate();
 
   // Function for the horizontal scrolling of review cards
   const scrollReviews = (direction) => {
@@ -53,7 +55,19 @@ const MovieDetails = ({ selectedCity }) => {
     };
 
     fetchMovieAndReviews();
-  }, [movieId]); // Re-run this effect if the movieId in the URL changes
+  }, [movieId]); 
+  
+  // Re-run this effect if the movieId in the URL changes
+
+  const handleClick=()=>{
+    if(authUser?.user?.id){
+      navigate(`/movie/${movieId}/theaters?city=${selectedCity?.id}`);
+      return;
+    }
+  
+      navigate('/login');
+    
+  }
 
   const handleReview=(e)=>{
     const {name,value}=e.target;
@@ -129,14 +143,12 @@ const MovieDetails = ({ selectedCity }) => {
             <p><strong>Release:</strong> {new Date(movie.ReleaseDate).toLocaleDateString()}</p>
           </div>
 
-          <Link 
-            to={`/movie/${movieId}/theaters?city=${selectedCity?.id}`}
-            className="book-tickets-link"
-          >
-            <button className="book-tickets-btn">
+          
+            <button className="book-tickets-btn" onClick={handleClick}>
               Book Tickets
+
             </button>
-          </Link>
+      
         </div>
       </div>
 
