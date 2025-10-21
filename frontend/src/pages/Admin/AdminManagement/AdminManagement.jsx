@@ -1,16 +1,75 @@
-import React, { useState, useEffect , useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { axiosInstance } from '../../../utils/axios';
 import toast from 'react-hot-toast';
+import Select, { components } from 'react-select';
+// --- (1) HELPER HOOK & COMPONENTS ---
 
-// --- REUSABLE & DETAIL COMPONENTS ---
+// Debounce hook for search inputs
+function useDebounce(value, delay) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+}
 
+// Simple Modal Component
+const Modal = ({ children, onClose }) => {
+    const modalRef = useRef();
+    
+    // Close on outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (modalRef.current && !modalRef.current.contains(event.target)) {
+                onClose();
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [onClose]);
+
+    return (
+        <div style={styles.modalBackdrop}>
+            <div style={styles.modalContent} ref={modalRef}>
+                <button onClick={onClose} style={styles.modalCloseButton}>&times;</button>
+                {children}
+            </div>
+        </div>
+    );
+};
+
+// Simple Pagination Component
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+    if (totalPages <= 1) return null;
+    return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '16px' }}>
+            <button onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1}>
+                &laquo; Prev
+            </button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button onClick={() => onPageChange(currentPage + 1)} disabled={currentPage >= totalPages}>
+                Next &raquo;
+            </button>
+        </div>
+    );
+};
+
+
+// --- (2) REUSABLE & DETAIL COMPONENTS ---
+// (No changes to ManagementSection, MovieDetails, CityDetails, CinemaDetails, HallDetails)
 const ManagementSection = ({ title, children }) => (
   <div style={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px', marginBottom: '24px', background: '#fff' }}>
     <h3 style={{ marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>{title}</h3>
     {children}
   </div>
 );
-
 const MovieDetails = ({ movie }) => (
     <div style={{ padding: '12px', background: '#f9f9f9', borderRadius: '4px' }}>
         <h4 style={{marginTop: 0}}>{movie.Title}</h4>
@@ -27,7 +86,6 @@ const MovieDetails = ({ movie }) => (
         </div>
     </div>
 );
-
 const CityDetails = ({ city }) => (
     <div style={{ padding: '12px', background: '#f9f9f9', borderRadius: '4px' }}>
         <h4>Details for {city.City_Name}</h4>
@@ -35,8 +93,6 @@ const CityDetails = ({ city }) => (
         <p><strong>Zip Code:</strong> {city.ZipCode}</p>
     </div>
 );
-
-// ... (CinemaDetails and HallDetails components remain the same as before)
 const CinemaDetails = ({ cinema }) => (
     <div style={{ padding: '12px', background: '#f9f9f9', borderRadius: '4px' }}>
         <h4>Details for {cinema.Cinema_Name}</h4>
@@ -44,7 +100,6 @@ const CinemaDetails = ({ cinema }) => (
         <p><strong>Cancellation Allowed:</strong> {cinema.Cancellation_Allowed ? 'Yes' : 'No'}</p>
     </div>
 );
-
 const HallDetails = ({ hall, allSeats }) => {
     const summarizeRanges = (numbers) => {
         if (!numbers.length) return '';
@@ -72,72 +127,106 @@ const HallDetails = ({ hall, allSeats }) => {
     return (
         <div style={{ padding: '12px', background: '#f9f9f9', borderRadius: '4px' }}>
             <h4>Seat Configuration for {hall.Hall_Name}</h4>
-            <ul>
-                {Object.entries(seatConfig).map(([type, numbers]) => (
-                    <li key={type}><strong>{type}:</strong> {numbers.length} seats ({summarizeRanges(numbers)})</li>
-                ))}
-            </ul>
+            {Object.keys(seatConfig).length > 0 ? (
+                <ul>
+                    {Object.entries(seatConfig).map(([type, numbers]) => (
+                        <li key={type}><strong>{type}:</strong> {numbers.length} seats ({summarizeRanges(numbers)})</li>
+                    ))}
+                </ul>
+            ) : <p>No seats found for this hall.</p>}
         </div>
     );
 };
 
 
-// --- FORM COMPONENTS ---
-// ... (AddCityForm, AddCinemaForm, AddHallForm remain the same as before) ...
-const AddCityForm = ({ onCityAdded, onCancel }) => {
-  const [cityName, setCityName] = useState('');
-  const [cityState, setCityState] = useState('');
-  const [zipCode, setZipCode] = useState('');
+// --- (3) REUSABLE FORM COMPONENTS (Handle Add & Edit) ---
+
+const CityForm = ({ onSave, onCancel, initialData }) => {
+  const isEditMode = Boolean(initialData);
+  const [cityName, setCityName] = useState(initialData?.City_Name || '');
+  const [cityState, setCityState] = useState(initialData?.City_State || '');
+  const [zipCode, setZipCode] = useState(initialData?.ZipCode || '');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axiosInstance.post('/api/admin/cities', { cityName, cityState, zipCode });
-      toast.success('City added successfully!');
-      onCityAdded();
+        const payload = { City_Name: cityName, City_State: cityState, ZipCode: zipCode };
+        if (isEditMode) {
+            await axiosInstance.put(`/api/admin/city/${initialData.CityID}`, payload);
+            toast.success('City updated successfully!');
+        } else {
+            await axiosInstance.post('/api/admin/cities', { cityName, cityState, zipCode });
+            toast.success('City added successfully!');
+        }
+        onSave();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to add city.');
+      toast.error(err.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} city.`);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px', marginTop: '16px' }}>
+      <h4>{isEditMode ? 'Edit City' : 'Add New City'}</h4>
       <input value={cityName} onChange={e => setCityName(e.target.value)} placeholder="City Name" required />
       <input value={cityState} onChange={e => setCityState(e.target.value)} placeholder="State" required />
       <input value={zipCode} onChange={e => setZipCode(e.target.value)} placeholder="Zip Code" required />
-      <div><button type="submit">Save City</button><button type="button" onClick={onCancel} style={{ marginLeft: '8px' }}>Cancel</button></div>
+      <div>
+        <button type="submit">{isEditMode ? 'Update City' : 'Save City'}</button>
+        <button type="button" onClick={onCancel} style={{ marginLeft: '8px' }}>Cancel</button>
+      </div>
     </form>
   );
 };
 
-const AddCinemaForm = ({ cityId, onCinemaAdded, onCancel }) => {
-    const [cinemaName, setCinemaName] = useState('');
-    const [facilities, setFacilities] = useState('');
-    const [cancellationAllowed, setCancellationAllowed] = useState(false);
+const CinemaForm = ({ cityId, onSave, onCancel, initialData }) => {
+    const isEditMode = Boolean(initialData);
+    const [cinemaName, setCinemaName] = useState(initialData?.Cinema_Name || '');
+    const [facilities, setFacilities] = useState(initialData?.Facilities || '');
+    const [cancellationAllowed, setCancellationAllowed] = useState(initialData?.Cancellation_Allowed || false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axiosInstance.post('/api/admin/cinemas', { name: cinemaName, cityId, facilities, cancellationAllowed });
-            toast.success('Cinema added successfully!');
-            onCinemaAdded();
+            const payload = { 
+                Cinema_Name: cinemaName, 
+                facilities, 
+                cancellationAllowed,
+                cityId: initialData?.CityID || cityId // Use initial data's cityId if editing
+            };
+
+            if (isEditMode) {
+                // Don't send cityId in PUT payload, not editable
+                const updatePayload = { Cinema_Name: cinemaName, Facilities: facilities, Cancellation_Allowed: cancellationAllowed };
+                await axiosInstance.put(`/api/admin/cinema/${initialData.CinemaID}`, updatePayload);
+                toast.success('Cinema updated successfully!');
+            } else {
+                // Send 'name' as key for add
+                await axiosInstance.post('/api/admin/cinemas', { name: cinemaName, cityId, facilities, cancellationAllowed });
+                toast.success('Cinema added successfully!');
+            }
+            onSave();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to add cinema.');
+            toast.error(err.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} cinema.`);
         }
     };
 
     return (
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px', marginTop: '16px' }}>
+            <h4>{isEditMode ? 'Edit Cinema' : 'Add New Cinema'}</h4>
             <input value={cinemaName} onChange={e => setCinemaName(e.target.value)} placeholder="Cinema Name" required />
             <input value={facilities} onChange={e => setFacilities(e.target.value)} placeholder="Facilities (e.g., Parking,Dolby)" />
             <label><input type="checkbox" checked={cancellationAllowed} onChange={e => setCancellationAllowed(e.target.checked)} /> Cancellation Allowed</label>
-            <div><button type="submit">Save Cinema</button><button type="button" onClick={onCancel} style={{ marginLeft: '8px' }}>Cancel</button></div>
+            <div>
+                <button type="submit">{isEditMode ? 'Update Cinema' : 'Save Cinema'}</button>
+                <button type="button" onClick={onCancel} style={{ marginLeft: '8px' }}>Cancel</button>
+            </div>
         </form>
     );
 };
 
-const AddHallForm = ({ cinemaId, onHallAdded, onCancel }) => {
-    const [hallName, setHallName] = useState('');
+const HallForm = ({ cinemaId, onSave, onCancel, initialData }) => {
+    const isEditMode = Boolean(initialData);
+    const [hallName, setHallName] = useState(initialData?.Hall_Name || '');
     const [seatConfig, setSeatConfig] = useState([{ type: 'Standard', ranges: '' }]);
     const [error, setError] = useState('');
     const seatTypes = ['Standard', 'Premium', 'Recliner', 'Sofa', 'Box'];
@@ -155,77 +244,140 @@ const AddHallForm = ({ cinemaId, onHallAdded, onCancel }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        // ... (complex validation logic remains the same)
         try {
-            await axiosInstance.post('/api/admin/cinema-halls', { hallName, cinemaId, seatConfig });
-            toast.success('Hall and seats added successfully!');
-            onHallAdded();
+            if (isEditMode) {
+                // ONLY update hall name. Seat editing is too complex.
+                await axiosInstance.put(`/api/admin/cinema-hall/${initialData.CinemaHallID}`, { Hall_Name: hallName });
+                toast.success('Hall name updated successfully!');
+            } else {
+                // ... (complex validation logic for add)
+                await axiosInstance.post('/api/admin/cinema-halls', { hallName, cinemaId, seatConfig });
+                toast.success('Hall and seats added successfully!');
+            }
+            onSave();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to add hall.');
+            toast.error(err.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} hall.`);
         }
     };
     const availableTypes = seatTypes.filter(t => !seatConfig.some(c => c.type === t));
     return (
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '16px', marginTop: '16px' }}>
+            <h4>{isEditMode ? 'Edit Hall Name' : 'Add New Hall'}</h4>
             <input value={hallName} onChange={e => setHallName(e.target.value)} placeholder="Hall Name" required />
-            <div>
-                <h4>Seat Configuration</h4>
-                {seatConfig.map((config, index) => (
-                    <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
-                        <select value={config.type} onChange={e => handleConfigChange(index, 'type', e.target.value)} required>
-                            <option value="">Select Type</option>
-                            {config.type && <option value={config.type}>{config.type}</option>}
-                            {availableTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                        <input value={config.ranges} onChange={e => handleConfigChange(index, 'ranges', e.target.value)} placeholder="Seat Numbers (e.g., 1-20, 25)" style={{ flex: 1 }} required />
-                        <button type="button" onClick={() => removeSeatType(index)}>&times;</button>
-                    </div>
-                ))}
-                {availableTypes.length > 0 && <button type="button" onClick={addSeatType}>+ Add Seat Type</button>}
-            </div>
+            
+            {/* Only show seat config for ADD mode */}
+            {!isEditMode && (
+                <div>
+                    <h4>Seat Configuration</h4>
+                    {seatConfig.map((config, index) => (
+                        <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+                            <select value={config.type} onChange={e => handleConfigChange(index, 'type', e.target.value)} required>
+                                <option value="">Select Type</option>
+                                {config.type && <option value={config.type}>{config.type}</option>}
+                                {availableTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                            <input value={config.ranges} onChange={e => handleConfigChange(index, 'ranges', e.target.value)} placeholder="Seat Numbers (e.g., 1-20, 25)" style={{ flex: 1 }} required />
+                            <button type="button" onClick={() => removeSeatType(index)}>&times;</button>
+                        </div>
+                    ))}
+                    {availableTypes.length > 0 && <button type="button" onClick={addSeatType}>+ Add Seat Type</button>}
+                </div>
+            )}
+            {isEditMode && <p><i>Note: Seat configuration cannot be edited. To change seats, please delete and re-create the hall.</i></p>}
+
             {error && <p style={{ color: 'red', margin: 0 }}>{error}</p>}
-            <div><button type="submit">Save Hall & Seats</button><button type="button" onClick={onCancel} style={{ marginLeft: '8px' }}>Cancel</button></div>
+            <div>
+                <button type="submit">{isEditMode ? 'Update Hall' : 'Save Hall & Seats'}</button>
+                <button type="button" onClick={onCancel} style={{ marginLeft: '8px' }}>Cancel</button>
+            </div>
         </form>
     );
 };
 
-
-const AddMovieForm = ({ onMovieAdded, onCancel }) => {
-  const [formData, setFormData] = useState({ title: '', description: '', duration: '02:30:00', language: '', releaseDate: '', genre: '', rating: '7.0', ageFormat: 'UA', trailerUrl: '' });
+const MovieForm = ({ onSave, onCancel, initialData }) => {
+  const isEditMode = Boolean(initialData);
+  const [formData, setFormData] = useState({
+      title: initialData?.Title || '',
+      description: initialData?.Movie_Description || '',
+      duration: initialData?.Duration || '02:30:00',
+      language: initialData?.Movie_Language || '',
+      releaseDate: initialData?.ReleaseDate ? new Date(initialData.ReleaseDate).toISOString().split('T')[0] : '',
+      genre: initialData?.Genre || '',
+      rating: initialData?.Rating || '7.0',
+      ageFormat: initialData?.Age_Format || 'UA',
+      trailerUrl: initialData?.Trailer_URL || ''
+  });
   const [posterFile, setPosterFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   const handleFileChange = (e) => setPosterFile(e.target.files[0]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!posterFile) return toast.error("Please select a poster image.");
-    const data = new FormData();
-    data.append('file', posterFile);
-    data.append('title', formData.title);
-    data.append('description', formData.description);
-    data.append('duration', formData.duration);
-    data.append('language', formData.language);
-    data.append('releaseDate', formData.releaseDate);
-    data.append('genre', formData.genre);
-    data.append('rating', formData.rating);
-    data.append('ageFormat', formData.ageFormat);
-    data.append('trailerUrl', formData.trailerUrl);
+    
+    // In ADD mode, file is required
+    if (!isEditMode && !posterFile) {
+        return toast.error("Please select a poster image.");
+    }
+
+    setIsUploading(true);
 
     try {
-      await axiosInstance.post('/api/admin/movie', data);
-      toast.success('Movie added successfully!');
-      onMovieAdded();
+        // --- This is now the *only* logic you need ---
+        
+        // 1. Create FormData
+        const data = new FormData();
+        
+        // 2. Append all text fields
+        data.append('title', formData.title);
+        data.append('description', formData.description);
+        data.append('duration', formData.duration);
+        data.append('language', formData.language);
+        data.append('releaseDate', formData.releaseDate);
+        data.append('genre', formData.genre);
+        data.append('rating', formData.rating);
+        data.append('ageFormat', formData.ageFormat);
+        data.append('trailerUrl', formData.trailerUrl);
+
+        // 3. Append the new file *only if* one was selected
+        if (posterFile) {
+            data.append('file', posterFile);
+        } else if (isEditMode) {
+            // If no new file, send back the old URL
+            // (Your `editMovie` controller handles this)
+            data.append('imageUrl', initialData.Poster_Image_URL);
+        }
+
+        // 4. Send the request
+        if (isEditMode) {
+            // Send FormData to the PUT route
+            await axiosInstance.put(`/api/admin/movie/${initialData.MovieID}`, data);
+            toast.success('Movie updated successfully!');
+        } else {
+            // Send FormData to the POST route
+            await axiosInstance.post('/api/admin/movie', data);
+            toast.success('Movie added successfully!');
+        }
+
+        setIsUploading(false);
+        onSave();
+
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to add movie.');
+        setIsUploading(false);
+        toast.error(err.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} movie.`);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px', marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
-      <h4>Add New Movie</h4>
+      <h4>{isEditMode ? 'Edit Movie' : 'Add New Movie'}</h4>
+      
       <label>Poster Image:</label>
-      <input name="posterFile" type="file" onChange={handleFileChange} accept="image/*" required />
+      {isEditMode && <img src={initialData.Poster_Image_URL} alt="poster" style={{width: '100px'}} />}
+      <input name="posterFile" type="file" onChange={handleFileChange} accept="image/*" required={!isEditMode} />
+      {isEditMode && <small>Select a new file to replace the current poster.</small>}
+      
       <input name="title" value={formData.title} onChange={handleChange} placeholder="Title" required />
       <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
       <input name="duration" value={formData.duration} onChange={handleChange} placeholder="Duration (HH:MM:SS)" required />
@@ -235,66 +387,68 @@ const AddMovieForm = ({ onMovieAdded, onCancel }) => {
       <input name="rating" type="number" step="0.1" value={formData.rating} onChange={handleChange} placeholder="Rating" required />
       <input name="ageFormat" value={formData.ageFormat} onChange={handleChange} placeholder="Age Format" required />
       <input name="trailerUrl" type="url" value={formData.trailerUrl} onChange={handleChange} placeholder="Trailer URL" required />
-      <div><button type="submit">Save Movie</button><button type="button" onClick={onCancel} style={{ marginLeft: '8px' }}>Cancel</button></div>
+      
+      <div>
+        <button type="submit" disabled={isUploading}>{isUploading ? 'Saving...' : (isEditMode ? 'Update Movie' : 'Save Movie')}</button>
+        <button type="button" onClick={onCancel} style={{ marginLeft: '8px' }}>Cancel</button>
+      </div>
     </form>
   );
 };
 
+// ShowForm (from your file) is already reusable with `initialData`
 const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialData }) => { 
+    // ... (Your existing AddShowForm is perfect as-is)
     const formRef = useRef(null);
-    // Determine if we are in "edit" mode
     const isEditMode = Boolean(initialData);
-
     const [movieId, setMovieId] = useState('');
     const [showDate, setShowDate] = useState('');
     const [startTime, setStartTime] = useState('');
     const [format, setFormat] = useState('2D');
     const [language, setLanguage] = useState('');
-    
-    const seatTypesInHall = [...new Set(allSeats.filter(s => s.CinemaHallID === hall.CinemaHallID).map(s => s.Seat_Type))];
-    const [priceConfig, setPriceConfig] = useState(
-        seatTypesInHall.reduce((acc, type) => ({ ...acc, [type]: '' }), {})
-    );
+    const [seatTypesInHall, setSeatTypesInHall] = useState([]);
+    const [priceConfig, setPriceConfig] = useState({});
 
-    // NEW: useEffect to populate form when in edit mode
+    // Deriving seat types
     useEffect(() => {
+        const types = [...new Set(allSeats.filter(s => s.CinemaHallID === hall.CinemaHallID).map(s => s.Seat_Type))];
+        setSeatTypesInHall(types);
+        
+        // Initialize priceConfig based on types
+        const initialPrices = types.reduce((acc, type) => ({ ...acc, [type]: '' }), {});
+        
+        if (isEditMode && initialData?.prices) {
+             const existingPrices = types.reduce((acc, type) => {
+                return { ...acc, [type]: initialData.prices[type] || '' };
+            }, {});
+            setPriceConfig(existingPrices);
+        } else {
+            setPriceConfig(initialPrices);
+        }
+
+        // Set form data
         if (isEditMode) {
             setMovieId(initialData.MovieID);
-            // Dates and times need careful formatting to work with input fields
             setShowDate(new Date(initialData.Show_Date).toISOString().split('T')[0]);
             setStartTime(new Date(initialData.StartTime).toTimeString().substring(0, 5));
             setFormat(initialData.Format);
             setLanguage(initialData.Show_Language);
-
-            // Fetch prices for the existing show to populate price fields
-            const fetchShowPrices = async () => {
-                try {
-                    toast.success("Editing show. Please re-enter all seat prices.");
-                } catch (error) {
-                    toast.error("Could not fetch existing prices.");
-                }
-            };
-            fetchShowPrices();
         }
-    }, [initialData, isEditMode]);
+
+    }, [allSeats, hall.CinemaHallID, initialData, isEditMode]);
+
 
     useEffect(() => {
-        // Function to handle clicks
         const handleClickOutside = (event) => {
-            // If the ref is attached and the click was not inside the form
             if (formRef.current && !formRef.current.contains(event.target)) {
-                onCancel(); // Call the onCancel function passed in props
+                onCancel(); 
             }
         };
-
-        // Add the event listener to the whole document
         document.addEventListener("mousedown", handleClickOutside);
-
-        // This is the cleanup function that removes the listener
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [onCancel]); // The effect depends on the onCancel function
+    }, [onCancel]); 
 
 
     const handlePriceChange = (type, value) => {
@@ -304,7 +458,7 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
     const handleSubmit = async (e) => {
         e.preventDefault();
         const emptyPrice = Object.values(priceConfig).some(p => p === '' || p <= 0);
-        if (emptyPrice) return toast.error("Please set a valid price for all seat types.");
+        if (emptyPrice && seatTypesInHall.length > 0) return toast.error("Please set a valid price for all seat types.");
 
         const showData = {
             MovieID: movieId,
@@ -318,11 +472,9 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
 
         try {
             if (isEditMode) {
-                // UPDATE request
                 await axiosInstance.put(`/api/admin/shows/${initialData.ShowID}`, showData);
                 toast.success("Show updated successfully!");
             } else {
-                // CREATE request
                 await axiosInstance.post('/api/admin/shows', showData);
                 toast.success("Show added successfully!");
             }
@@ -334,11 +486,10 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
 
     return (
         <form ref={formRef} onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px', marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
-            {/* Change title based on mode */}
             <h4>{isEditMode ? `Edit Show in ${hall.Hall_Name}`: `Add New Show to ${hall.Hall_Name}`}</h4>
-            {/* ... rest of the form is the same ... */}
              <select value={movieId} onChange={e => setMovieId(e.target.value)} required>
                 <option value="">Select a Movie</option>
+                {/* Use the full movie list passed from parent */}
                 {movies.map(m => <option key={m.MovieID} value={m.MovieID}>{m.Title}</option>)}
             </select>
             <input type="date" value={showDate} onChange={e => setShowDate(e.target.value)} required />
@@ -351,18 +502,18 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
             </select>
 
             <h4>{isEditMode ? "Update Seat Prices" : "Set Seat Prices"}</h4>
-            {seatTypesInHall.map(type => (
+            {seatTypesInHall.length > 0 ? seatTypesInHall.map(type => (
                 <div key={type} style={{display: 'grid', gridTemplateColumns: '100px 1fr', alignItems: 'center'}}>
                     <label><strong>{type}:</strong></label>
                     <input 
                         type="number" 
-                        value={priceConfig[type]}
+                        value={priceConfig[type] || ''}
                         onChange={e => handlePriceChange(type, e.target.value)}
                         placeholder={`Price for ${type}`}
                         required 
                     />
                 </div>
-            ))}
+            )) : <p>No seat types found for this hall.</p>}
             
             <div>
                 <button type="submit">{isEditMode ? "Update Show" : "Save Show"}</button>
@@ -373,68 +524,214 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
 };
 
 
-// --- MAIN UNIFIED DASHBOARD COMPONENT ---
+// --- (4) MAIN ADMIN COMPONENT ---
 
 export default function AdminManagement() {
   // --- STATE MANAGEMENT ---
   const [movies, setMovies] = useState([]);
   const [cities, setCities] = useState([]);
-  const [allCinemas, setAllCinemas] = useState([]);
-  const [allHalls, setAllHalls] = useState([]);
-  const [allShows, setAllShows] = useState([]);
-  const [allSeats, setAllSeats] = useState([]);
+  const [cinemas, setCinemas] = useState([]);
+  const [halls, setHalls] = useState([]);
+  const [shows, setShows] = useState([]);
+  const [seats, setSeats] = useState([]);
+  
+  // Store all movies for filter dropdowns
+  const [allMovies, setAllMovies] = useState([]); 
 
+  const [loading, setLoading] = useState({
+      movies: false, cities: false, cinemas: false, halls: false, shows: false
+  });
+
+  // State for selections
   const [selectedMovieId, setSelectedMovieId] = useState(null);
   const [selectedCityId, setSelectedCityId] = useState(null);
   const [selectedCinemaId, setSelectedCinemaId] = useState(null);
   const [selectedHallId, setSelectedHallId] = useState(null);
 
-  const [showAddMovieForm, setShowAddMovieForm] = useState(false);
-  const [showAddCityForm, setShowAddCityForm] = useState(false);
-  const [showAddCinemaForm, setShowAddCinemaForm] = useState(false);
-  const [showAddHallForm, setShowAddHallForm] = useState(false);
+  // State for forms/modals
+  const [showAddForm, setShowAddForm] = useState(null); // 'movie', 'city', 'cinema', 'hall'
+  const [editingItem, setEditingItem] = useState(null); // { type: 'movie', data: {...} }
+  const [editingShow, setEditingShow] = useState(null); // For the special case show form
   const [showAddShowForm, setShowAddShowForm] = useState(false);
-  const [editingShow, setEditingShow] = useState(null);
-  
-  // --- DATA FETCHING ---
-  const fetchData = async () => {
-    try {
-      const [moviesRes, citiesRes, cinemasRes, hallsRes, showsRes, seatsRes] = await Promise.all([
-        axiosInstance.get("/api/admin/movie"),
-        axiosInstance.get("/api/admin/cities"),
-        axiosInstance.get("/api/admin/cinemas"),
-        axiosInstance.get("/api/admin/cinema-halls"),
-        axiosInstance.get("/api/admin/view-shows"),
-        axiosInstance.get("/api/admin/cinema-seats")
-      ]);
-      setMovies(moviesRes.data.movies);
-      setCities(citiesRes.data.cities);
-      setAllCinemas(cinemasRes.data.cinemas);
-      setAllHalls(hallsRes.data.halls);
-      setAllShows(showsRes.data.shows);
-      setAllSeats(seatsRes.data.seats);
-    } catch (error) {
-      toast.error("Failed to fetch all management data.");
-    }
+
+  // --- NEW STATE for Search, Filter, Sort, Pagination ---
+  const [movieParams, setMovieParams] = useState({ search: '', genre: '', language: '', minRating: '', sortKey: 'ReleaseDate', sortOrder: 'DESC', page: 1, limit: 5 });
+  const [cityParams, setCityParams] = useState({ search: '', sortKey: 'City_Name', sortOrder: 'ASC', page: 1, limit: 10 });
+  const [cinemaParams, setCinemaParams] = useState({ search: '', facilities: [], cancellation: '', sortKey: 'Cinema_Name', sortOrder: 'ASC', page: 1, limit: 10 });
+  const [showParams, setShowParams] = useState({ movieId: '', date: '', language: '', status: '', sortKey: 'ms.StartTime', sortOrder: 'DESC', page: 1, limit: 10 });
+
+  const [pagination, setPagination] = useState({
+      movies: {}, cities: {}, cinemas: {}, shows: {}
+  });
+
+  // Debounced search terms
+  const debouncedMovieSearch = useDebounce(movieParams.search, 500);
+  const debouncedCitySearch = useDebounce(cityParams.search, 500);
+  const debouncedCinemaSearch = useDebounce(cinemaParams.search, 500);
+
+  // --- CACHE-BUSTING CONFIG ---
+  const cacheBustConfig = {
+    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
   };
 
+  // --- (5) DATA FETCHING (REFACTORED) ---
+
+  const fetchMovies = async () => {
+      setLoading(prev => ({ ...prev, movies: true }));
+      try {
+          const params = new URLSearchParams({ ...movieParams, search: debouncedMovieSearch });
+          const res = await axiosInstance.get(`/api/admin/movie?${params.toString()}`, cacheBustConfig);
+          setMovies(res.data.movies);
+          setPagination(prev => ({...prev, movies: res.data.pagination}));
+      } catch (e) { toast.error("Failed to fetch movies."); }
+      finally { setLoading(prev => ({ ...prev, movies: false })); }
+  };
+  
+  const fetchAllMovies = async () => {
+      // For dropdowns, no pagination needed
+      try {
+          const res = await axiosInstance.get(`/api/admin/movie?limit=1000`, cacheBustConfig);
+          setAllMovies(res.data.movies);
+      } catch (e) { toast.error("Failed to fetch movie list for filters."); }
+  };
+
+  const fetchCities = async () => {
+      setLoading(prev => ({ ...prev, cities: true }));
+      try {
+          const params = new URLSearchParams({ ...cityParams, search: debouncedCitySearch });
+          const res = await axiosInstance.get(`/api/admin/cities?${params.toString()}`, cacheBustConfig);
+          setCities(res.data.cities);
+          setPagination(prev => ({...prev, cities: res.data.pagination}));
+      } catch (e) { toast.error("Failed to fetch cities."); }
+      finally { setLoading(prev => ({ ...prev, cities: false })); }
+  };
+
+  const fetchCinemas = async (cityId) => {
+      if (!cityId) return;
+      setLoading(prev => ({ ...prev, cinemas: true }));
+      try {
+          const params = new URLSearchParams({ ...cinemaParams, cityId, search: debouncedCinemaSearch });
+          const res = await axiosInstance.get(`/api/admin/cinemas?${params.toString()}`, cacheBustConfig);
+          setCinemas(res.data.cinemas);
+           setPagination(prev => ({...prev, cinemas: res.data.pagination}));
+      } catch (e) { toast.error("Failed to fetch cinemas."); }
+      finally { setLoading(prev => ({ ...prev, cinemas: false })); }
+  };
+
+  const fetchHalls = async (cinemaId) => {
+      if (!cinemaId) return;
+      setLoading(prev => ({ ...prev, halls: true }));
+      try {
+          // Note: Hall pagination is not fully implemented in UI, but supported by backend
+          const res = await axiosInstance.get(`/api/admin/cinema-halls?cinemaId=${cinemaId}`, cacheBustConfig);
+          setHalls(res.data.halls);
+          // setPagination(prev => ({...prev, halls: res.data.pagination}));
+      } catch (e) { toast.error("Failed to fetch halls."); }
+      finally { setLoading(prev => ({ ...prev, halls: false })); }
+  };
+
+  const fetchShowsAndSeats = async (hallId) => {
+      if (!hallId) return;
+      setLoading(prev => ({ ...prev, shows: true }));
+      try {
+          const showSearch = new URLSearchParams({ ...showParams, hallId });
+          const [showsRes, seatsRes] = await Promise.all([
+              axiosInstance.get(`/api/admin/view-shows?${showSearch.toString()}`, cacheBustConfig),
+              axiosInstance.get(`/api/admin/cinema-seats?hallId=${hallId}`, cacheBustConfig)
+          ]);
+          setShows(showsRes.data.shows);
+          setSeats(seatsRes.data.seats);
+          setPagination(prev => ({...prev, shows: showsRes.data.pagination}));
+      } catch (e) { toast.error("Failed to fetch hall details."); }
+      finally { setLoading(prev => ({ ...prev, shows: false })); }
+  };
+
+  // --- (6) CHAINED useEffect HOOKS (REFACTORED) ---
+
+  // 1. Initial load:
   useEffect(() => {
-    fetchData();
+    fetchAllMovies(); // Get all movies for dropdowns
   }, []);
-
-// --- EVENT HANDLERS ---
-  const handleCitySelect = (cityId) => {
-    setSelectedCityId(cityId);
-    setSelectedCinemaId(null);
-    setSelectedHallId(null);
-  };
   
-  const handleCinemaSelect = (cinemaId) => {
-    setSelectedCinemaId(cinemaId);
-    setSelectedHallId(null);
+  // Re-fetch whenever params change
+  useEffect(() => { fetchMovies(); }, [debouncedMovieSearch, movieParams.genre, movieParams.language, movieParams.minRating, movieParams.sortKey, movieParams.sortOrder, movieParams.page]);
+  useEffect(() => { fetchCities(); }, [debouncedCitySearch, cityParams.sortKey, cityParams.sortOrder, cityParams.page]);
+  
+  // 2. When city changes: Fetch cinemas and clear all children
+  useEffect(() => {
+      setCinemas([]);
+      setHalls([]);
+      setShows([]);
+      setSeats([]);
+      setSelectedCinemaId(null);
+      setSelectedHallId(null);
+      
+      if (selectedCityId) {
+          fetchCinemas(selectedCityId);
+      }
+  }, [selectedCityId, debouncedCinemaSearch, cinemaParams.facilities, cinemaParams.cancellation, cinemaParams.sortKey, cinemaParams.sortOrder, cinemaParams.page]);
+
+  // 3. When cinema changes: Fetch halls and clear children
+  useEffect(() => {
+      setHalls([]);
+      setShows([]);
+      setSeats([]);
+      setSelectedHallId(null);
+
+      if (selectedCinemaId) {
+          fetchHalls(selectedCinemaId);
+      }
+  }, [selectedCinemaId]); // Re-fetch only when cinema selection changes
+
+  // 4. When hall changes: Fetch shows & seats
+  useEffect(() => {
+      setShows([]);
+      setSeats([]);
+
+      if (selectedHallId) {
+          fetchShowsAndSeats(selectedHallId);
+      }
+  }, [selectedHallId, showParams.movieId, showParams.date, showParams.language, showParams.status, showParams.sortKey, showParams.sortOrder, showParams.page]);
+
+
+// --- (7) EVENT HANDLERS (REFACTORED) ---
+  
+  // Parameter change handlers
+  const handleParamChange = (setter, key, value) => {
+      setter(prev => ({ ...prev, [key]: value, page: 1 })); // Reset to page 1 on any filter/search change
   };
+
+  const handlePageChange = (type, newPage) => {
+      if (newPage < 1) return;
+      
+      switch (type) {
+          case 'movies':
+              if (newPage > pagination.movies.totalPages) return;
+              setMovieParams(prev => ({ ...prev, page: newPage }));
+              break;
+          case 'cities':
+              if (newPage > pagination.cities.totalPages) return;
+              setCityParams(prev => ({ ...prev, page: newPage }));
+              break;
+          case 'cinemas':
+               if (newPage > pagination.cinemas.totalPages) return;
+              setCinemaParams(prev => ({ ...prev, page: newPage }));
+              break;
+          case 'shows':
+               if (newPage > pagination.shows.totalPages) return;
+              setShowParams(prev => ({ ...prev, page: newPage }));
+              break;
+          default: break;
+      }
+  };
+
+  const handleMultiSelectChange = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    handleParamChange(setCinemaParams, 'facilities', selectedOptions);
+};
 
   const handleDelete = async (type, id) => {
+    // ... (Your existing delete logic is fine)
     let endpoint = '';
     switch (type) {
         case 'movie': endpoint = `/api/admin/movie/${id}`; break;
@@ -445,81 +742,207 @@ export default function AdminManagement() {
         default: toast.error(`Unknown type: ${type}`); return;
     }
     if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
+
     try {
         await axiosInstance.delete(endpoint);
         toast.success(`${type} deleted successfully!`);
-        fetchData();
+        
+        // Refetch the list
+        switch (type) {
+            case 'movie':
+                fetchMovies();
+                if (selectedMovieId === id) setSelectedMovieId(null);
+                break;
+            case 'city':
+                fetchCities();
+                if (selectedCityId === id) setSelectedCityId(null);
+                break;
+            case 'cinema':
+                fetchCinemas(selectedCityId);
+                if (selectedCinemaId === id) setSelectedCinemaId(null);
+                break;
+            case 'cinema-hall':
+                fetchHalls(selectedCinemaId);
+                if (selectedHallId === id) setSelectedHallId(null);
+                break;
+            case 'show':
+                fetchShowsAndSeats(selectedHallId);
+                break;
+        }
+
     } catch (err) {
         toast.error(`Could not delete: ${err.response?.data?.message || err.message}`);
     }
   };
 
-  const handleEditClick = (show) => {
+  // --- Edit & Form Handlers ---
+  const handleEditClick = (type, data) => {
+      setEditingItem({ type, data });
+  };
+  
+  const handleShowEditClick = (show) => {
     setEditingShow(show);
-    setShowAddShowForm(true); // Open the form
+    setShowAddShowForm(true); // Open the special show form
   };
 
-  const handleCancelForm = () => {
+  const handleShowAddClick = () => {
+      setEditingShow(null); // Ensure it's not in edit mode
+      setShowAddShowForm(true);
+  };
+
+  const handleSave = (type) => {
+      // This is called on successful save from a form
+      setEditingItem(null);
+      setShowAddForm(null);
+      
+      // Refetch the relevant data
+      switch (type) {
+          case 'movie': fetchMovies(); break;
+          case 'city': fetchCities(); break;
+          case 'cinema': fetchCinemas(selectedCityId); break;
+          case 'hall': fetchHalls(selectedCinemaId); break;
+      }
+  };
+  
+  const handleShowSave = () => {
       setShowAddShowForm(false);
-      setEditingShow(null); // Clear editing state on cancel
+      setEditingShow(null);
+      fetchShowsAndSeats(selectedHallId);
+  };
+  
+  const handleCancel = () => {
+      setEditingItem(null);
+      setShowAddForm(null);
+      setShowAddShowForm(false);
+      setEditingShow(null);
   };
 
-  // Correct, single definition of handleDataAdded
-  const handleDataAdded = (formSetter) => {
-      fetchData();
-      formSetter(false);
-      setEditingShow(null); // Clear editing state on success
-  };
-
-    const handleToggleShowStatus = async (showId, currentStatus) => {
-    const newStatus = !currentStatus; // Invert the current status
+  const handleToggleShowStatus = async (showId, currentStatus) => {
+    // ... (Your existing function is fine)
+    const newStatus = !currentStatus;
     try {
-      // You will need to create this backend endpoint: PUT /api/admin/shows/:id/status
       await axiosInstance.put(`/api/admin/shows/${showId}/status`, { isActive: newStatus });
       toast.success(`Show booking status updated to: ${newStatus ? 'ACTIVE' : 'INACTIVE'}`);
-      
-      // OPTION 1 (Simple): Refetch all data to see the change
-      fetchData(); 
-
-      // OPTION 2 (Advanced): Update state directly for a faster UI response
-      // setAllShows(prevShows => 
-      //   prevShows.map(show => 
-      //     show.ShowID === showId ? { ...show, isActive: newStatus } : show
-      //   )
-      // );
-
+      fetchShowsAndSeats(selectedHallId);
     } catch (err) {
       toast.error("Failed to update show status.");
     }
   };
 
-  // --- FILTERED DATA & SELECTED OBJECTS ---
+  // --- Selected Objects ---
   const selectedMovie = selectedMovieId ? movies.find(m => m.MovieID === parseInt(selectedMovieId)) : null;
-  const filteredCinemas = selectedCityId ? allCinemas.filter(c => c.CityID === parseInt(selectedCityId)) : [];
   const selectedCity = selectedCityId ? cities.find(c => c.CityID === parseInt(selectedCityId)) : null;
-  const filteredHalls = selectedCinemaId ? allHalls.filter(h => h.CinemaID === parseInt(selectedCinemaId)) : [];
-  const selectedCinema = selectedCinemaId ? allCinemas.find(c => c.CinemaID === parseInt(selectedCinemaId)) : null;
-  const filteredShows = selectedHallId ? allShows.filter(s => s.CinemaHallID === parseInt(selectedHallId)) : [];
-  const selectedHall = selectedHallId ? allHalls.find(h => h.CinemaHallID === parseInt(selectedHallId)) : null;
+  const selectedCinema = selectedCinemaId ? cinemas.find(c => c.CinemaID === parseInt(selectedCinemaId)) : null;
+  const selectedHall = selectedHallId ? halls.find(h => h.CinemaHallID === parseInt(selectedHallId)) : null;
+
+  const facilityOptions = [
+      { value: "Parking", label: "Parking" },
+      { value: "Dolby", label: "Dolby" },
+      { value: "Dolby Atmos", label: "Dolby Atmos" },
+      { value: "Recliner", label: "Recliner" },
+      { value: "Cafe", label: "Cafe" },
+      { value: "IMAX", label: "IMAX" },
+      { value: "4DX", label: "4DX" },
+      { value: "Heritage", label: "Heritage" }
+  ];
+
+  // Custom component for the checkbox
+  const CustomOption = ({ children, ...props }) => (
+    <components.Option {...props}>
+      <input
+        type="checkbox"
+        checked={props.isSelected}
+        onChange={() => null} 
+        style={{ marginRight: '10px' }}
+      />
+      <label>{children}</label>
+    </components.Option>
+  );
+
+  // New handler for react-select
+  const handleReactSelectChange = (selectedOptions) => {
+      const newFacilities = selectedOptions ? selectedOptions.map(option => option.value) : [];
+      handleParamChange(setCinemaParams, 'facilities', newFacilities);
+  };
+  
+  // --- (8) JSX RENDER (with new UI) ---
   
   return (
     <div style={{ padding: 24 }}>
       <h1>Admin Management</h1>
 
+      {/* --- MODAL FOR EDITING --- */}
+      {editingItem && (
+          <Modal onClose={handleCancel}>
+              {editingItem.type === 'movie' && (
+                  <MovieForm onSave={() => handleSave('movie')} onCancel={handleCancel} initialData={editingItem.data} />
+              )}
+              {editingItem.type === 'city' && (
+                  <CityForm onSave={() => handleSave('city')} onCancel={handleCancel} initialData={editingItem.data} />
+              )}
+              {editingItem.type === 'cinema' && (
+                  <CinemaForm onSave={() => handleSave('cinema')} onCancel={handleCancel} initialData={editingItem.data} />
+              )}
+              {editingItem.type === 'hall' && (
+                  <HallForm onSave={() => handleSave('hall')} onCancel={handleCancel} initialData={editingItem.data} />
+              )}
+          </Modal>
+      )}
+
       {/* --- MOVIE MANAGEMENT SECTION --- */}
       <ManagementSection title="Movie Management">
+        {/* NEW Filter Bar */}
+        <div style={styles.filterBar}>
+            <input 
+                type="text" 
+                placeholder="Search by Title or ID..."
+                value={movieParams.search}
+                onChange={e => handleParamChange(setMovieParams, 'search', e.target.value)}
+                style={{ flex: 2 }}
+            />
+            <select value={movieParams.genre} onChange={e => handleParamChange(setMovieParams, 'genre', e.target.value)}>
+                <option value="">All Genres</option>
+                {[...new Set(allMovies.map(m => m.Genre))].map(g => g && <option key={g} value={g}>{g}</option>)}
+            </select>
+            <select value={movieParams.language} onChange={e => handleParamChange(setMovieParams, 'language', e.target.value)}>
+                <option value="">All Languages</option>
+                 {[...new Set(allMovies.map(m => m.Movie_Language))].map(l => l && <option key={l} value={l}>{l}</option>)}
+            </select>
+            <select value={movieParams.minRating} onChange={e => handleParamChange(setMovieParams, 'minRating', e.target.value)}>
+                <option value="">All Ratings</option>
+                <option value="9">9.0+</option>
+                <option value="8">8.0+</option>
+                <option value="7">7.0+</option>
+            </select>
+            <select value={movieParams.sortKey} onChange={e => handleParamChange(setMovieParams, 'sortKey', e.target.value)}>
+                <option value="ReleaseDate">Sort by Release Date</option>
+                <option value="Title">Sort by Title</option>
+                <option value="Rating">Sort by Rating</option>
+            </select>
+        </div>
+
         <div style={{display: 'flex', gap: '20px'}}>
             <div style={{flex: 1}}>
-                {movies.map(movie => (
-                    <div key={movie.MovieID} onClick={() => setSelectedMovieId(movie.MovieID)} style={{ padding: '10px', cursor: 'pointer', background: selectedMovieId == movie.MovieID ? '#eef4ff' : 'transparent', border: '1px solid #ddd', marginBottom:'5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>{movie.Title}</span>
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete('movie', movie.MovieID); }} style={{background:'red', color:'white'}}>Delete</button>
+                {loading.movies && <p>Loading movies...</p>}
+                {!loading.movies && movies.map(movie => (
+                    <div key={movie.MovieID} onClick={() => setSelectedMovieId(movie.MovieID)} style={{ ...styles.listItem, background: selectedMovieId === movie.MovieID ? '#eef4ff' : 'transparent' }}>
+                        <span>{movie.Title} ({movie.Movie_Language})</span>
+                        <div>
+                            <button onClick={(e) => { e.stopPropagation(); handleEditClick('movie', movie); }} style={styles.editButton}>Edit</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDelete('movie', movie.MovieID); }} style={styles.deleteButton}>Delete</button>
+                        </div>
                     </div>
                 ))}
-                {!showAddMovieForm ? (
-                    <button onClick={() => setShowAddMovieForm(true)} style={{marginTop: '10px'}}>+ Add New Movie</button>
-                ) : (
-                    <AddMovieForm onMovieAdded={() => handleDataAdded(setShowAddMovieForm)} onCancel={() => setShowAddMovieForm(false)} />
+                
+                <Pagination 
+                    currentPage={pagination.movies.currentPage}
+                    totalPages={pagination.movies.totalPages}
+                    onPageChange={(page) => handlePageChange('movies', page)}
+                />
+                
+                {!showAddForm && <button onClick={() => setShowAddForm('movie')} style={{marginTop: '10px'}}>+ Add New Movie</button>}
+                {showAddForm === 'movie' && (
+                    <MovieForm onSave={() => handleSave('movie')} onCancel={handleCancel} />
                 )}
             </div>
             <div style={{flex: 1}}>
@@ -530,133 +953,327 @@ export default function AdminManagement() {
 
       {/* --- THEATER MANAGEMENT SECTIONS --- */}
       <ManagementSection title="Theater Management: Cities">
+        {/* NEW Filter Bar */}
+        <div style={styles.filterBar}>
+             <input 
+                type="text" 
+                placeholder="Search by Name, Zip, or ID..."
+                value={cityParams.search}
+                onChange={e => handleParamChange(setCityParams, 'search', e.target.value)}
+                style={{ flex: 1 }}
+            />
+        </div>
+        
         <div style={{display: 'flex', gap: '20px'}}>
             <div style={{flex: 1}}>
-                {cities.map(city => (
-                    <div key={city.CityID} onClick={() => handleCitySelect(city.CityID)} style={{ padding: '10px', cursor: 'pointer', background: selectedCityId == city.CityID ? '#eef4ff' : 'transparent', border: '1px solid #ddd', marginBottom:'5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>{city.City_Name}</span>
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete('city', city.CityID); }} style={{background:'red', color:'white'}}>Delete</button>
+                {loading.cities && <p>Loading cities...</p>}
+                {!loading.cities && cities.map(city => (
+                    <div key={city.CityID} onClick={() => setSelectedCityId(city.CityID)} style={{ ...styles.listItem, background: selectedCityId === city.CityID ? '#eef4ff' : 'transparent' }}>
+                        <span>{city.City_Name}, {city.City_State}</span>
+                        <div>
+                             <button onClick={(e) => { e.stopPropagation(); handleEditClick('city', city); }} style={styles.editButton}>Edit</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDelete('city', city.CityID); }} style={styles.deleteButton}>Delete</button>
+                        </div>
                     </div>
                 ))}
-                {!showAddCityForm ? <button onClick={() => setShowAddCityForm(true)} style={{marginTop: '10px'}}>+ Add City</button> : <AddCityForm onCityAdded={() => handleDataAdded(setShowAddCityForm)} onCancel={() => setShowAddCityForm(false)} />}
+                
+                 <Pagination 
+                    currentPage={pagination.cities.currentPage}
+                    totalPages={pagination.cities.totalPages}
+                    onPageChange={(page) => handlePageChange('cities', page)}
+                />
+
+                {!showAddForm && <button onClick={() => setShowAddForm('city')} style={{marginTop: '10px'}}>+ Add City</button>}
+                {showAddForm === 'city' && <CityForm onSave={() => handleSave('city')} onCancel={handleCancel} />}
             </div>
             {selectedCity && <div style={{flex: 1}}><CityDetails city={selectedCity} /></div>}
         </div>
       </ManagementSection>
 
+      {/* --- CINEMA SECTION --- */}
       {selectedCityId && (
         <ManagementSection title={`Cinemas in ${selectedCity?.City_Name}`}>
+            {/* NEW Filter Bar */}
+            <div style={styles.filterBar}>
+                <input 
+                    type="text" 
+                    placeholder="Search by Name or ID..."
+                    value={cinemaParams.search}
+                    onChange={e => handleParamChange(setCinemaParams, 'search', e.target.value)}
+                    style={{ flex: 1 }}
+                />
+                 <Select
+                    isMulti
+                    options={facilityOptions}
+                    placeholder="Filter by facilities..."
+                    // Tell react-select to use your new checkbox component
+                    components={{ Option: CustomOption }}
+                    // Keep the dropdown open after clicking an item
+                    closeMenuOnSelect={false}
+                    // Hide the selected items from the list so they don't appear twice
+                    hideSelectedOptions={false}
+                    // Read the current state
+                    value={facilityOptions.filter(opt => 
+                        cinemaParams.facilities.includes(opt.value)
+                    )}
+                    // Use the handler
+                    onChange={handleReactSelectChange}
+                    // Style
+                    styles={{ container: (base) => ({ ...base, flex: 1 }) }}
+                />
+                <select value={cinemaParams.cancellation} onChange={e => handleParamChange(setCinemaParams, 'cancellation', e.target.value)}>
+                    <option value="">Cancellation (All)</option>
+                    <option value="true">Allowed</option>
+                    <option value="false">Not Allowed</option>
+                </select>
+            </div>
+
+            { loading.cinemas && <p>Loading cinemas...</p> }
             <div style={{display: 'flex', gap: '20px'}}>
                 <div style={{flex: 1}}>
-                    {filteredCinemas.map(cinema => (
-                        <div key={cinema.CinemaID} onClick={() => handleCinemaSelect(cinema.CinemaID)} style={{ padding: '10px', cursor: 'pointer', background: selectedCinemaId == cinema.CinemaID ? '#eef4ff' : 'transparent', border: '1px solid #ddd', marginBottom:'5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {!loading.cinemas && cinemas.map(cinema => (
+                        <div key={cinema.CinemaID} onClick={() => setSelectedCinemaId(cinema.CinemaID)} style={{ ...styles.listItem, background: selectedCinemaId === cinema.CinemaID ? '#eef4ff' : 'transparent' }}>
                             <span>{cinema.Cinema_Name}</span>
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete('cinema', cinema.CinemaID); }} style={{background:'red', color:'white'}}>Delete</button>
+                            <div>
+                                <button onClick={(e) => { e.stopPropagation(); handleEditClick('cinema', cinema); }} style={styles.editButton}>Edit</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete('cinema', cinema.CinemaID); }} style={styles.deleteButton}>Delete</button>
+                            </div>
                         </div>
                     ))}
-                    {!showAddCinemaForm ? <button onClick={() => setShowAddCinemaForm(true)} style={{marginTop: '10px'}}>+ Add Cinema</button> : <AddCinemaForm cityId={selectedCityId} onCinemaAdded={() => handleDataAdded(setShowAddCinemaForm)} onCancel={() => setShowAddCinemaForm(false)} />}
+                    
+                    <Pagination 
+                        currentPage={pagination.cinemas.currentPage}
+                        totalPages={pagination.cinemas.totalPages}
+                        onPageChange={(page) => handlePageChange('cinemas', page)}
+                    />
+                    
+                    {!showAddForm && <button onClick={() => setShowAddForm('cinema')} style={{marginTop: '10px'}}>+ Add Cinema</button>}
+                    {showAddForm === 'cinema' && <CinemaForm cityId={selectedCityId} onSave={() => handleSave('cinema')} onCancel={handleCancel} />}
                 </div>
                 {selectedCinema && <div style={{flex: 1}}><CinemaDetails cinema={selectedCinema} /></div>}
             </div>
         </ManagementSection>
       )}
 
+      {/* --- HALL SECTION --- */}
       {selectedCinemaId && (
         <ManagementSection title={`Halls in ${selectedCinema?.Cinema_Name}`}>
+            { loading.halls && <p>Loading halls...</p> }
             <div style={{display: 'flex', gap: '20px'}}>
                 <div style={{flex: 1}}>
-                    {filteredHalls.map(hall => (
-                        <div key={hall.CinemaHallID} onClick={() => setSelectedHallId(hall.CinemaHallID)} style={{ padding: '10px', cursor: 'pointer', background: selectedHallId == hall.CinemaHallID ? '#eef4ff' : 'transparent', border: '1px solid #ddd', marginBottom:'5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {!loading.halls && halls.map(hall => (
+                        <div key={hall.CinemaHallID} onClick={() => setSelectedHallId(hall.CinemaHallID)} style={{ ...styles.listItem, background: selectedHallId === hall.CinemaHallID ? '#eef4ff' : 'transparent' }}>
                             <span>{hall.Hall_Name}</span>
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete('cinema-hall', hall.CinemaHallID); }} style={{background:'red', color:'white'}}>Delete</button>
+                            <div>
+                                <button onClick={(e) => { e.stopPropagation(); handleEditClick('hall', hall); }} style={styles.editButton}>Edit</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete('cinema-hall', hall.CinemaHallID); }} style={styles.deleteButton}>Delete</button>
+                            </div>
                         </div>
                     ))}
-                    {!showAddHallForm ? <button onClick={() => setShowAddHallForm(true)} style={{marginTop: '10px'}}>+ Add Hall</button> : <AddHallForm cinemaId={selectedCinemaId} onHallAdded={() => handleDataAdded(setShowAddHallForm)} onCancel={() => setShowAddHallForm(false)} />}
+                    
+                    {!showAddForm && <button onClick={() => setShowAddForm('hall')} style={{marginTop: '10px'}}>+ Add Hall</button>}
+                    {showAddForm === 'hall' && <HallForm cinemaId={selectedCinemaId} onSave={() => handleSave('hall')} onCancel={handleCancel} />}
                 </div>
-                {selectedHall && <div style={{flex: 1}}><HallDetails hall={selectedHall} allSeats={allSeats} /></div>}
+                {selectedHall && <div style={{flex: 1}}><HallDetails hall={selectedHall} allSeats={seats} /></div>}
             </div>
         </ManagementSection>
       )}
 
+      {/* --- SHOW SECTION --- */}
       {selectedHallId && (
-<ManagementSection title={`Shows in ${selectedHall?.Hall_Name}`}>
-    {filteredShows.length > 0 ? (
-            <table style={{ width: "100%", borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-    <thead>
-        <tr style={{ background: '#f4f4f4' }}>
-            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', width: '25%' }}>Movie</th>
-            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', width: '25%' }}>Date & Time</th>
-            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Format</th>
-            {/* New Header for Language */}
-            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Language</th>
-            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', width: '20%' }}>Seat Prices</th>
-            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Start Booking</th>
-            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        {filteredShows.map(s => (
-        <tr key={s.ShowID}>
-            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{s.Title}</td>
-            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                {new Date(s.Show_Date).toLocaleDateString()} at {new Date(s.StartTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-            </td>
-            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{s.Format}</td>
+        <ManagementSection title={`Shows in ${selectedHall?.Hall_Name}`}>
+            {/* NEW Filter Bar */}
+             <div style={styles.filterBar}>
+                <select value={showParams.movieId} onChange={e => handleParamChange(setShowParams, 'movieId', e.target.value)}>
+                    <option value="">All Movies</option>
+                    {allMovies.map(m => <option key={m.MovieID} value={m.MovieID}>{m.Title}</option>)}
+                </select>
+                 <input 
+                    type="date" 
+                    value={showParams.date}
+                    onChange={e => handleParamChange(setShowParams, 'date', e.target.value)}
+                />
+                <input 
+                    type="text"
+                    placeholder="Language..."
+                    value={showParams.language}
+                    onChange={e => handleParamChange(setShowParams, 'language', e.target.value)}
+                />
+                <select value={showParams.status} onChange={e => handleParamChange(setShowParams, 'status', e.target.value)}>
+                    <option value="">All Statuses</option>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+
+            { loading.shows && <p>Loading shows...</p> }
+            {shows.length > 0 ? (
+                    <table style={{ width: "100%", borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                        <thead>
+                            <tr style={{ background: '#f4f4f4' }}>
+                                <th style={styles.th}>Movie</th>
+                                <th style={styles.th}>Date & Time</th>
+                                <th style={styles.th}>Format</th>
+                                <th style={styles.th}>Language</th>
+                                <th style={styles.th}>Seat Prices</th>
+                                <th style={styles.th}>Start Booking</th>
+                                <th style={styles.th}>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {shows.map(s => (
+                            <tr key={s.ShowID}>
+                                <td style={styles.td}>{s.Title}</td>
+                                <td style={styles.td}>
+                                    {new Date(s.Show_Date).toLocaleDateString()} at {new Date(s.StartTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </td>
+                                <td style={styles.td}>{s.Format}</td>
+                                <td style={styles.td}>{s.Show_Language}</td>
+                                <td style={styles.td}>
+                                    {s.prices ? (
+                                        Object.entries(s.prices).map(([type, price]) => (
+                                            <div key={type} style={{display: 'flex', justifyContent: 'space-between'}}>
+                                            <span>{type}:</span>
+                                            <strong>₹{parseFloat(price).toFixed(2)}</strong>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <span style={{color: '#888'}}>Not Set</span>
+                                    )}
+                                </td>
+                                <td style={styles.td}>
+                                    <label style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        cursor: s.Format === 'EXPIRED' ? 'not-allowed' : 'pointer',
+                                        opacity: s.Format === 'EXPIRED' ? 0.6 : 1
+                                    }}>
+                                        <input 
+                                            type="checkbox"
+                                            checked={Boolean(s.isActive)} 
+                                            onChange={() => handleToggleShowStatus(s.ShowID, s.isActive)}
+                                            style={{ height: '18px', width: '18px' }}
+                                            disabled={s.Format === 'EXPIRED'}
+                                        />
+                                        <span style={{ marginLeft: '8px' }}>
+                                            {/* Show "Expired" if the format is set */}
+                                            {s.Format === 'EXPIRED' ? 'Expired' : (s.isActive ? 'Active' : 'Inactive')}
+                                        </span>
+                                    </label>
+                                </td>
+                                <td style={styles.td}>
+                                    <div style={{display: 'flex', gap: '5px'}}>
+                                        <button onClick={() => handleShowEditClick(s)} style={styles.editButton}>Edit</button>
+                                        <button onClick={() => handleDelete('show', s.ShowID)} style={styles.deleteButton}>Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            ))}
+                        </tbody>
+                    </table>
+            ): !loading.shows && <p>No shows scheduled for this hall matching your filters.</p>}
             
-            {/* New Cell to Display Language */}
-            <td style={{ padding: '8px', border: '1px solid #ddd' }}>{s.Show_Language}</td>
-            
-            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                {s.prices ? (
-                    Object.entries(s.prices).map(([type, price]) => (
-                        <div key={type} style={{display: 'flex', justifyContent: 'space-between'}}>
-                           <span>{type}:</span>
-                           <strong>₹{parseFloat(price).toFixed(2)}</strong>
-                        </div>
-                    ))
-                ) : (
-                    <span style={{color: '#888'}}>Not Set</span>
-                )}
-            </td>
+            <Pagination 
+                currentPage={pagination.shows.currentPage}
+                totalPages={pagination.shows.totalPages}
+                onPageChange={(page) => handlePageChange('shows', page)}
+            />
 
-            <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                <input 
-                                    type="checkbox"
-                                    checked={Boolean(s.isActive)} // Ensure it's a boolean
-                                    onChange={() => handleToggleShowStatus(s.ShowID, s.isActive)}
-                                    style={{ height: '18px', width: '18px' }}
-                                />
-                                <span style={{ marginLeft: '8px' }}>
-                                    {s.isActive ? 'Active' : 'Inactive'}
-                                </span>
-                            </label>
-                        </td>
-
-            <td style={{ padding: '8px', border: '1px solid #ddd', display: 'flex', gap: '5px' }}>
-                <button onClick={() => handleEditClick(s)} style={{background: 'blue', color: 'white', cursor: 'pointer'}}>Edit</button>
-                <button onClick={() => handleDelete('show', s.ShowID)} style={{background:'red', color: 'white', cursor: 'pointer'}}>Delete</button>
-            </td>
-        </tr>
-        ))}
-    </tbody>
-</table>
-    ): <p>No shows scheduled for this hall.</p>}
-
-    {!showAddShowForm ? (
-        <button onClick={() => setShowAddShowForm(true)} style={{marginTop: '10px'}}>+ Add Show</button>
-    ) : (
-        <AddShowForm 
-            hall={selectedHall} 
-            movies={movies}
-            allSeats={allSeats}
-            initialData={editingShow} // Pass the show to be edited
-            onShowAdded={() => handleDataAdded(setShowAddShowForm)}
-            onCancel={handleCancelForm} // Use the updated cancel handler
-        />
-    )}
-</ManagementSection>
-)}
+            {!showAddShowForm ? (
+                <button onClick={handleShowAddClick} style={{marginTop: '10px'}}>+ Add Show</button>
+            ) : (
+                <AddShowForm 
+                    hall={selectedHall} 
+                    movies={allMovies} /* Give it the full list */
+                    allSeats={seats}
+                    initialData={editingShow}
+                    onShowAdded={handleShowSave}
+                    onCancel={handleCancel}
+                />
+            )}
+        </ManagementSection>
+      )}
     </div>
   );
 }
+
+// --- (9) STYLES ---
+// (Added some simple styles for readability)
+const styles = {
+    filterBar: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '10px',
+        marginBottom: '16px',
+        paddingBottom: '16px',
+        borderBottom: '1px solid #eee'
+    },
+    listItem: {
+        padding: '10px', 
+        cursor: 'pointer', 
+        border: '1px solid #ddd', 
+        marginBottom:'5px', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center'
+    },
+    editButton: {
+        background: '#007bff',
+        color: 'white',
+        border: 'none',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        marginRight: '5px'
+    },
+    deleteButton: {
+        background: '#dc3545',
+        color: 'white',
+        border: 'none',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    },
+    th: {
+        padding: '8px', 
+        border: '1px solid #ddd', 
+        textAlign: 'left',
+        fontSize: '14px'
+    },
+    td: {
+        padding: '8px', 
+        border: '1px solid #ddd',
+        fontSize: '14px',
+        verticalAlign: 'top',
+        wordBreak: 'break-word'
+    },
+    modalBackdrop: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000
+    },
+    modalContent: {
+        background: 'white',
+        padding: '20px',
+        borderRadius: '8px',
+        width: '90%',
+        maxWidth: '600px',
+        position: 'relative'
+    },
+    modalCloseButton: {
+        position: 'absolute',
+        top: '10px',
+        right: '10px',
+        background: 'transparent',
+        border: 'none',
+        fontSize: '24px',
+        cursor: 'pointer'
+    }
+};

@@ -14,6 +14,10 @@ import MovieDetails from './pages/MovieDetails/MovieDetails';
 import ShowtimesPage from './pages/Showtimes/ShowtimesPage';
 import AdminManagement from './pages/Admin/AdminManagement/AdminManagement';
 import SeatSelect from './pages/SeatSelect/SeatSelect';
+import AdminLayout from './pages/Admin/AdminLayout';
+import UserManagement from './pages/Admin/UserManagement/UserManagement';
+import BookingManagement from './pages/Admin/BookingManagement/BookingManagement';
+import AnalyticsDashboard from './pages/Admin/AnalyticsDashboard/AnalyticsDashboard';
 import BookingSummary from './pages/BookingSummary/BookingSummary';
 import PaymentPage from "./pages/Payment/PaymentPage";
 import Skeleton from './components/Skeleton/Skeleton';
@@ -73,10 +77,16 @@ function App() {
           path="/admin" 
           element={
             <ProtectedAdmin>
-              <AdminManagement />
+              <AdminLayout />
             </ProtectedAdmin>
           } 
-        />
+        >
+          {/* These routes will render INSIDE AdminLayout */}
+          <Route index element={<AdminManagement />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="bookings" element={<BookingManagement />} />
+          <Route path="analytics" element={<AnalyticsDashboard />} />
+        </Route>
       </Routes>
     </>
   );
