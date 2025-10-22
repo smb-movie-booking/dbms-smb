@@ -1,222 +1,244 @@
-/* Variables */
-:root{
-  --bg:#fff;                 /* page background */
-  --card-bg:#ffffff;         /* card background */
-  --muted:#6b6b6b;          /* secondary text */
-  --text:#111;              /* primary text */
-  --accent:#ff7a00;         /* your orange */
-  --accent-2:#ff8f33;      /* lighter orange for gradients */
-  --card-border: rgba(0,0,0,0.04);
-  --radius:12px;
-  --glass: rgba(255,255,255,0.6);
-  --shadow: 0 8px 24px rgba(16,16,16,0.08);
-  --max-width: 1000px;
+/* ============================== */
+/* 🎨 ORANGE & WHITE TICKET THEME */
+/* ============================== */
+:root {
+  --bg: #fff;
+  --card-bg: #ffffff;
+  --muted: #6b6b6b;
+  --text: #111;
+  --accent: #ff7a00;
+  --accent-2: #ffae42;
+  --card-border: rgba(255, 122, 0, 0.12);
+  --radius: 14px;
+  --shadow: 0 6px 18px rgba(255, 122, 0, 0.15);
+  --max-width: 980px;
+  --transition: all 0.25s ease-in-out;
 }
 
-/* Page container */
+/* ============================== */
+/* PAGE CONTAINER */
+/* ============================== */
 .order-container {
   width: 94%;
   max-width: var(--max-width);
-  margin: 36px auto;
-  padding: 22px;
-  font-family: "Inter", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  margin: 40px auto;
+  padding: 24px;
+  font-family: "Poppins", "Inter", system-ui, sans-serif;
   color: var(--text);
-  background: linear-gradient(180deg, #fff 0%, #fff 100%);
-  border-radius: 16px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* Header */
+/* ============================== */
+/* HEADER */
+/* ============================== */
 .order-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom: 18px;
-  gap: 16px;
-}
-.order-header h2{
-  margin:0;
-  font-size:1.6rem;
-  letter-spacing:0.2px;
-  color: var(--accent);
-}
-.order-header .sub{
-  color: var(--muted);
-  font-size:0.92rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 122, 0, 0.15);
+  padding-bottom: 10px;
 }
 
-/* Body & wrapper for cards */
+.order-header h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+.download-btn {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 122, 0, 0.3);
+  transition: var(--transition);
+}
+
+.download-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(255, 122, 0, 0.35);
+}
+
+.download-btn:active {
+  transform: scale(0.98);
+}
+
+/* ============================== */
+/* BODY */
+/* ============================== */
 .order-body {
-  display:block;
+  width: 100%;
+  display: block;
 }
 
 .order-box {
-  display:flex;
-  flex-direction:column;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-/* Individual order card */
+/* ============================== */
+/* INDIVIDUAL ORDER CARD */
+/* ============================== */
 .order-main {
-  display:flex;
-  gap: 18px;
-  align-items: center;               /* ensures vertical alignment across columns */
+  display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   background: var(--card-bg);
   border-radius: var(--radius);
-  padding: 16px;
   border: 1px solid var(--card-border);
   box-shadow: var(--shadow);
-  transition: transform .15s ease, box-shadow .15s ease;
-  min-height: 72px;
+  padding: 18px 20px;
+  transition: var(--transition);
+  min-height: 90px;
 }
 
-/* hover lift */
-.order-main:hover{
-  transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(16,16,16,0.10);
+.order-main:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(255, 122, 0, 0.2);
 }
 
-/* Left column (movie + cinema) */
+/* LEFT SIDE - MOVIE DETAILS */
 .order-details {
-  display:flex;
-  gap: 12px;
-  align-items: flex-start;
-  flex: 1 1 60%;
-  min-width: 0; /* important for text truncation in flex */
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
-/* optional poster placeholder */
 .order-poster {
-  width: 68px;
-  height: 68px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #fff;
-  font-weight:600;
-  flex: 0 0 68px;
-  box-shadow: 0 6px 14px rgba(255,122,0,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(255, 122, 0, 0.25);
 }
 
-/* Movie + cinema text block */
 .order-meta {
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  min-width: 0; /* allow child text to truncate nicely */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
+
 .order-meta .movie-title {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text);
-  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.order-meta .cinema-name{
-  font-size: 0.94rem;
+
+.order-meta .cinema-name {
+  font-size: 0.95rem;
   color: var(--muted);
+}
+
+.show-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.show-pill {
+  background: rgba(255, 122, 0, 0.08);
+  border: 1px solid rgba(255, 122, 0, 0.2);
+  border-radius: 20px;
+  padding: 5px 12px;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+/* RIGHT SIDE - SEAT INFO */
+.order-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  text-align: right;
+  flex: 0 0 260px;
+}
+
+.seats h4 {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1rem;
   margin: 0;
 }
 
-/* show date/time row */
-.show-row{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  margin-top:6px;
-  font-size:0.92rem;
-  color:var(--muted);
-}
-.show-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 10px;
-  border-radius:999px;
-  background: rgba(255,122,0,0.06);
-  color: var(--accent);
-  font-weight:600;
-  font-size:0.88rem;
-  border: 1px solid rgba(255,122,0,0.12);
+.seats .seat-list {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.96rem;
 }
 
-/* Right column (seats + actions) */
-.order-right {
-  display:flex;
-  gap: 18px;
-  align-items:center;
-  justify-content:flex-end;
-  flex: 0 0 320px; /* fixed-ish column to keep alignment consistent */
-  min-width: 200px;
-}
-
-/* seat details card */
-.seats {
-  text-align:right;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  min-width: 0;
-}
-.seats h4{
-  margin:0;
-  font-size:0.95rem;
-  color:var(--accent);
-  font-weight:700;
-}
-.seats .seat-list{
-  margin:0;
-  font-weight:600;
-  color:var(--text);
-  font-size:0.95rem;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-/* small meta like total seats / price */
-.order-stats{
-  text-align:right;
-  color:var(--muted);
-  font-size:0.88rem;
-}
-
-/* fallback when no orders */
-.order-box .empty {
-  text-align:center;
-  padding: 28px;
+.order-stats {
   color: var(--muted);
-  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
-  border-radius: 10px;
-  border: 1px dashed rgba(0,0,0,0.04);
+  font-size: 0.9rem;
 }
 
-/* mobile responsiveness: stack columns */
-@media (max-width:720px){
+/* EMPTY STATE */
+.order-box .empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px dashed rgba(255, 122, 0, 0.2);
+  border-radius: var(--radius);
+  font-size: 1rem;
+}
+
+/* ============================== */
+/* RESPONSIVE STYLES */
+/* ============================== */
+@media (max-width: 720px) {
   .order-main {
     flex-direction: column;
     align-items: stretch;
     padding: 14px;
-    gap:12px;
-  }
-
-  .order-details{
-    flex-direction: row;
     gap: 12px;
-    align-items:center;
   }
 
-  .order-right{
-    flex: 1 1 auto;
-    justify-content: space-between;
-    text-align:left;
+  .order-details {
+    flex-direction: row;
+    align-items: center;
   }
 
-  .seats{
-    text-align:left;
+  .order-right {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .download-btn {
+    width: 100%;
   }
 }
