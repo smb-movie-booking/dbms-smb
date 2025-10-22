@@ -4,7 +4,7 @@ const cron = require('node-cron');
 // We can reuse the releaseSeats function from your booking model
 const bookingModel = require('../models/bookingModel');
 
-const BOOKING_EXPIRATION_MINUTES = 10; // Set the expiration time to 10 minutes
+const BOOKING_EXPIRATION_MINUTES = 1; // Set the expiration time to 1 minute
 
 /**
  * This function finds pending bookings that are older than the expiration time,

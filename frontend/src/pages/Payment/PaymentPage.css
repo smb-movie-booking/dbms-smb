@@ -273,3 +273,22 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Style for the Timer Display */
+.payment-main {
+  position: relative; /* Ensure the container allows absolute positioning */
+}
+
+.timer-display {
+  position: absolute;
+  top: 15px; /* Adjust as needed */
+  right: 20px; /* Adjust as needed */
+  background-color: #ffebeb; /* Light red background */
+  color: #c53030; /* Dark red text */
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1px solid #fbd3d3; /* Lighter red border */
+  z-index: 10; /* Make sure it's above other elements if needed */
+}
