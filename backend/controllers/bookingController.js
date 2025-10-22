@@ -2,13 +2,17 @@ const bookingModel = require('../models/bookingModel');
 
 exports.confirmBooking = (req, res) => {
   const { userId, showId, seatSelections } = req.body;
-  console.log("payment Page",req.body);
-  const seatIds = seatSelections.map(s => s.seatId);
-  
+  const seatIds = seatSelections.map(s => s.showSeatId);
+  let seatsSuccessfullyHeld = false; // Flag to track if hold succeeded
 
   try {
     // Step 1: Hold seats (Seat_Status = 1)
-    
+    const heldCount = await bookingModel.holdSeats(seatIds);
+    if (heldCount !== seatIds.length) {
+      // If hold failed partially or fully (race condition), no need to release, just return error
+      return res.status(409).json({ error: 'One or more seats already held/booked' });
+    }
+    seatsSuccessfullyHeld = true; // Mark that seats were held
 
     // Step 2: Create Booking (status = 1)
     bookingModel.createBooking(userId, showId, seatIds.length,(err,newBookingId)=>{
@@ -25,11 +29,29 @@ exports.confirmBooking = (req, res) => {
     });
 
     // Step 3: Link held seats to booking
+    await bookingModel.assignSeatsToBooking(bookingId, seatIds);
 
+    // If all steps succeed:
+    res.status(201).json({ success: true, bookingId });
 
-   
   } catch (err) {
     console.error('❌ Confirm booking failed:', err);
+
+    // --- NEW ROLLBACK LOGIC ---
+    // If seats were successfully held BUT the subsequent steps failed, release them.
+    if (seatsSuccessfullyHeld) {
+      console.log('Attempting to release held seats due to error during booking confirmation...');
+      try {
+        await bookingModel.releaseSeats(seatIds);
+        console.log('Held seats released successfully.');
+      } catch (releaseErr) {
+        // Log this critical error - manual cleanup might be needed
+        console.error('❌ CRITICAL: Failed to release held seats after booking confirmation error:', releaseErr);
+      }
+    }
+    // --- END NEW LOGIC ---
+
+    // Send generic error response
     res.status(500).json({ error: 'Booking process failed' });
   }
 };

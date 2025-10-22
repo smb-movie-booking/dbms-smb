@@ -88,7 +88,7 @@ CREATE TABLE Movie_Show (
 );
 
 CREATE TABLE Booking (
-    BookingID INT PRIMARY KEY,
+    BookingID INT PRIMARY KEY AUTO_INCREMENT,
     NumberOfSeats INT,
     Booking_Timestamp DATETIME,
     Booking_Status INT,
@@ -112,11 +112,11 @@ CREATE TABLE Show_Seat (
 
 
 CREATE TABLE Payment (
-    PaymentID INT PRIMARY KEY,
+    PaymentID INT PRIMARY KEY AUTO_INCREMENT,
     Amount DECIMAL(10,2),
     Payment_Timestamp DATETIME,
     DiscountCouponID INT,
-    RemoteTransactionID INT,
+    RemoteTransactionID VARCHAR(100),
     PaymentMethod INT,
     BookingID INT,
     FOREIGN KEY (BookingID) REFERENCES Booking(BookingID) ON DELETE CASCADE -- If a booking is deleted, remove its payment record

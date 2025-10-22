@@ -63,11 +63,11 @@ const SeatSelect = () => {
 
   const selectSeat = (seat, money) => {
     const price = Math.round(money);
-    const isPresent = selectedSeats.seats.some((s) => s.seatId === seat.seatId);
+    const isPresent = selectedSeats.seats.some((s) => s.showSeatId === seat.showSeatId);  
     console.log(isPresent);
     if (isPresent) {
       const updatedSeats = selectedSeats.seats.filter(
-        (s) => s.seatId !== seat.seatId
+        (s) => s.showSeatId !== seat.showSeatId
       );
       setSelectedSeats({
         ...selectedSeats,
@@ -100,7 +100,7 @@ const SeatSelect = () => {
       date: selectedDate,
       time: selectedTime,
       selectedSeats: selectedSeats.map((s) => ({
-        seatId: s.id,
+        showSeatId: s.showSeatId,
         label: s.label,
         price: s.price,
       })),
@@ -203,7 +203,7 @@ const SeatSelect = () => {
                           {row.map((seat, index) => {
                             if (index === mid && mid !== -1) {
                               return (
-                                <React.Fragment key={seat.seatId}>
+                                <React.Fragment key={seat.showSeatId}>
                                   {" "}
                                   {/* key moved to fragment */}
                                   <span className="aisle"></span>
@@ -213,10 +213,10 @@ const SeatSelect = () => {
                                       "available"
                                     } ${
                                       selectedSeats.seats.some(
-                                        (s) => s.seatId === seat.seatId
+                                        (s) => s.showSeatId === seat.showSeatId
                                       ) && "locked"
                                     }`}
-                                    disabled={seat.seatStatus === "booked"}
+                                    disabled={seat.seatStatus === "booked" || seat.seatStatus === "blocked"}
                                     onClick={() =>
                                       selectSeat(seat, seatType.price)
                                     }
@@ -233,12 +233,12 @@ const SeatSelect = () => {
                                   seat.seatStatus === "available" && "available"
                                 }  ${
                                   selectedSeats.seats.some(
-                                    (s) => s.seatId === seat.seatId
+                                    (s) => s.showSeatId === seat.showSeatId
                                   ) && "locked"
                                 }`}
-                                disabled={seat.seatStatus === "booked"}
+                                disabled={seat.seatStatus === "booked" || seat.seatStatus === "blocked"}
                                 onClick={() => selectSeat(seat, seatType.price)}
-                                key={seat.seatId}
+                                key={seat.showSeatId}
                               >
                                 {/* --- THIS IS THE CHANGE --- */}
                                 {seat.seatName}
