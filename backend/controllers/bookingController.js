@@ -1,6 +1,6 @@
 const bookingModel = require('../models/bookingModel');
 
-exports.confirmBooking = async (req, res) => {
+exports.confirmBooking = async(req, res) => {
   const { userId, showId, seatSelections } = req.body;
   const seatIds = seatSelections.map(s => s.showSeatId);
   let seatsSuccessfullyHeld = false; // Flag to track if hold succeeded
@@ -15,7 +15,18 @@ exports.confirmBooking = async (req, res) => {
     seatsSuccessfullyHeld = true; // Mark that seats were held
 
     // Step 2: Create Booking (status = 1)
-    const bookingId = await bookingModel.createBooking(userId, showId, seatIds.length);
+    bookingModel.createBooking(userId, showId, seatIds.length,(err,newBookingId)=>{
+      if (err) {
+      console.error("Booking creation failed:", err);
+      return res.status(500).json({ error: "Booking failed" });
+    }
+    console.log("Booking created with ID:", newBookingId);
+    bookingModel.finalizeSeatsAfterPayment(newBookingId, seatIds,(err,result)=>{
+      if(err)return res.status(500).json({ error: "Finalizing seats failed" });
+      console.log("Seats finalized for booking ID:", newBookingId);
+      return res.status(201).json({ success: true, bookingId: newBookingId});
+    });
+    });
 
     // Step 3: Link held seats to booking
     await bookingModel.assignSeatsToBooking(bookingId, seatIds);
@@ -69,3 +80,14 @@ exports.getBookingSummary = async (req, res) => {
     res.status(500).json({ error: 'Could not fetch summary' });
   }
 };
+
+exports.getOrderDetails=(req,res)=>{
+  const {userId}=req.params;
+  bookingModel.getUserBookings(userId,(err,bookings)=>{
+    if(err){
+      return res.status(500).json({ error: 'Could not fetch bookings' });
+    }
+    console.log("Bookings fetched:",bookings);
+    return res.status(200).json({bookings});
+  })
+}

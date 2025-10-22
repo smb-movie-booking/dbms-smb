@@ -3,6 +3,7 @@ import './sidebar.css'
 import { Auth } from '../../Context/AuthContext'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/auth/useAuth';
+
 const Sidebar = ({isOpen,setIsOpen}) => {
   const {authUser}=useContext(Auth);
   const {logoutUser}=useAuth();
@@ -29,7 +30,7 @@ const Sidebar = ({isOpen,setIsOpen}) => {
       <div className='bottom-section'>
         <div>
           {authUser?.user&&<button onClick={()=>{navigate(`/${authUser.user.id}/edit`);setIsOpen(false)}} className='app-btn'>Edit Profile</button>}
-          {authUser?.user&&<button className='app-btn'>Your Orders</button>}
+          {authUser?.user&&<button className='app-btn' onClick={()=>navigate(`${authUser?.user?.id}/orders`)}>Your Orders</button>}
           {authUser?.user&& authUser.user.isAdmin && (<button className="app-btn" onClick={() => { navigate("/admin"); setIsOpen(false); }}> Admin</button>)}
         </div>
 

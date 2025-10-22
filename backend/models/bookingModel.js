@@ -14,17 +14,29 @@ exports.checkUnavailableSeats = (seatIds) => {
   });
 };
 
-exports.createBooking = (userId, showId, numberOfSeats) => {
-  return new Promise((resolve, reject) => {
+exports.createBooking = (userId, showId, numberOfSeats,callback) => {
+  
+  db.query(`SELECT MAX(BookingID) as maxId from Booking`,(err,result)=>{
+    if(err){
+      return callback(err,null);
+    }
+    const newBookingId=result[0].maxId?result[0].maxId+1:1;
+    console.log("Booking Number",newBookingId);
+
     const query = `
-      INSERT INTO Booking (UserID, ShowID, NumberOfSeats, Booking_Timestamp, Booking_Status)
-      VALUES (?, ?, ?, NOW(), 1)
+      INSERT INTO Booking (BookingID,UserID, ShowID, NumberOfSeats, Booking_Timestamp, Booking_Status)
+      VALUES (?,?, ?, ?, NOW(), 1)
     `;
-    db.query(query, [userId, showId, numberOfSeats], (err, result) => {
-      if (err) return reject(err);
-      resolve(result.insertId);
+    db.query(query, [newBookingId,userId, showId, numberOfSeats], (err, result) => {
+      if (err) return callback(err,null);
+      console.log("Booking created",result)
+      return callback(null,newBookingId);
     });
-  });
+
+
+  })
+    
+  
 };
 
 exports.assignSeatsToBooking = (bookingId, seatIds) => {
@@ -57,17 +69,44 @@ exports.releaseSeats = (seatIds) => {
 
 
 // After payment success: update Seat_Status = 2 (booked)
-exports.finalizeSeatsAfterPayment = (bookingId, seatIds) => {
-  return new Promise((resolve, reject) => {
-    const query = `
-      UPDATE Show_Seat
-      SET Seat_Status = 2
-      WHERE ShowSeatID IN (?) AND BookingID = ?
-    `;
-    db.query(query, [seatIds, bookingId], (err, result) => {
-      if (err) return reject(err);
-      resolve(true);
-    });
+exports.finalizeSeatsAfterPayment = (bookingId, seatIds, callback) => {
+  const placeholders = seatIds.map(() => '?').join(',');
+
+  // Combine both updates into one atomic query
+  // This query will only update rows where the ID is in your list
+  // AND the seat is currently available (Seat_Status = 0).
+  const query = `
+    UPDATE Show_Seat
+    SET
+      BookingID = ?,
+      Seat_Status = 2
+    WHERE
+      ShowSeatID IN (${placeholders}) AND Seat_Status = 0
+  `;
+
+  // The parameters are [bookingId, seatId1, seatId2, ...]
+  db.query(query, [bookingId, ...seatIds], (err, result) => {
+    if (err) {
+      return callback(err, null);
+    }
+
+    console.log("Seats finalized result:", result);
+
+    // IMPORTANT: Check if the number of affected rows
+    // matches the number of seats you tried to book.
+    if (result.affectedRows === 0) {
+      // This means none of the requested seats were available
+      return callback(new Error("None of the selected seats were available."), null);
+    } 
+    
+    if (result.affectedRows < seatIds.length) {
+      // This means *some* but not all seats were booked.
+      // This might indicate a problem you need to handle (e.g., roll back)
+      console.warn(`Warning: Tried to book ${seatIds.length} seats, but only ${result.affectedRows} were available.`);
+    }
+
+    // Success, all (or at least some) seats were booked
+    return callback(null, true);
   });
 };
 
@@ -127,4 +166,56 @@ exports.getShowDetails = (showId) => {
       resolve(results[0]);  // only one show
     });
   });
+};
+
+
+exports.getUserBookings = (userId,callback) => {
+  
+    const query = `
+      SELECT 
+    b.BookingID,
+    b.Booking_Timestamp,
+    b.NumberOfSeats,
+    b.Booking_Status,
+    u.User_Name,
+    m.Title AS Movie_Name,
+    ms.Show_Date,
+    ms.StartTime,
+    ms.EndTime,
+    ch.Hall_Name AS Cinema_Hall,
+    c.Cinema_Name AS Cinema_Name,
+    ci.City_Name AS City_Name,
+    GROUP_CONCAT(cs.SeatName ORDER BY cs.SeatName SEPARATOR ', ') AS Selected_Seats,
+    SUM(ss.Price) AS Total_Amount
+FROM Booking b
+JOIN User u ON b.UserID = u.UserID
+JOIN Movie_Show ms ON b.ShowID = ms.ShowID
+JOIN Movie m ON ms.MovieID = m.MovieID
+JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
+JOIN Cinema c ON ch.CinemaID = c.CinemaID
+JOIN City ci ON c.CityID = ci.CityID
+JOIN Show_Seat ss ON ss.BookingID = b.BookingID
+JOIN Cinema_Seat cs ON ss.CinemaSeatID = cs.CinemaSeatID
+WHERE b.UserID = ?
+GROUP BY 
+    b.BookingID, 
+    b.Booking_Timestamp,
+    b.NumberOfSeats,
+    b.Booking_Status,
+    u.User_Name,
+    m.Title,
+    ms.Show_Date,
+    ms.StartTime,
+    ms.EndTime,
+    ch.Hall_Name,
+    c.Cinema_Name,
+    ci.City_Name
+ORDER BY b.Booking_Timestamp DESC;
+
+    `;
+    db.query(query, [userId], (err, results) => {
+      if (err) return callback(err,null);
+      return callback(null,results);  // only one show
+    });
+  
 };

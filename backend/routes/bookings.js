@@ -4,5 +4,6 @@ const bookingController = require('../controllers/bookingController');
 
 router.post('/summary', bookingController.getBookingSummary);
 router.post('/confirm', bookingController.confirmBooking);
+router.get('/user/:userId/orders', bookingController.getOrderDetails);
 
 module.exports = router;

@@ -1,6 +1,12 @@
-const { db } = require('../config/db');
+const { db } = require("../config/db");
 
-exports.getShowsByMovieAndTheaters = (movieId, theaterIds, date, filters, callback) => {
+exports.getShowsByMovieAndTheaters = (
+  movieId,
+  theaterIds,
+  date,
+  filters,
+  callback
+) => {
   if (!theaterIds || theaterIds.length === 0) {
     return callback(null, []);
   }
@@ -20,7 +26,7 @@ exports.getShowsByMovieAndTheaters = (movieId, theaterIds, date, filters, callba
       AND ms.isActive = TRUE
       AND ms.EndTime >= NOW() /* This is the new line */
   `;
-  
+
   const params = [movieId, theaterIds, date];
 
   // Dynamically add filters
@@ -32,20 +38,20 @@ exports.getShowsByMovieAndTheaters = (movieId, theaterIds, date, filters, callba
     sql += ` AND ms.Show_Language = ?`;
     params.push(filters.language);
   }
-  
+
   // --- NEW: Add Preferred Time Filter Logic ---
   if (filters.preferredTime) {
     switch (filters.preferredTime) {
-      case 'morning':
+      case "morning":
         sql += ` AND TIME(ms.StartTime) < '12:00:00'`;
         break;
-      case 'afternoon':
+      case "afternoon":
         sql += ` AND TIME(ms.StartTime) BETWEEN '12:00:00' AND '16:59:59'`;
         break;
-      case 'evening':
+      case "evening":
         sql += ` AND TIME(ms.StartTime) BETWEEN '17:00:00' AND '20:59:59'`;
         break;
-      case 'night':
+      case "night":
         sql += ` AND TIME(ms.StartTime) >= '21:00:00'`;
         break;
     }
@@ -62,15 +68,13 @@ exports.getShowsByMovieAndTheaters = (movieId, theaterIds, date, filters, callba
   });
 };
 
-
-exports.fetchShowsByTheaterAndDate = (theaterID, showDate) => {
-    return new Promise((resolve, reject) => {
-        const query = `
+exports.fetchShowsByTheaterAndDate = (theaterID, showDate, callback) => {
+  const query = `
             SELECT 
                 ms.ShowID,
                 ms.MovieID,
                 TIME_FORMAT(ms.StartTime, '%H:%i') AS ShowTime,
-                ss.Price,
+                MIN(ss.Price) AS Price,
                 ms.Format,
                 m.Title,
                 m.Movie_Language,
@@ -80,15 +84,16 @@ exports.fetchShowsByTheaterAndDate = (theaterID, showDate) => {
             JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
             JOIN Movie m ON ms.MovieID = m.MovieID
             LEFT JOIN Show_Seat ss ON ms.ShowID = ss.ShowID
-            WHERE ch.CinemaID = ? 
+            WHERE ch.CinemaID = ?
               AND DATE(ms.Show_Date) = ?
               AND ms.isActive = TRUE
-            ORDER BY m.MovieName, ms.StartTime ASC
+            GROUP BY ms.ShowID
+            ORDER BY m.Title, ms.StartTime ASC;
+
         `;
 
-        db.query(query, [theaterID, showDate], (err, results) => {
-            if (err) reject(err);
-            else resolve(results);
-        });
-    });
+  db.query(query, [theaterID, showDate], (err, results) => {
+    if (err) return callback(err, null);
+    else return callback(null, results);
+  });
 };

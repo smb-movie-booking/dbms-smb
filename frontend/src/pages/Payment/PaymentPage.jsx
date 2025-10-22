@@ -19,7 +19,8 @@ const PaytmLogo = () => ( /* Your preferred Paytm logo implementation */
 // --- END SVG Icons ---
 
 const PaymentPage = () => {
-  const { state } = useLocation();
+  const location = useLocation();
+  const {authUser}=useContext(Auth);
   const navigate = useNavigate();
   // Destructure state, including the new bookingId
   const { bookingId, total = 0, seatInfo = {}, selectedSeats = { seats: [] } } = state || {};
