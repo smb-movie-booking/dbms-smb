@@ -1,8 +1,9 @@
-import React, { useState , useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./PaymentPage.css";
 import toast from "react-hot-toast";
-import { axiosInstance } from "../../utils/axios"; // Assuming axios instance path
+import { axiosInstance } from "../../utils/axios"; // make sure path is correct
+
 
 // --- SVG Icons (keep these as they are) ---
 const VisaLogo = () => <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" style={{ height: '24px' }} />;
@@ -19,33 +20,36 @@ const PaytmLogo = () => ( /* Your preferred Paytm logo implementation */
 // --- END SVG Icons ---
 
 const PaymentPage = () => {
-  const location = useLocation();
-  const {authUser}=useContext(Auth);
-  const navigate = useNavigate();
-  // Destructure state, including the new bookingId
+  const { state } = useLocation();       // get booking details
+  const navigate = useNavigate();        // for navigation
+
   const { bookingId, total = 0, seatInfo = {}, selectedSeats = { seats: [] } } = state || {};
 
   const [paymentMethod, setPaymentMethod] = useState("card");
-  const [selectedBank, setSelectedBank] = useState(null); // Keep this if using netbanking UI
+  const [selectedBank, setSelectedBank] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [timer, setTimer] = useState(60);
 
+  // Timer countdown
   useEffect(() => {
-    // Exit early if timer reaches 0 or payment is processing
-    if (timer <= 0 || isProcessing) return;
-
-    // Set up the interval
-    const intervalId = setInterval(() => {
-      setTimer((prevTimer) => prevTimer - 1);
-    }, 1000); // Decrease every second
-
-    // Cleanup function to clear interval
-    return () => clearInterval(intervalId);
-
+    if (isProcessing) return; // don't decrement while processing payment
+    if (timer <= 0) return;   // countdown stops here, but redirect will handle separately
+    const interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+    return () => clearInterval(interval);
   }, [timer, isProcessing]);
 
-  // Updated check to include bookingId
-  React.useEffect(() => {
+  // Redirect when timer reaches 0
+  useEffect(() => {
+    if (timer <= 0) {
+      toast.error("Time expired! Redirecting to seat selection...", { duration: 1500 });
+      const t = setTimeout(() => navigate(`/booking/summary`, { state: { showId: seatInfo.showId, seatInfo, selectedSeats } }), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [timer, navigate, seatInfo, selectedSeats]);
+
+
+  // Redirect if incomplete state
+  useEffect(() => {
     if (!state || !bookingId || !total || !seatInfo.title) {
       toast.error("Payment details incomplete. Redirecting...", { duration: 1500 });
       const timer = setTimeout(() => navigate("/"), 1500);

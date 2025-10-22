@@ -61,31 +61,38 @@ const SeatSelect = () => {
     return [seatsPerRow, rowCount];
   };
 
-  const selectSeat = (seat, money) => {
-    const price = Math.round(money);
-    const isPresent = selectedSeats.seats.some((s) => s.showSeatId === seat.showSeatId);  
-    console.log(isPresent);
-    if (isPresent) {
-      const updatedSeats = selectedSeats.seats.filter(
-        (s) => s.showSeatId !== seat.showSeatId
-      );
-      setSelectedSeats({
-        ...selectedSeats,
-        totalPrice: selectedSeats.totalPrice - price,
-        seats: updatedSeats,
-      });
-      return;
-    }
-    if (selectedSeats.seats.length >= 10) {
-      return toast.error("Can Book Only 10 seats at a time");
-    }
-    const temp = [...selectedSeats.seats, seat];
-    setSelectedSeats({
-      ...selectedSeats,
-      totalPrice: selectedSeats.totalPrice + price,
-      seats: temp,
+  const selectSeat = (seat, money, seatType) => {
+    const price = Math.round(money || 0);
+
+    setSelectedSeats((prev) => {
+      const isPresent = prev.seats.some((s) => s.showSeatId === seat.showSeatId);
+
+      if (isPresent) {
+        // use the stored price if available to subtract correctly
+        const existing = prev.seats.find((s) => s.showSeatId === seat.showSeatId);
+        const removePrice = existing?.price ?? price;
+        const updatedSeats = prev.seats.filter(
+          (s) => s.showSeatId !== seat.showSeatId
+        );
+        return {
+          ...prev,
+          totalPrice: Math.max(0, prev.totalPrice - removePrice),
+          seats: updatedSeats,
+        };
+      }
+
+      if (prev.seats.length >= 10) {
+        toast.error("Can Book Only 10 seats at a time");
+        return prev;
+      }
+
+      const seatToAdd = { ...seat, price, seatType };
+      return {
+        ...prev,
+        totalPrice: prev.totalPrice + price,
+        seats: [...prev.seats, seatToAdd],
+      };
     });
-    return;
   };
 
   const navigate = useNavigate();
@@ -169,8 +176,8 @@ const SeatSelect = () => {
                 for (let i = 0; i < rowCount; i++) {
                   const start = i * seatsPerRow;
                   const end = start + seatsPerRow;
-                  const selectedSeats = seatType.value.slice(start, end);
-                  rows.push(selectedSeats);
+                  const seatsInRow = seatType.value.slice(start, end);
+                  rows.push(seatsInRow);
                 }
                 return (
                   <div style={{ marginBottom: "1rem" }} key={seatType.type}>
@@ -218,7 +225,7 @@ const SeatSelect = () => {
                                     }`}
                                     disabled={seat.seatStatus === "booked" || seat.seatStatus === "blocked"}
                                     onClick={() =>
-                                      selectSeat(seat, seatType.price)
+                                      selectSeat(seat, seatType.price , seatType.type)
                                     }
                                   >
                                     {/* --- THIS IS THE CHANGE --- */}
@@ -237,7 +244,7 @@ const SeatSelect = () => {
                                   ) && "locked"
                                 }`}
                                 disabled={seat.seatStatus === "booked" || seat.seatStatus === "blocked"}
-                                onClick={() => selectSeat(seat, seatType.price)}
+                                onClick={() => selectSeat(seat, seatType.price , seatType.type)}
                                 key={seat.showSeatId}
                               >
                                 {/* --- THIS IS THE CHANGE --- */}

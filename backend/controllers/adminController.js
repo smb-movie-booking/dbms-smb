@@ -1355,17 +1355,18 @@ exports.getDashboardKPIs = async (req, res) => {
             // 5. Average Occupancy (approximate for recent shows)
             // This is complex. We'll simplify: % of booked seats in shows started in the last 7 days.
             db.promise().query(`
-                SELECT AVG(booked_seats / total_seats) * 100 AS avg_occupancy
+            SELECT AVG(booked_seats / total_seats) * 100 AS avg_occupancy
                 FROM (
                     SELECT 
                         ms.ShowID,
                         (SELECT COUNT(*) FROM Cinema_Seat cs WHERE cs.CinemaHallID = ms.CinemaHallID) AS total_seats,
                         COUNT(ss.ShowSeatID) AS booked_seats
                     FROM Movie_Show ms
-                    JOIN Show_Seat ss ON ms.ShowID = ss.ShowID
-                    WHERE ms.StartTime >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND ss.BookingID IS NOT NULL
+                    LEFT JOIN Show_Seat ss ON ms.ShowID = ss.ShowID AND ss.BookingID IS NOT NULL
+                    WHERE ms.StartTime >= DATE_SUB(NOW(), INTERVAL 7 DAY)
                     GROUP BY ms.ShowID
                 ) AS ShowOccupancy;
+
             `),
             // 6. Top Movie (Revenue, This Week)
             db.promise().query(`
