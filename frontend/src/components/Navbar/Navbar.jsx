@@ -83,9 +83,9 @@ const Navbar = ({ selectedCity, onCityChange }) => {
 
     const handleClick=(result)=>{
         if(result.MovieID){
-            navigate(`movies/${result.MovieID}`);
+            navigate(`movies/${result.MovieID}`,{replace:true});
         }else{
-            navigate(`/theatre/${result?.CinemaID}/movies`); //edit here theatre
+            navigate(`/theatre/${result?.CinemaID}/movies`,{replace:true}); //edit here theatre
         }
 
         setShowSuggestion(false);
