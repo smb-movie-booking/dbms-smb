@@ -93,14 +93,13 @@ const getTheaterDetails = (theaterId, callback) => {
  */
 const getTheatersByCity = (cityId, callback) => {
   const sql = `
-    SELECT 
+    SELECT
       CinemaID,
       Cinema_Name AS cinemaName,
-      CONCAT(
-        IFNULL(Address_Line1, ''), ' ',
-        IFNULL(Address_Line2, ''), ' ',
-        IFNULL(City_Name, '')
-      ) AS address
+      Facilities,
+      Cancellation_Allowed AS cancellationAllowed,
+      Created_At,
+      Updated_At
     FROM Cinema
     WHERE CityID = ?
     ORDER BY Cinema_Name;

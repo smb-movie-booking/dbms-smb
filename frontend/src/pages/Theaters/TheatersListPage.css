@@ -1,0 +1,51 @@
+.theater-container {
+  max-width: 900px;
+  margin: auto;
+  padding: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.date-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.date-btn {
+  background: #f3f3f3;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.date-btn.active {
+  background: #e50914;
+  color: #fff;
+}
+
+.movie-block {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.movie-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.showtime {
+  display: inline-block;
+  border: 1px solid #ccc;
+  padding: 0.3rem 0.8rem;
+  margin-right: 0.5rem;
+  margin-top: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.showtime:hover {
+  background: #e6f9e6;
+}

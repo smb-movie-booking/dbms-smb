@@ -20,8 +20,8 @@ import BookingManagement from './pages/Admin/BookingManagement/BookingManagement
 import AnalyticsDashboard from './pages/Admin/AnalyticsDashboard/AnalyticsDashboard';
 import BookingSummary from './pages/BookingSummary/BookingSummary';
 import PaymentPage from "./pages/Payment/PaymentPage";
-import Skeleton from './components/Skeleton/Skeleton';
-
+import { SearchMovie } from './pages/SearchMovie/SearchMovie';
+import { Theaters } from './pages/Theaters/Theaters';
 function App() {
   const { getUser } = useAuth();
   const { authUser } = useContext(Auth);
@@ -72,7 +72,10 @@ function App() {
         <Route path='/theater/:theaterId/movies'  element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /> <ShowtimesPage /> </>} />
         <Route path='/seat/show/:showid' element={<SeatSelect/>}/>
         <Route path="/booking/summary" element={<BookingSummary />} />
-        <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/payment" element={<PaymentPage />} />       
+        <Route path='/searchmovie' element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange}/><SearchMovie selectedCity={selectedCity}/></>}/>
+        <Route path='/theatermovies/:theaterId' element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange}/> <Theaters /></>}/>
+ 
         <Route 
           path="/admin" 
           element={

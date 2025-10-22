@@ -73,6 +73,9 @@ const Home = ({ selectedCity }  ) => {
     // This assumes you have a route like "/explore/movie/:id"
     navigate(`/movies/${movieId}`);
   };
+  const handleSearchMovieClick = ()=>{
+    navigate('/searchmovie');
+  }
 
   return (
     <>
@@ -222,7 +225,7 @@ const Home = ({ selectedCity }  ) => {
                     </div>
                 </div>
 
-                <button className="browse-cinemas-btn">Browse by Cinemas</button>
+                <button className="browse-cinemas-btn" onClick={handleSearchMovieClick}>Browse by Cinemas</button>
             </div>
             
             {/* --- Movie List Section (Right) --- */}

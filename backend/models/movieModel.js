@@ -17,10 +17,10 @@ const getMovieDetails = (movieId, callback) => {
 
 const getMoviesByTheaterAndDate = (theaterId, date, callback) => {
   const sql = `
-    SELECT DISTINCT m.MovieID, m.Title, m.Movie_Language, m.Genre, m.Poster_Image_URL, ms.Format
+    SELECT DISTINCT m.MovieID, m.Title, m.Movie_Language, m.Genre, m.Poster_Image_URL, ms.Format,ms.Show_Date
     FROM Movie m
     JOIN Movie_Show ms ON m.MovieID = ms.MovieID
-    JOIN cinema_hall ch ON ms.CinemaHallID = ch.CinemaHallID
+    JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
     WHERE ch.CinemaID = ? AND DATE(ms.Show_Date) = ?`;
 
   db.query(sql, [theaterId, date], (err, rows) => {
