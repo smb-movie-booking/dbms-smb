@@ -83,7 +83,7 @@ const Navbar = ({ selectedCity, onCityChange }) => {
 
     const handleClick=(result)=>{
         if(result.MovieID){
-            navigate(`movies/${result.MovieID}`,{replace:true});
+            navigate(`/movies/${result.MovieID}`,{replace:true});
         }else{
             navigate(`/theatre/${result?.CinemaID}/movies`,{replace:true}); //edit here theatre
         }
