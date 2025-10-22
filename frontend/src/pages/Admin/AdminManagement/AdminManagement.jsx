@@ -2,6 +2,129 @@ import React, { useState, useEffect, useRef } from 'react';
 import { axiosInstance } from '../../../utils/axios';
 import toast from 'react-hot-toast';
 import Select, { components } from 'react-select';
+
+// --- (1a) SHARED OPTIONS & COMPONENTS ---
+
+// --- SHARED FILTER & FORM OPTIONS ---
+
+/**
+ * Options for cinema facilities.
+ */
+export const facilityOptions = [
+    { value: "Parking", label: "Parking" },
+    { value: "Dolby", label: "Dolby" },
+    { value: "Dolby Atmos", label: "Dolby Atmos" },
+    { value: "Recliner", label: "Recliner" },
+    { value: "Cafe", label: "Cafe" },
+    { value: "IMAX", label: "IMAX" },
+    { value: "4DX", label: "4DX" },
+    { value: "Heritage", label: "Heritage" }
+];
+
+/**
+ * Options for movie genres.
+ */
+export const genreOptions = [
+    { value: "Action", label: "Action" },
+    { value: "Adventure", label: "Adventure" },
+    { value: "Animation", label: "Animation" },
+    { value: "Biography", label: "Biography" },
+    { value: "Comedy", label: "Comedy" },
+    { value: "Crime", label: "Crime" },
+    { value: "Drama", label: "Drama" },
+    { value: "Family", label: "Family" },
+    { value: "Fantasy", label: "Fantasy" },
+    { value: "History", label: "History" },
+    { value: "Horror", label: "Horror" },
+    { value: "Musical", label: "Musical" },
+    { value: "Mystery", label: "Mystery" },
+    { value: "Period", label: "Period" },
+    { value: "Romance", label: "Romance" },
+    { value: "Sci-Fi", label: "Sci-Fi" },
+    { value: "Sports", label: "Sports" },
+    { value: "Thriller", label: "Thriller" },
+    { value: "War", label: "War" },
+];
+
+/**
+ * Comprehensive options for movie and show languages, focusing on the Indian market.
+ */
+export const languageOptions = [
+    // --- Major Indian Languages ---
+    { value: "Hindi", label: "Hindi" },
+    { value: "English", label: "English" }, // (Globally used, but essential for India)
+    { value: "Malayalam", label: "Malayalam" },
+    { value: "Tamil", label: "Tamil" },
+    { value: "Telugu", label: "Telugu" },
+    { value: "Kannada", label: "Kannada" },
+    { value: "Marathi", label: "Marathi" },
+    { value: "Bengali", label: "Bengali" },
+    { value: "Punjabi", label: "Punjabi" },
+    { value: "Gujarati", label: "Gujarati" },
+    { value: "Odia", label: "Odia" },
+    { value: "Assamese", label: "Assamese" },
+    { value: "Bhojpuri", label: "Bhojpuri" },
+    { value: "Tulu", label: "Tulu" },
+    { value: "Konkani", label: "Konkani" },
+    { value: "Haryanvi", label: "Haryanvi" },
+    { value: "Rajasthani", label: "Rajasthani" },
+    
+    // --- Common Foreign Languages ---
+    { value: "Korean", label: "Korean" },
+    { value: "Japanese", label: "Japanese" },
+    { value: "Spanish", label: "Spanish" },
+    { value: "French", label: "French" },
+    { value: "Mandarin", label: "Mandarin" },
+];
+
+/**
+ * Options for movie age ratings (e.g., U, UA, A).
+ */
+export const ageFormatOptions = [
+    { value: "U", label: "U (Universal)" },
+    { value: "UA", label: "UA (Parental Guidance)" },
+    { value: "A", label: "A (Adults Only)" },
+    { value: "S", label: "S (Special Class)" },
+];
+
+/**
+ * Options for show formats (e.g., 2D, 3D).
+ */
+export const formatOptions = [
+    { value: "2D", label: "2D" },
+    { value: "3D", label: "3D" },
+    { value: "IMAX", label: "IMAX" },
+    { value: "4DX", label: "4DX" },
+    { value: "IMAX 3D", label: "IMAX 3D" },
+    { value: "4DX 3D", label: "4DX 3D" },
+];
+
+// Based on user location (Kochi, Kerala)
+const stateOptions = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", 
+    "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", 
+    "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", 
+    "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", 
+    "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", 
+    "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Lakshadweep", 
+    "Delhi (NCT)", "Puducherry", "Jammu and Kashmir", "Ladakh"
+].map(s => ({ value: s, label: s }));
+
+
+// Custom component for the checkbox in multi-select
+const CustomOption = ({ children, ...props }) => (
+    <components.Option {...props}>
+      <input
+        type="checkbox"
+        checked={props.isSelected}
+        onChange={() => null} 
+        style={{ marginRight: '10px' }}
+      />
+      <label>{children}</label>
+    </components.Option>
+);
+
+
 // --- (1) HELPER HOOK & COMPONENTS ---
 
 // Debounce hook for search inputs
@@ -168,7 +291,13 @@ const CityForm = ({ onSave, onCancel, initialData }) => {
     <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px', marginTop: '16px' }}>
       <h4>{isEditMode ? 'Edit City' : 'Add New City'}</h4>
       <input value={cityName} onChange={e => setCityName(e.target.value)} placeholder="City Name" required />
-      <input value={cityState} onChange={e => setCityState(e.target.value)} placeholder="State" required />
+      
+      {/* --- MODIFIED FIELD --- */}
+      <select value={cityState} onChange={e => setCityState(e.target.value)} required>
+        <option value="">Select State</option>
+        {stateOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+      </select>
+
       <input value={zipCode} onChange={e => setZipCode(e.target.value)} placeholder="Zip Code" required />
       <div>
         <button type="submit">{isEditMode ? 'Update City' : 'Save City'}</button>
@@ -181,27 +310,43 @@ const CityForm = ({ onSave, onCancel, initialData }) => {
 const CinemaForm = ({ cityId, onSave, onCancel, initialData }) => {
     const isEditMode = Boolean(initialData);
     const [cinemaName, setCinemaName] = useState(initialData?.Cinema_Name || '');
-    const [facilities, setFacilities] = useState(initialData?.Facilities || '');
+    
+    // --- MODIFIED STATE ---
+    // Initialize state from comma-separated string to array of objects for react-select
+    const [facilities, setFacilities] = useState(
+        initialData?.Facilities 
+        ? initialData.Facilities.split(',').filter(f => f).map(f => ({ value: f, label: f })) 
+        : []
+    );
+
     const [cancellationAllowed, setCancellationAllowed] = useState(initialData?.Cancellation_Allowed || false);
+    
+    const handleReactSelectChange = (selectedOptions) => {
+        setFacilities(selectedOptions || []);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // --- MODIFIED PAYLOAD ---
+            // Convert array of objects back to comma-separated string for backend
+            const facilitiesString = facilities.map(f => f.value).join(',');
+
             const payload = { 
                 Cinema_Name: cinemaName, 
-                facilities, 
+                facilities: facilitiesString, // Use the string
                 cancellationAllowed,
-                cityId: initialData?.CityID || cityId // Use initial data's cityId if editing
+                cityId: initialData?.CityID || cityId
             };
 
             if (isEditMode) {
                 // Don't send cityId in PUT payload, not editable
-                const updatePayload = { Cinema_Name: cinemaName, Facilities: facilities, Cancellation_Allowed: cancellationAllowed };
+                const updatePayload = { Cinema_Name: cinemaName, Facilities: facilitiesString, Cancellation_Allowed: cancellationAllowed };
                 await axiosInstance.put(`/api/admin/cinema/${initialData.CinemaID}`, updatePayload);
                 toast.success('Cinema updated successfully!');
             } else {
-                // Send 'name' as key for add
-                await axiosInstance.post('/api/admin/cinemas', { name: cinemaName, cityId, facilities, cancellationAllowed });
+                // Send 'name' as key for add, and facilities string
+                await axiosInstance.post('/api/admin/cinemas', { name: cinemaName, cityId, facilities: facilitiesString, cancellationAllowed });
                 toast.success('Cinema added successfully!');
             }
             onSave();
@@ -214,7 +359,20 @@ const CinemaForm = ({ cityId, onSave, onCancel, initialData }) => {
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px', marginTop: '16px' }}>
             <h4>{isEditMode ? 'Edit Cinema' : 'Add New Cinema'}</h4>
             <input value={cinemaName} onChange={e => setCinemaName(e.target.value)} placeholder="Cinema Name" required />
-            <input value={facilities} onChange={e => setFacilities(e.target.value)} placeholder="Facilities (e.g., Parking,Dolby)" />
+            
+             {/* --- MODIFIED FIELD --- */}
+            <label>Facilities:</label>
+            <Select
+                isMulti
+                options={facilityOptions}
+                placeholder="Select facilities..."
+                components={{ Option: CustomOption }}
+                closeMenuOnSelect={false}
+                hideSelectedOptions={false}
+                value={facilities} // State is already array of objects
+                onChange={handleReactSelectChange}
+            />
+
             <label><input type="checkbox" checked={cancellationAllowed} onChange={e => setCancellationAllowed(e.target.checked)} /> Cancellation Allowed</label>
             <div>
                 <button type="submit">{isEditMode ? 'Update Cinema' : 'Save Cinema'}</button>
@@ -296,21 +454,34 @@ const HallForm = ({ cinemaId, onSave, onCancel, initialData }) => {
 
 const MovieForm = ({ onSave, onCancel, initialData }) => {
   const isEditMode = Boolean(initialData);
+  
+  // --- MODIFIED STATE ---
   const [formData, setFormData] = useState({
       title: initialData?.Title || '',
       description: initialData?.Movie_Description || '',
       duration: initialData?.Duration || '02:30:00',
-      language: initialData?.Movie_Language || '',
+      language: initialData?.Movie_Language || '', // Will be a string value
       releaseDate: initialData?.ReleaseDate ? new Date(initialData.ReleaseDate).toISOString().split('T')[0] : '',
-      genre: initialData?.Genre || '',
+      
+      // Convert comma-separated string to array of objects for react-select
+      genre: initialData?.Genre 
+          ? initialData.Genre.split(',').filter(g => g).map(g => ({ value: g, label: g })) 
+          : [],
+          
       rating: initialData?.Rating || '7.0',
-      ageFormat: initialData?.Age_Format || 'UA',
+      ageFormat: initialData?.Age_Format || 'UA', // Will be a string value
       trailerUrl: initialData?.Trailer_URL || ''
   });
   const [posterFile, setPosterFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // --- MODIFIED HANDLERS ---
   const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  
+  const handleGenreChange = (selectedOptions) => {
+      setFormData(prev => ({ ...prev, genre: selectedOptions || [] }));
+  };
+  
   const handleFileChange = (e) => setPosterFile(e.target.files[0]);
 
   const handleSubmit = async (e) => {
@@ -333,11 +504,15 @@ const MovieForm = ({ onSave, onCancel, initialData }) => {
         data.append('title', formData.title);
         data.append('description', formData.description);
         data.append('duration', formData.duration);
-        data.append('language', formData.language);
+        data.append('language', formData.language); // Append string value
         data.append('releaseDate', formData.releaseDate);
-        data.append('genre', formData.genre);
+        
+        // --- MODIFIED SUBMISSION ---
+        // Convert array of objects back to comma-separated string
+        data.append('genre', formData.genre.map(g => g.value).join(','));
+        
         data.append('rating', formData.rating);
-        data.append('ageFormat', formData.ageFormat);
+        data.append('ageFormat', formData.ageFormat); // Append string value
         data.append('trailerUrl', formData.trailerUrl);
 
         // 3. Append the new file *only if* one was selected
@@ -381,11 +556,36 @@ const MovieForm = ({ onSave, onCancel, initialData }) => {
       <input name="title" value={formData.title} onChange={handleChange} placeholder="Title" required />
       <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
       <input name="duration" value={formData.duration} onChange={handleChange} placeholder="Duration (HH:MM:SS)" required />
-      <input name="language" value={formData.language} onChange={handleChange} placeholder="Language" required />
+
+      {/* --- MODIFIED FIELD: LANGUAGE --- */}
+      <select name="language" value={formData.language} onChange={handleChange} required>
+        <option value="">Select Language</option>
+        {languageOptions.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+      </select>
+
       <input name="releaseDate" type="date" value={formData.releaseDate} onChange={handleChange} required />
-      <input name="genre" value={formData.genre} onChange={handleChange} placeholder="Genre" required />
+      
+      {/* --- MODIFIED FIELD: GENRE --- */}
+      <label>Genre(s):</label>
+      <Select
+          isMulti
+          options={genreOptions}
+          placeholder="Select genres..."
+          components={{ Option: CustomOption }}
+          closeMenuOnSelect={false}
+          hideSelectedOptions={false}
+          value={formData.genre} // State is already array of objects
+          onChange={handleGenreChange}
+      />
+
       <input name="rating" type="number" step="0.1" value={formData.rating} onChange={handleChange} placeholder="Rating" required />
-      <input name="ageFormat" value={formData.ageFormat} onChange={handleChange} placeholder="Age Format" required />
+      
+      {/* --- MODIFIED FIELD: AGE FORMAT --- */}
+      <select name="ageFormat" value={formData.ageFormat} onChange={handleChange} required>
+          <option value="">Select Age Format</option>
+          {ageFormatOptions.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+      </select>
+      
       <input name="trailerUrl" type="url" value={formData.trailerUrl} onChange={handleChange} placeholder="Trailer URL" required />
       
       <div>
@@ -432,7 +632,7 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
             setShowDate(new Date(initialData.Show_Date).toISOString().split('T')[0]);
             setStartTime(new Date(initialData.StartTime).toTimeString().substring(0, 5));
             setFormat(initialData.Format);
-            setLanguage(initialData.Show_Language);
+            setLanguage(initialData.Show_Language || ''); // Set initial language
         }
 
     }, [allSeats, hall.CinemaHallID, initialData, isEditMode]);
@@ -494,7 +694,13 @@ const AddShowForm = ({ hall, movies, onShowAdded, onCancel, allSeats, initialDat
             </select>
             <input type="date" value={showDate} onChange={e => setShowDate(e.target.value)} required />
             <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} required />
-            <input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Show Language (e.g., Malayalam)" required />
+            
+            {/* --- MODIFIED FIELD --- */}
+            <select value={language} onChange={e => setLanguage(e.target.value)} required>
+                <option value="">Select Show Language</option>
+                {languageOptions.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+            </select>
+            
             <select value={format} onChange={e => setFormat(e.target.value)} required>
                 <option value="2D">2D</option>
                 <option value="3D">3D</option>
@@ -797,7 +1003,10 @@ export default function AdminManagement() {
       
       // Refetch the relevant data
       switch (type) {
-          case 'movie': fetchMovies(); break;
+          case 'movie': 
+              fetchMovies(); 
+              fetchAllMovies(); // Also refetch all movies for filters
+              break;
           case 'city': fetchCities(); break;
           case 'cinema': fetchCinemas(selectedCityId); break;
           case 'hall': fetchHalls(selectedCinemaId); break;
@@ -834,30 +1043,6 @@ export default function AdminManagement() {
   const selectedCity = selectedCityId ? cities.find(c => c.CityID === parseInt(selectedCityId)) : null;
   const selectedCinema = selectedCinemaId ? cinemas.find(c => c.CinemaID === parseInt(selectedCinemaId)) : null;
   const selectedHall = selectedHallId ? halls.find(h => h.CinemaHallID === parseInt(selectedHallId)) : null;
-
-  const facilityOptions = [
-      { value: "Parking", label: "Parking" },
-      { value: "Dolby", label: "Dolby" },
-      { value: "Dolby Atmos", label: "Dolby Atmos" },
-      { value: "Recliner", label: "Recliner" },
-      { value: "Cafe", label: "Cafe" },
-      { value: "IMAX", label: "IMAX" },
-      { value: "4DX", label: "4DX" },
-      { value: "Heritage", label: "Heritage" }
-  ];
-
-  // Custom component for the checkbox
-  const CustomOption = ({ children, ...props }) => (
-    <components.Option {...props}>
-      <input
-        type="checkbox"
-        checked={props.isSelected}
-        onChange={() => null} 
-        style={{ marginRight: '10px' }}
-      />
-      <label>{children}</label>
-    </components.Option>
-  );
 
   // New handler for react-select
   const handleReactSelectChange = (selectedOptions) => {
@@ -902,11 +1087,11 @@ export default function AdminManagement() {
             />
             <select value={movieParams.genre} onChange={e => handleParamChange(setMovieParams, 'genre', e.target.value)}>
                 <option value="">All Genres</option>
-                {[...new Set(allMovies.map(m => m.Genre))].map(g => g && <option key={g} value={g}>{g}</option>)}
+                {[...new Set(allMovies.map(m => m.Genre).join(',').split(','))].filter(g => g).map(g => <option key={g} value={g}>{g}</option>)}
             </select>
             <select value={movieParams.language} onChange={e => handleParamChange(setMovieParams, 'language', e.target.value)}>
                 <option value="">All Languages</option>
-                 {[...new Set(allMovies.map(m => m.Movie_Language))].map(l => l && <option key={l} value={l}>{l}</option>)}
+                 {[...new Set(allMovies.map(m => m.Movie_Language))].filter(l => l).map(l => <option key={l} value={l}>{l}</option>)}
             </select>
             <select value={movieParams.minRating} onChange={e => handleParamChange(setMovieParams, 'minRating', e.target.value)}>
                 <option value="">All Ratings</option>
@@ -1099,7 +1284,7 @@ export default function AdminManagement() {
                     value={showParams.language}
                     onChange={e => handleParamChange(setShowParams, 'language', e.target.value)}
                 />
-                <select value={showParams.status} onChange={e => handleParamChange(setShowParams, 'status', e.target.value)}>
+                <select value={showParams.status} onChange={e => handleParamChange(setShowParams, 'status', e.g.et.value)}>
                     <option value="">All Statuses</option>
                     <option value="true">Active</option>
                     <option value="false">Inactive</option>
@@ -1116,7 +1301,7 @@ export default function AdminManagement() {
                                 <th style={styles.th}>Format</th>
                                 <th style={styles.th}>Language</th>
                                 <th style={styles.th}>Seat Prices</th>
-                                <th style={styles.th}>Start Booking</th>
+                                <th style={{...styles.th}}>Start Booking</th>
                                 <th style={styles.th}>Action</th>
                             </tr>
                         </thead>
