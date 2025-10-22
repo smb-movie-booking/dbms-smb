@@ -214,8 +214,7 @@ export default function AnalyticsDashboard() {
                     <div style={styles.kpiCard}><span style={styles.kpiLabel}>Revenue This Week</span><div style={styles.kpiValue}>{formatCurrency(kpis.revenueWeek)}</div></div>
                     <div style={styles.kpiCard}><span style={styles.kpiLabel}>Revenue This Month</span><div style={styles.kpiValue}>{formatCurrency(kpis.revenueMonth)}</div></div>
                     {/* Booking/Occupancy Cards */}
-                    <div style={styles.kpiCard}><span style={styles.kpiLabel}>Bookings Today</span><div style={styles.kpiValue}>{kpis.bookingsToday}</div></div>
-                    <div style={styles.kpiCard}><span style={styles.kpiLabel}>Avg. Occupancy (7d)</span><div style={styles.kpiValue}>{typeof kpis.averageOccupancy === 'number' ? kpis.averageOccupancy.toFixed(1) : '0.0'}%</div></div>
+                    
                     {/* Top Performers Cards */}
                     <div style={styles.kpiCard}><span style={styles.kpiLabel}>Top Movie (Wk)</span><div style={styles.kpiSubValue}>{kpis.topMovieWeek.Title}</div><div style={styles.kpiValue}>{formatCurrency(kpis.topMovieWeek.totalRevenue)}</div></div>
                     <div style={styles.kpiCard}><span style={styles.kpiLabel}>Top Theater (Wk)</span><div style={styles.kpiSubValue}>{kpis.topTheaterWeek.Cinema_Name}</div><div style={styles.kpiValue}>{formatCurrency(kpis.topTheaterWeek.totalRevenue)}</div></div>
@@ -235,7 +234,7 @@ export default function AnalyticsDashboard() {
 
             {loadingCharts ? <p>Loading reports...</p> : (
                 <>
-                    {/* Revenue Over Time Chart */}
+                    {/* Revenue Over Time Chart */} 
                     <div style={styles.chartContainer}>
                         <h3 style={styles.chartTitle}>Revenue Over Time</h3>
                         {revenueOverTimeData && revenueOverTimeData.length > 0 ? (
