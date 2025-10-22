@@ -26,6 +26,8 @@ header .show-info-sub{
 .main-body{
     display:flex;
     margin:0 10rem;
+    padding: 0 0 4rem 0;
+    
 }
 
 .seat-container{

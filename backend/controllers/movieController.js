@@ -6,7 +6,6 @@ const { db } = require('../config/db');
 const handleExplore = async(req,res) => {
     try{
         const {city, language, genre, format, theater, showDate, movie } = req.query;
-        console.log(req.query)
         if (movie) {
             movieModel.getMovieDetails(movie, (err, details) => {
                 if (err) {
@@ -21,17 +20,18 @@ const handleExplore = async(req,res) => {
                     return res.status(500).json({ error: "Failed to fetch movies" });
                 }
 
+                //return res.status(201).json(movies);
+
                 showModel.fetchShowsByTheaterAndDate(theater, showDate, (err2, shows) => {
                     if (err2) {
                         return res.status(500).json({ error: "Failed to fetch shows" });
                     }
-
                     const merged = movies.map(m => ({
                         ...m,
-                        shows: shows.filter(s => s.movieId === m.MovieID)
+                        shows: shows.filter(s => s.MovieID === m.MovieID)
                     }));
 
-                    return res.json(merged);
+                    return res.status(201).json(merged);
                 });
             });
         }
@@ -43,7 +43,6 @@ const handleExplore = async(req,res) => {
             return res.status(500).json({ error: "Internal server error" });
 
             }
-            console.log(movie)
             return res.json(movies);
         });
         } else {

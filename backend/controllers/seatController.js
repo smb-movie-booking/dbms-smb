@@ -2,7 +2,6 @@ const seatModel = require('../models/seatModel');
 
 exports.getSeatsByShowId = async (req, res) => {
   const showId = req.params.showid;
-  console.log(showId);
   
 
   try {

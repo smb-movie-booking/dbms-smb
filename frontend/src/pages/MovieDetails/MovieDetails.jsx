@@ -2,13 +2,25 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { axiosInstance } from '../../utils/axios';
 import "./MovieDetails.css"; // Make sure this CSS file exists for styling
-
+import { useContext } from "react";
+import { Auth } from "../../Context/AuthContext";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 // The component now accepts `selectedCity` as a prop from App.jsx
 const MovieDetails = ({ selectedCity }) => {
   const { movieId } = useParams();
+  const {authUser}=useContext(Auth);
   const [movie, setMovie] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currReview,setCurrentReview]=useState({
+    UserID:authUser?.user?.id||null,
+    MovieID:movieId,
+    Comment:"",
+    Rating:"",
+  });
+
+  const navigate=useNavigate();
 
   // Function for the horizontal scrolling of review cards
   const scrollReviews = (direction) => {
@@ -43,8 +55,58 @@ const MovieDetails = ({ selectedCity }) => {
     };
 
     fetchMovieAndReviews();
-  }, [movieId]); // Re-run this effect if the movieId in the URL changes
+  }, [movieId]); 
+  
+  // Re-run this effect if the movieId in the URL changes
 
+  const handleClick=()=>{
+    if(authUser?.user?.id){
+      navigate(`/movie/${movieId}/theaters?city=${selectedCity?.id}`);
+      return;
+    }
+  
+      navigate('/login');
+    
+  }
+
+  const handleReview=(e)=>{
+    const {name,value}=e.target;
+    setCurrentReview({...currReview,[name]:value});
+  }
+
+  const addReview=async()=>{
+    
+    try {
+      if(!currReview.Comment.trim()){
+        return toast.error("Review Comment cannot be empty");
+      } 
+      if( currReview.Rating==="" || isNaN(currReview.Rating) || currReview.Rating<0 || currReview.Rating>10){
+        return toast.error("Rating must be a number between 0 and 10");
+      }
+      const response=await axiosInstance.post(`/api/movies/${movieId}/reviews`,currReview);
+      const reviewID=response.data.reviewId;
+      toast.success("Review Added Successfully");
+
+      const newReview={
+        ReviewID: reviewID, 
+        Comment: currReview.Comment,
+        Rating: currReview.Rating,
+        username: authUser?.user?.username || "You",
+        Review_Timestamp: new Date().toISOString(),
+
+      }
+
+      setReviews((prevReviews)=>[newReview,...prevReviews]);
+      setCurrentReview({...currReview,Comment:"",Rating:""});
+      
+    } catch (error) {
+      toast.error(error.response.data.message || "Failed to add review");
+      
+    }finally{
+      return
+    }
+  }
+  console.log(reviews);
   if (loading) {
     return <p style={{ padding: '20px' }}>Loading movie details...</p>;
   }
@@ -52,6 +114,8 @@ const MovieDetails = ({ selectedCity }) => {
   if (!movie) {
     return <p style={{ padding: '20px' }}>Sorry, this movie could not be found.</p>;
   }
+
+  console.log(currReview)
 
   return (
     <div className="movie-detail">
@@ -79,19 +143,49 @@ const MovieDetails = ({ selectedCity }) => {
             <p><strong>Release:</strong> {new Date(movie.ReleaseDate).toLocaleDateString()}</p>
           </div>
 
-          <Link 
-            to={`/movie/${movieId}/theaters?city=${selectedCity?.id}`}
-            className="book-tickets-link"
-          >
-            <button className="book-tickets-btn">
+          
+            <button className="book-tickets-btn" onClick={handleClick}>
               Book Tickets
+
             </button>
-          </Link>
+      
         </div>
       </div>
 
       <div className="review-section">
         <h2>Reviews</h2>
+        <div className="rev-head-container">
+        
+        
+
+        <textarea rows="5" 
+          className=""
+          value={currReview.Comment}
+          name="Comment"
+          placeholder="Write your review here..."
+          onChange={(e)=>handleReview(e)}/>
+
+
+          <div style={{display:"flex",gap:"10px",alignItems:"center",marginBottom:"10px"}}>
+
+              <label>Give Your Rating <span style={{color:"grey",opacity:"0.7"}}>(Out of 10)</span></label>
+
+              <input
+              className="rating-input"
+              placeholder="eg.7"
+              type="text"
+              value={currReview.Rating}
+              name="Rating"
+              onChange={(e)=>handleReview(e)}/>
+
+          </div>
+
+        <button 
+          style={{backgroundColor:"var(--secondary-color)",color:"#fff",borderRadius:"5px",border:"none"}}
+          onClick={addReview}>
+            Add Review
+        </button>
+        </div>
         <div className="review-scroll-container">
           <button className="scroll-btn left" onClick={() => scrollReviews(-1)}>‹</button>
           <div className="review-cards-wrapper">

@@ -55,10 +55,21 @@ const handleTheaterLookup = async (req, res) => {
         });
       });
     }
-    
-    // Placeholder for your teammate's logic to list all theaters in a city
+
+    // ✅ Newly implemented: Fetch all theaters in a given city
     else if (city) {
-        return res.json({ message: `TODO: Implement fetch for all theaters in city ID: ${city}` });
+      theaterModel.getTheatersByCity(city, (err, theaters) => {
+        if (err) {
+          console.error("Error fetching theaters by city:", err);
+          return res.status(500).json({ error: "Failed to fetch theaters by city" });
+        }
+
+        if (!theaters || theaters.length === 0) {
+          return res.status(404).json({ message: "No theaters found in this city" });
+        }
+
+        return res.json(theaters);
+      });
     }
 
     else {
@@ -72,4 +83,3 @@ const handleTheaterLookup = async (req, res) => {
 };
 
 module.exports = { handleTheaterLookup };
-

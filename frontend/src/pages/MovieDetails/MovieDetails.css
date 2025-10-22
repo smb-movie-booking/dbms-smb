@@ -169,6 +169,25 @@
   padding: 10px 0;
 }
 
+.rev-head-container{
+  display: flex;
+  flex-direction: column;
+}
+
+.rev-head-container button{
+  align-self: flex-end;
+}
+
+.rating-input{
+  border: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.rating-input:focus{
+  border-color:var(--secondary-color);
+}
+
 .review-card {
   min-width: 250px; /* width of each card */
   flex-shrink: 0;
