@@ -3,22 +3,23 @@ const { db } = require('../config/db');
 exports.fetchSeatsByShowId = (showId) => {
   return new Promise((resolve, reject) => {
     const query = `
-       SELECT
-         ms.ShowID,
-	 ms.Show_Date as showDate,
-	 ms.StartTime as startTime,
-         m.MovieID,
-         m.Title,
-	 c.Cinema_Name,
-         cs.CinemaSeatID AS seatId,
-         cs.Seat_Type AS seatType,
-         cs.SeatName AS seatName,
-         ss.Price as price,
-         CASE
-             WHEN ss.Seat_Status = 2 THEN 'booked'
-             WHEN ss.Seat_Status = 1 THEN 'blocked'
-             ELSE 'available'
-         END AS status
+      SELECT
+          ms.ShowID,
+          ms.Show_Date as showDate,
+          ms.StartTime as startTime,
+          m.MovieID,
+          m.Title,
+          c.Cinema_Name,
+          ss.ShowSeatID AS showSeatId,
+          cs.CinemaSeatID AS cinemaSeatId,
+          cs.Seat_Type AS seatType,
+          cs.SeatName AS seatName,
+          ss.Price as price,
+          CASE
+              WHEN ss.Seat_Status = 2 THEN 'booked'
+              WHEN ss.Seat_Status = 1 THEN 'blocked'
+              ELSE 'available'
+          END AS status
      FROM
          Movie_Show ms
      JOIN Movie m ON ms.MovieID = m.MovieID

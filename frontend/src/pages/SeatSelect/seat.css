@@ -71,6 +71,33 @@ header .show-info-sub{
 
 }
 
+/* Style for seats that are disabled (booked or blocked) */
+.seat-button:disabled {
+  background-color: #bdbdbd; /* Gray background */
+  color: #757575;          /* Darker gray text */
+  cursor: not-allowed;    /* Show disabled cursor */
+  border: 1px solid #bdbdbd; /* Match border color, adjust thickness if needed */
+  /* Ensure border-width matches your default .seat-button if it's not 1px */
+}
+
+/* Ensure available and locked styles override the disabled style if needed */
+/* (Your existing .available and .locked rules should be sufficient) */
+.seat-button.available {
+  /* ... your existing styles ... */
+  border: 2px solid var(--secondary-color);
+  background: transparent;
+  cursor: pointer; /* Ensure cursor changes back */
+  color: #333; /* Ensure text color changes back */
+}
+
+.seat-button.locked {
+  /* ... your existing styles ... */
+  background-color: var(--secondary-color);
+  color: white;
+  cursor: pointer; /* Ensure cursor changes back */
+  border: 1px solid var(--secondary-color); /* Ensure border matches */
+}
+
 /* 1. Add padding to the *bottom of the main content* */
 .seat-wrapper main {
   padding-bottom: 150px; 

@@ -18,9 +18,10 @@ exports.getSeatsByShowId = async (req, res) => {
     const type = seat.seatType;
     if (!seatTypeMap[type]) seatTypeMap[type] = {price:seat.price,arr:[]};
     seatTypeMap[type].arr.push({
-      seatId: seat.seatId,
+      showSeatId: seat.showSeatId, // <-- USE THE CORRECT ID
+      cinemaSeatId: seat.cinemaSeatId, // Keep if needed
       seatStatus: seat.status,
-      seatName: seat.seatName // use 'seatName' as per your required format
+      seatName: seat.seatName 
     });
   });
 

@@ -8,12 +8,13 @@ exports.processPayment = async (req, res) => {
     paymentMethod,
     remoteTransactionId,
     discountCouponId,
-    seatIds // MUST be passed from frontend to finalize/release seats
+    seatIds
   } = req.body;
 
+  const connection = await db.promise().getConnection(); // get connection from pool
+
   try {
-    // Start transaction (optional but ideal)
-    await db.beginTransaction();
+    await connection.beginTransaction();
 
     // Step 1: Insert payment
     const insertQuery = `
@@ -24,51 +25,41 @@ exports.processPayment = async (req, res) => {
       )
       VALUES (NULL, ?, NOW(), ?, ?, ?, ?)
     `;
-
-    const insertValues = [amount, discountCouponId, remoteTransactionId, paymentMethod, bookingId];
-
-    await new Promise((resolve, reject) => {
-      db.query(insertQuery, insertValues, (err, result) => {
-        if (err) return reject(err);
-        resolve(result.insertId); // paymentId
-      });
-    });
+    await connection.query(insertQuery, [
+      amount,
+      discountCouponId,
+      remoteTransactionId,
+      paymentMethod,
+      bookingId
+    ]);
 
     // Step 2: Finalize seats
     await bookingModel.finalizeSeatsAfterPayment(bookingId, seatIds);
 
-    // Step 3: Update booking status to "Paid" (2)
-    await new Promise((resolve, reject) => {
-      db.query(`UPDATE Booking SET Booking_Status = 2 WHERE BookingID = ?`, [bookingId], (err) => {
-        if (err) return reject(err);
-        resolve();
-      });
-    });
+    // Step 3: Update booking status to "Paid"
+    await connection.query(
+      `UPDATE Booking SET Booking_Status = 2 WHERE BookingID = ?`,
+      [bookingId]
+    );
 
-    // Commit transaction
-    await db.commit();
+    await connection.commit();
+    connection.release(); // release connection
 
     res.status(201).json({ success: true, bookingId });
   } catch (err) {
     console.error('❌ Payment failed, rolling back...', err);
-
-    // Rollback seat hold and booking
     try {
-      await db.rollback();
-
-      // Release seats: Seat_Status = 0, BookingID = NULL
+      await connection.rollback();
       await bookingModel.releaseSeats(seatIds);
-
-      // Optionally, mark booking as cancelled
-      await new Promise((resolve, reject) => {
-        db.query(`UPDATE Booking SET Booking_Status = 3 WHERE BookingID = ?`, [bookingId], (err) => {
-          if (err) return reject(err);
-          resolve();
-        });
-      });
-
+      await db
+        .promise()
+        .query(`UPDATE Booking SET Booking_Status = 3 WHERE BookingID = ?`, [
+          bookingId,
+        ]);
     } catch (rollbackErr) {
       console.error('❌ Rollback failed:', rollbackErr);
+    } finally {
+      connection.release();
     }
 
     res.status(500).json({ error: 'Payment failed, booking cancelled' });
