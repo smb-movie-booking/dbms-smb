@@ -1,6 +1,6 @@
 const bookingModel = require('../models/bookingModel');
 
-exports.confirmBooking = (req, res) => {
+exports.confirmBooking = async(req, res) => {
   const { userId, showId, seatSelections } = req.body;
   const seatIds = seatSelections.map(s => s.showSeatId);
   let seatsSuccessfullyHeld = false; // Flag to track if hold succeeded
@@ -80,3 +80,14 @@ exports.getBookingSummary = async (req, res) => {
     res.status(500).json({ error: 'Could not fetch summary' });
   }
 };
+
+exports.getOrderDetails=(req,res)=>{
+  const {userId}=req.params;
+  bookingModel.getUserBookings(userId,(err,bookings)=>{
+    if(err){
+      return res.status(500).json({ error: 'Could not fetch bookings' });
+    }
+    console.log("Bookings fetched:",bookings);
+    return res.status(200).json({bookings});
+  })
+}

@@ -20,8 +20,10 @@ import BookingManagement from './pages/Admin/BookingManagement/BookingManagement
 import AnalyticsDashboard from './pages/Admin/AnalyticsDashboard/AnalyticsDashboard';
 import BookingSummary from './pages/BookingSummary/BookingSummary';
 import PaymentPage from "./pages/Payment/PaymentPage";
+
 import { SearchMovie } from './pages/SearchMovie/SearchMovie';
 import { Theaters } from './pages/Theaters/Theaters';
+import UserOrders from './pages/UserOrders/UserOrders';
 function App() {
   const { getUser } = useAuth();
   const { authUser } = useContext(Auth);
@@ -46,7 +48,7 @@ function App() {
     navigate('/');
   };
 
-  if (loading) return <Skeleton/>;
+  if (loading) return <p>Loading</p>;
 
   return (
     <>
@@ -63,7 +65,7 @@ function App() {
         <Route path='/register' element={!authUser ? <Register /> : <Navigate to="/" />} />
         <Route path='/reset-password' element={!authUser ? <ResetPassword /> : <Navigate to="/" />} />
         <Route path='/:userid/edit' element={authUser ? <><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /> <EditProfile /></> : <Login />} />
-        
+        <Route path='/:userid/orders' element={authUser ? <UserOrders/>:<Login/>}/>
         {/* Pass selectedCity down to build the correct link for 'Book Tickets' */}
         <Route path='/movies/:movieId' element={<><Navbar selectedCity={selectedCity} onCityChange={handleCityChange} /> <MovieDetails selectedCity={selectedCity}/>   </>} />
         

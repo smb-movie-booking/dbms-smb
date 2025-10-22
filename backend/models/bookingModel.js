@@ -167,3 +167,55 @@ exports.getShowDetails = (showId) => {
     });
   });
 };
+
+
+exports.getUserBookings = (userId,callback) => {
+  
+    const query = `
+      SELECT 
+    b.BookingID,
+    b.Booking_Timestamp,
+    b.NumberOfSeats,
+    b.Booking_Status,
+    u.User_Name,
+    m.Title AS Movie_Name,
+    ms.Show_Date,
+    ms.StartTime,
+    ms.EndTime,
+    ch.Hall_Name AS Cinema_Hall,
+    c.Cinema_Name AS Cinema_Name,
+    ci.City_Name AS City_Name,
+    GROUP_CONCAT(cs.SeatName ORDER BY cs.SeatName SEPARATOR ', ') AS Selected_Seats,
+    SUM(ss.Price) AS Total_Amount
+FROM Booking b
+JOIN User u ON b.UserID = u.UserID
+JOIN Movie_Show ms ON b.ShowID = ms.ShowID
+JOIN Movie m ON ms.MovieID = m.MovieID
+JOIN Cinema_Hall ch ON ms.CinemaHallID = ch.CinemaHallID
+JOIN Cinema c ON ch.CinemaID = c.CinemaID
+JOIN City ci ON c.CityID = ci.CityID
+JOIN Show_Seat ss ON ss.BookingID = b.BookingID
+JOIN Cinema_Seat cs ON ss.CinemaSeatID = cs.CinemaSeatID
+WHERE b.UserID = ?
+GROUP BY 
+    b.BookingID, 
+    b.Booking_Timestamp,
+    b.NumberOfSeats,
+    b.Booking_Status,
+    u.User_Name,
+    m.Title,
+    ms.Show_Date,
+    ms.StartTime,
+    ms.EndTime,
+    ch.Hall_Name,
+    c.Cinema_Name,
+    ci.City_Name
+ORDER BY b.Booking_Timestamp DESC;
+
+    `;
+    db.query(query, [userId], (err, results) => {
+      if (err) return callback(err,null);
+      return callback(null,results);  // only one show
+    });
+  
+};

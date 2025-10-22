@@ -1,0 +1,222 @@
+/* Variables */
+:root{
+  --bg:#fff;                 /* page background */
+  --card-bg:#ffffff;         /* card background */
+  --muted:#6b6b6b;          /* secondary text */
+  --text:#111;              /* primary text */
+  --accent:#ff7a00;         /* your orange */
+  --accent-2:#ff8f33;      /* lighter orange for gradients */
+  --card-border: rgba(0,0,0,0.04);
+  --radius:12px;
+  --glass: rgba(255,255,255,0.6);
+  --shadow: 0 8px 24px rgba(16,16,16,0.08);
+  --max-width: 1000px;
+}
+
+/* Page container */
+.order-container {
+  width: 94%;
+  max-width: var(--max-width);
+  margin: 36px auto;
+  padding: 22px;
+  font-family: "Inter", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: var(--text);
+  background: linear-gradient(180deg, #fff 0%, #fff 100%);
+  border-radius: 16px;
+}
+
+/* Header */
+.order-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom: 18px;
+  gap: 16px;
+}
+.order-header h2{
+  margin:0;
+  font-size:1.6rem;
+  letter-spacing:0.2px;
+  color: var(--accent);
+}
+.order-header .sub{
+  color: var(--muted);
+  font-size:0.92rem;
+}
+
+/* Body & wrapper for cards */
+.order-body {
+  display:block;
+}
+
+.order-box {
+  display:flex;
+  flex-direction:column;
+  gap: 14px;
+}
+
+/* Individual order card */
+.order-main {
+  display:flex;
+  gap: 18px;
+  align-items: center;               /* ensures vertical alignment across columns */
+  justify-content: space-between;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow);
+  transition: transform .15s ease, box-shadow .15s ease;
+  min-height: 72px;
+}
+
+/* hover lift */
+.order-main:hover{
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(16,16,16,0.10);
+}
+
+/* Left column (movie + cinema) */
+.order-details {
+  display:flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex: 1 1 60%;
+  min-width: 0; /* important for text truncation in flex */
+}
+
+/* optional poster placeholder */
+.order-poster {
+  width: 68px;
+  height: 68px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color: #fff;
+  font-weight:600;
+  flex: 0 0 68px;
+  box-shadow: 0 6px 14px rgba(255,122,0,0.12);
+}
+
+/* Movie + cinema text block */
+.order-meta {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width: 0; /* allow child text to truncate nicely */
+}
+.order-meta .movie-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.order-meta .cinema-name{
+  font-size: 0.94rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* show date/time row */
+.show-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:6px;
+  font-size:0.92rem;
+  color:var(--muted);
+}
+.show-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(255,122,0,0.06);
+  color: var(--accent);
+  font-weight:600;
+  font-size:0.88rem;
+  border: 1px solid rgba(255,122,0,0.12);
+}
+
+/* Right column (seats + actions) */
+.order-right {
+  display:flex;
+  gap: 18px;
+  align-items:center;
+  justify-content:flex-end;
+  flex: 0 0 320px; /* fixed-ish column to keep alignment consistent */
+  min-width: 200px;
+}
+
+/* seat details card */
+.seats {
+  text-align:right;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width: 0;
+}
+.seats h4{
+  margin:0;
+  font-size:0.95rem;
+  color:var(--accent);
+  font-weight:700;
+}
+.seats .seat-list{
+  margin:0;
+  font-weight:600;
+  color:var(--text);
+  font-size:0.95rem;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* small meta like total seats / price */
+.order-stats{
+  text-align:right;
+  color:var(--muted);
+  font-size:0.88rem;
+}
+
+/* fallback when no orders */
+.order-box .empty {
+  text-align:center;
+  padding: 28px;
+  color: var(--muted);
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
+  border-radius: 10px;
+  border: 1px dashed rgba(0,0,0,0.04);
+}
+
+/* mobile responsiveness: stack columns */
+@media (max-width:720px){
+  .order-main {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+    gap:12px;
+  }
+
+  .order-details{
+    flex-direction: row;
+    gap: 12px;
+    align-items:center;
+  }
+
+  .order-right{
+    flex: 1 1 auto;
+    justify-content: space-between;
+    text-align:left;
+  }
+
+  .seats{
+    text-align:left;
+  }
+}
