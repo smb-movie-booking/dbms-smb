@@ -118,7 +118,7 @@ const BookingSummary = () => {
           <ul className="seat-list">
             {selectedSeats.seats.map((seat) => (
               <li key={seat.seatId} className="seat-item">
-                <span className="seat-name">{seat.seatName}</span>
+                <span className="seat-name">{seat.seatName} ({seat.seatType})</span>
                 <span className="seat-price">₹{parseFloat(seat.price).toFixed(2)}</span>
               </li>
             ))}
