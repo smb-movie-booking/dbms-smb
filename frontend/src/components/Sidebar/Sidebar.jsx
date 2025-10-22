@@ -30,7 +30,7 @@ const Sidebar = ({isOpen,setIsOpen}) => {
       <div className='bottom-section'>
         <div>
           {authUser?.user&&<button onClick={()=>{navigate(`/${authUser.user.id}/edit`);setIsOpen(false)}} className='app-btn'>Edit Profile</button>}
-          {authUser?.user&&<button className='app-btn' onClick={()=>navigate(`${authUser?.user?.id}/orders`)}>Your Orders</button>}
+          {authUser?.user&&<button className='app-btn' onClick={()=>navigate(`/${authUser?.user?.id}/orders`,{replace:true})}>Your Orders</button>}
           {authUser?.user&& authUser.user.isAdmin && (<button className="app-btn" onClick={() => { navigate("/admin"); setIsOpen(false); }}> Admin</button>)}
         </div>
 
