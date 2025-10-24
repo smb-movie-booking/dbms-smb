@@ -1,137 +1,90 @@
-# Backend API Documentation & Frontend Guide
+# Controllers (`/controllers`)
 
-## 1. Project Overview
+This directory contains the "brains" of the backend application. Each controller file is responsible for handling the business logic for a specific resource (like "movies" or "users").
 
-This document provides a comprehensive overview of the backend API for a user management system. The system handles user registration, login, session management, profile updates, and password resets, with a focus on OTP (One-Time Password) verification for key actions. It supports two user roles: standard users and administrators, distinguished by a secret code during registration.
+They act as the middle layer between the **Routes** (which define the API endpoints) and the **Models** (which interact with the database). A controller function receives a request, uses models to fetch or save data, and then sends a response back to the client.
 
-**Backend Stack:**
-- **Node.js/Express.js**: Server logic
-- **bcrypt**: Password hashing
-- **express-session**: Session management
-- **dotenv**: Environment variables
+## Files
 
----
+### `adminController.js`
 
-## 2. API Endpoints
+Handles all logic for the Admin Dashboard. This is the largest controller and is responsible for all **CRUD** (Create, Read, Update, Delete) operations on core data, including:
 
-The API is logically divided into three main controllers:
+* Cities, Cinemas (Theaters), and Cinema Halls
+* Movies and Shows (including pricing)
+* User management (viewing users, toggling admin status)
+* Booking management (searching and cancelling bookings)
+* Review management (deleting reviews)
+* Analytics (fetching KPIs and reports for the dashboard)
 
-- `auth`: Authentication-related endpoints
-- `otp`: OTP management
-- `users`: Authenticated user actions
+### `authController.js`
 
-### Authentication (`/api/auth`)
+Manages user authentication and registration.
 
-| Method | Endpoint         | Description                        | Request Body                                    | Success Response                               | Error Response                                                                                                                                 |
-|--------|------------------|------------------------------------|------------------------------------------------|------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| POST   | `/login`         | Logs a user in                     | `{ "phone": "...", "password": "..." }`        | `{ "message": "User/Admin logged in successfully" }` | 400: Missing fields, invalid phone format. <br> 401: Invalid credentials.                                                                       |
-| POST   | `/register`      | Registers a user after OTP verify  | `{ "name": "...", "phone": "...", "password": "...", "adminCode": "..." }` | `{ "message": "User/Admin registered & logged in" }` | 400: Missing fields. <br> 403: Phone not verified via OTP. <br> 500: Hashing/DB error.                   |
-| GET    | `/logout`        | Logs out user                      | (None)                                         | `"Logged out"`                                  | 500: Error logging out                                                                                                                         |
-| POST   | `/reset-password`| Resets password using OTP          | `{ "phone": "...", "otp": "...", "newPassword": "..." }` | `{ "message": "Password reset successfully" }`  | 400: Missing fields, invalid phone, OTP expired. <br> 401: Invalid OTP. <br> 500: Hashing/DB error.      |
+* `login`: Handles user login with email/phone and password.
+* `register`: Creates a new user after verifying their OTP.
+* `logout`: Destroys the user's session.
+* `resetPassword`: Updates a user's password after a successful OTP verification.
 
----
+### `userController.js`
 
-### OTP Management (`/api/otp`)
+Manages a logged-in user's own profile.
 
-| Method | Endpoint         | Description               | Request Body                      | Success Response                               | Error Response                                                                                                                  |
-|--------|------------------|---------------------------|----------------------------------|------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
-| POST   | `/send-otp`      | Sends OTP to phone/email  | `{ "identifier": "..." }`        | `{ "message": "OTP sent to phone/email (console)" }` | 400: Invalid format. <br> 409: Identifier already registered. <br> 500: DB error.                       |
-| POST   | `/verify-otp`    | Verifies the OTP          | `{ "identifier": "...", "otp": "..." }` | `{ "message": "OTP verified successfully" }`    | 400: Missing fields, OTP not found. <br> 401: Invalid OTP. <br> 500: DB error.                          |
+* `getProfile`: Gets the current user's data from their session.
+* `updateProfile`: Handles updates to a user's name, email, or phone.
+* `updatePassword`: Allows a logged-in user to change their password by providing their current one.
+* `deleteProfile`: Allows a user to delete their own account.
 
----
+### `otpController.js`
 
-### User Profile (`/api/users`)
+Manages the One-Time Password (OTP) system.
 
-> All endpoints below require an active user session.
+* `sendOTP`: Generates a 6-digit OTP, saves it to the database with an expiration time, and (simulates) sending it.
+* `verifyOTP`: Checks if a provided OTP matches the one in the database and is not expired.
 
-| Method | Endpoint              | Description                         | Request Body                                    | Success Response                               | Error Response                                                                                                                    |
-|--------|-----------------------|-------------------------------------|------------------------------------------------|------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| GET    | `/me`                 | Fetch user profile                  | (None)                                         | `{ "user": { ... } }`                          | 401: Not authenticated                                                                                                           |
-| PUT    | `/update-password`    | Update password                     | `{ "currentPassword": "...", "newPassword": "...", "confirmPassword": "..." }` | `{ "message": "Password updated successfully" }` | 400: Missing fields, mismatch. <br> 401: Incorrect current password. <br> 500: DB error. |
-| PUT    | `/update-name`        | Update user's name                  | `{ "name": "..." }`                            | `{ "message": "Name updated successfully" }`    | 400: Name required. <br> 500: Update failed.                                                                                     |
-| PUT    | `/update-phone`       | Update phone (after OTP verify)     | `{ "phone": "...", "otp": "..." }`             | `{ "message": "Phone number verified and updated successfully" }` | 400: Missing fields, expired OTP. <br> 401: Invalid OTP. <br> 409: Phone already in use. <br> 500: DB error. |
-| PUT    | `/update-email`       | Update email (after OTP verify)     | `{ "email": "...", "otp": "..." }`             | `{ "message": "Email updated successfully" }`   | 400: Missing fields, expired OTP. <br> 401: Invalid OTP. <br> 409: Email already in use. <br> 500: DB error. |
-| DELETE | `/me`                 | Delete user account                 | (None)                                         | `{ "message": "Profile deleted successfully" }` | 401: Not authenticated. <br> 500: Deletion failed.                                                                               |
+### `movieController.js`
 
----
+Handles public-facing logic for discovering movies.
 
-## 3. Frontend UI/UX Approach
+* `handleExplore`: A flexible function that finds movies based on different criteria (e.g., by city, by theater).
+* `getCities`: Returns a simple list of all available cities.
+* `getMoviesBySearch`: Powers the search bar, finding movies and theaters that match a search string.
 
-### 3.1. Registration Flow (Multi-Step)
+### `theaterController.js`
 
-- **Step 1: Phone Verification**
-  - UI: Phone input field
-  - Action: `POST /api/otp/send-otp`
-  - Feedback: "OTP sent", then reveal OTP input
+Handles public-facing logic for finding theaters.
 
-- **Step 2: Complete Registration**
-  - UI: Inputs for Name, Password, Admin Code (optional), and OTP
-  - Action:
-    - `POST /api/otp/verify-otp`
-    - On success: `POST /api/auth/register`
-  - UX: Redirect to dashboard/profile after auto-login
+* `handleTheaterLookup`: Finds theaters playing a specific movie on a given date/city, or simply lists all theaters in a city.
 
----
+### `showController.js`
 
-### 3.2. Login & Session Management
+Handles public-facing logic for finding specific showtimes.
 
-- UI: Form with Phone and Password
-- Action: `POST /api/auth/login`
-- State Management:
-  - Store session status (React context, Redux, etc.)
-  - Use to render protected routes/UI
-  - Show appropriate nav controls ("Login" → "Logout")
+* `getShowsByMovieTheaterDate`: Fetches all available showtimes for a single movie at a single theater on a specific date.
 
----
+### `seatController.js`
 
-### 3.3. Password Reset Flow (Multi-Step)
+Manages the seat selection process for a user.
 
-- **Step 1: Request Reset**
-  - UI: Phone input
-  - Action: `POST /api/otp/send-otp`
+* `getSeatsByShowId`: Fetches the complete seat map for a specific show, including seat type, price, and availability (Booked, Available, etc.).
 
-- **Step 2: Verify & Update**
-  - UI: OTP and new password input
-  - Action: `POST /api/auth/reset-password`
-  - Feedback: On success, redirect to login
+### `bookingController.js`
 
----
+Manages the user-facing booking workflow.
 
-### 3.4. User Profile Page
+* `getBookingSummary`: Provides a price and details summary *before* the user pays.
+* `confirmBooking`: Creates a new booking, places a temporary "hold" on the selected seats, and returns a `bookingId`.
+* `getOrderDetails`: Fetches a list of all past bookings for a user.
 
-- On load: `GET /api/users/me`
+### `paymentController.js`
 
-#### Components:
+Handles the final step of a booking after payment is received.
 
-- **Display Info**: Name, Phone, Email
-- **Update Name**:
-  - Input + Save button → `PUT /api/users/update-name`
-- **Update Password**:
-  - Inputs for Current, New, Confirm → `PUT /api/users/update-password`
-- **Update Phone/Email (Modal Flow Recommended)**:
-  - Modal form:
-    - New phone/email → `POST /api/otp/send-otp`
-    - OTP input → `PUT /api/users/update-phone` or `update-email`
-    - On success: close modal and `GET /api/users/me`
-- **Delete Profile**:
-  - Confirmation modal → `DELETE /api/users/me`
+* `processPayment`: Marks a booking as "Confirmed" (Status=2), finalizes the seat reservation, and creates a payment record in the database.
 
----
+### `reviewController.js`
 
-### 3.5. Error Handling
+Manages user-submitted reviews for movies.
 
-- Display error messages returned from API
-- Examples:
-  - Login 401 → "Invalid credentials."
-  - Register 409 on `send-otp` → "Phone number already registered."
-
----
-
-## 4. Setup & Environment
-
-### Dependencies
-
-Install required npm packages:
-
-```bash
-npm install express bcrypt express-session dotenv mysql
+* `getReviews`: Fetches all reviews for a specific movie.
+* `addReview`: Allows a logged-in user to post a new review.

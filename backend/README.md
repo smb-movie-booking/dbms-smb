@@ -1,184 +1,170 @@
-## 📁 Folder Structure
+# Boxoffice Backend Service
 
-```
-backend/
-├── config/                 # Configuration (e.g. DB, sessions)
-│   └── db.js
+This directory contains the complete backend API for the Boxoffice application. It is a **Node.js / Express.js** server that handles all business logic, user authentication, database interactions, and administrative tasks.
+
+This server exposes a RESTful API that the `frontend` application consumes.
+
+## ✨ Key Features
+
+* **Session-Based Authentication**: Secure user login, registration, and profile management using `express-session` with a MySQL store.
+* **OTP Verification**: Robust OTP system for user registration and password resets.
+* **Role-Based Access Control**: Distinct routes and permissions for regular users and administrators (`isAuthenticated`, `isAdmin` middlewares).
+* **Full Admin Dashboard**: Complete CRUD (Create, Read, Update, Delete) functionality for:
+    * Movies
+    * Theaters (Cinemas)
+    * Cinema Halls
+    * Showtimes
+    * Cities
+* **Analytics & Reporting**: Admin-only endpoints for fetching KPIs, revenue over time, and top-performing movies/theaters.
+* **Transactional Booking System**: A multi-step booking process that "holds" seats temporarily and "confirms" them after successful payment.
+* **Background Cron Job**: An automated service (`cleanupService.js`) that runs every minute to release expired "held" seats, preventing deadlocks.
+* **Cloud Image Uploads**: Integrates with `multer` and `cloudinary` for seamless uploading of movie posters.
+
+---
+
+## 💻 Tech Stack
+
+* **Runtime**: Node.js
+* **Framework**: Express.js
+* **Database**: MySQL (using the `mysql2` driver)
+* **Authentication**: `express-session` (with `express-mysql-session` for storage)
+* **Password Hashing**: `bcrypt`
+* **File Uploads**: `multer` & `cloudinary`
+* **Scheduled Jobs**: `node-cron`
+* **Environment**: `dotenv`
+* **CORS**: `cors`
+
+---
+
+
+## 📂 Project Structure
+
+This is the high-level architecture of the backend service.
+````
+
+/backend
 │
-├── controllers/           # Route logic (business layer)
+├── app.js                \# Main server entry point
+├── package.json          \# Project dependencies
+│
+├── config/               \# Database connection & SSL
+│   ├── db.js
+│   └── ca.pem
+│
+├── controllers/          \# Business logic for each route
+│   ├── adminController.js
 │   ├── authController.js
-│   ├── movieController.js
-│   ├── theaterController.js
-│   ├── showController.js
 │   ├── bookingController.js
-│   └── seatController.js
+│   ├── movieController.js
+│   ├── otpController.js
+│   ├── paymentController.js
+│   ├── reviewController.js
+│   ├── seatController.js
+│   ├── showController.js
+│   ├── theaterController.js
+│   └── userController.js
 │
-├── middlewares/           # Auth, logging, error handlers
+├── middlewares/          \# Request handlers (auth, file uploads)
+│   ├── isAdmin.js
 │   ├── isAuthenticated.js
-│   └── isAdmin.js
+│   └── multer.js
 │
-├── models/                # DB models/queries
-│   ├── userModel.js
-│   ├── movieModel.js
-│   ├── theaterModel.js
-│   ├── showModel.js
+├── models/               \# Database query functions (Data Access Layer)
+│   ├── adminModel.js
 │   ├── bookingModel.js
-│   └── seatModel.js
+│   ├── movieModel.js
+│   ├── otpModel.js
+│   ├── reviewModel.js
+│   ├── seatModel.js
+│   ├── showModel.js
+│   ├── theaterModel.js
+│   └── userModel.js
 │
-├── routes/                # Route definitions
-│   ├── authRoutes.js
-│   ├── movieRoutes.js
-│   ├── theaterRoutes.js
-│   ├── showRoutes.js
-│   ├── bookingRoutes.js
-│   └── adminRoutes.js
+├── routes/               \# API endpoint definitions
+│   ├── admin.js
+│   ├── auth.js
+│   ├── bookings.js
+│   ├── movies.js
+│   ├── payment.js
+│   ├── seat.js
+│   ├── show.js
+│   ├── theater.js
+│   └── users.js
 │
-├── .env                   # Environment variables
-├── app.js                 # Entry point
-└── package.json           # NPM metadata & scripts
-```
----
+├── utils/                \# Helper scripts & background services
+│   ├── cleanupService.js
+│   ├── cloudinary.js
+│   └── parse.js
+│
+└── uploads/              \# (Empty) Folder for locally uploaded images (if not using cloud)
 
-## 📦 Modules Overview
-
-This backend follows a modular MVC structure. Each module encapsulates a key domain of the system such as authentication, movies, theaters, shows, bookings, and admin operations.
-
----
-
-### 🔐 Auth Module
-
-Handles user authentication and profile management.
-
-**Key Files:**
-- `controllers/authController.js` – Authentication logic
-- `routes/authRoutes.js` – Auth-related API routes
-- `models/userModel.js` – User schema/model
-- `middlewares/isAutenticated.js` - Login Check
-
-**Endpoints:**
-```
-POST   /api/auth/register     # Register a new user
-POST   /api/auth/login        # User login
-GET    /api/auth/logout       # Logout the current session
-GET    /api/auth/profile      # Get current user info
-```
+````
 
 ---
 
-### 🎬 Movie Module
+## 🚀 Setup & Installation
 
-Manage movie listings, view movie details, and perform admin-level CRUD.
+Follow these steps to run the backend server locally.
 
-**Key Files:**
-- `controllers/movieController.js`
-- `routes/movieRoutes.js`
-- `models/movieModel.js`
+### 1. Install Dependencies
 
-**Endpoints:**
-```
-GET    /api/movies            # List all movies
-GET    /api/movies/:id        # Get movie by ID
-POST   /api/movies            # Add a movie (admin)
-PUT    /api/movies/:id        # Update a movie (admin)
-DELETE /api/movies/:id        # Delete a movie (admin)
-```
+Navigate to the `backend` directory and install the required npm packages.
 
----
+```bash
+cd backend
+npm install
+````
 
-### 🏢 Theater Module
+### 2\. Set up the Database
 
-Create, update, or delete theaters, and fetch theater info.
+This project requires a MySQL database.
 
-**Key Files:**
-- `controllers/theaterController.js`
-- `routes/theaterRoutes.js`
-- `models/theaterModel.js`
+1.  Ensure you have a MySQL server running.
+2.  Create a new database (e.g., `smb_db`).
+3.  Import the database schema by executing the `/database/smb.sql` file.
+4.  (Optional) Run `/database/populate.sql` or `/database/insert.sql` to add sample data.
 
-**Endpoints:**
-```
-GET    /api/theaters          # Get all theaters
-GET    /api/theaters/:id      # Get theater by ID
-POST   /api/theaters          # Add a theater (admin)
-PUT    /api/theaters/:id      # Edit a theater (admin)
-DELETE /api/theaters/:id      # Remove a theater (admin)
-```
+### 3\. Configure Environment Variables
 
----
+Create a file named `.env` in the `backend` directory and add the following variables.
 
-### ⏰ Show Module
+```.env
+# Server
+NODE_ENV=development
+PORT=3000
 
-Manage showtime schedules for movies in specific theaters.
+# Database Connection
+DB_HOST=localhost
+DB_USER=your_db_user
+DB_PASS=your_db_password
+DB_NAME=smb_db
+PORT=3306
 
-**Key Files:**
-- `controllers/showController.js`
-- `routes/showRoutes.js`
-- `models/showModel.js`
+# Session
+SESSION_SECRET=a_very_strong_secret_key_here
 
-**Endpoints:**
-```
-GET    /api/shows             # Filter shows by movie/date
-POST   /api/shows             # Add a new showtime (admin)
-PUT    /api/shows/:id         # Update showtime (admin)
-DELETE /api/shows/:id         # Remove showtime (admin)
+# Admin
+ADMIN_SECRET=your_secret_admin_code
+
+# Cloudinary (for image uploads)
+CLOUDINARY_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
----
+**Note**: For production (`NODE_ENV=production`), the session cookie requires an HTTPS connection.
 
-### 🪑 Seats & Booking Module
+-----
 
-Handles live seat availability, seat mapping, and ticket booking.
+## ▶️ Running the Server
 
-**Key Files:**
-- `controllers/seatController.js`
-- `controllers/bookingController.js`
-- `routes/bookingRoutes.js`
-- `models/seatModel.js`
-- `models/bookingModel.js`
+Once your `.env` file is configured, you can start the server:
 
-**Endpoints:**
-```
-GET    /api/seats/:showId            # Get available seats for a show
-POST   /api/bookings                 # Book seats
-GET    /api/bookings/user/:userId    # View user's booking history
-GET    /api/bookings/:id             # View specific booking (user/admin)
+```bash
+node app.js
 ```
 
----
-
-### ⚙️ Admin Module
-
-Provides access to protected admin operations and dashboard analytics.
-
-**Key Files:**
-- `routes/adminRoutes.js`
-- `middlewares/isAdmin.js`
-
-**Endpoints:**
-```
-GET    /api/admin/users              # List all users
-GET    /api/admin/bookings           # View all bookings
-GET    /api/admin/dashboard          # Admin dashboard data
-```
----
-
-### 🛡️ Middleware Protection
-
-Custom middleware for route-level protection.
-
-- `isAuthenticated.js`: Validates login/auth tokens
-- `isAdmin.js`: Ensures admin privileges
-
-**Usage Example:**
-```js
-router.use('/api/admin', isAuthenticated, isAdmin);
-```
-
----
-
-### ⚙️ Configuration
-
-- `config/db.js`: MongoDB or DB connection setup
-- `.env` / `.env.example`: Store secret credentials and configs
-
----
- #### *Payment, image upload, review modules will be implemented later*
+The server will start, connect to the database, and begin the cron job.
+You should see:
+`🚀 Server running on http://localhost:3000`
+`✅ Expired booking cleanup job scheduled to run every minute.`

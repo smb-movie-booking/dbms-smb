@@ -1,227 +1,43 @@
+# Models (`/models`)
 
----
+This directory is the data access layer (DAL) of the application. Each file, or "model," is responsible for all database interactions related to a single data entity (like `User` or `Movie`).
 
-# 🧠 Backend Model Documentation – User & OTP (Node.js + MySQL)
+These models are called by the **Controllers**. They are the only part of the application that should directly execute SQL queries. They provide simple, reusable functions (e.g., `createUser`, `getMovieById`) to the rest of the application, hiding the raw SQL logic.
 
-This document explains the backend logic for handling **user data** and **OTP (One-Time Password) verification** using MySQL. Each exported function from the model is explained with its **functionality**, **SQL logic**, and **integration suggestions for frontend developers (UI/UX guides).**
+## Files
 
+### `adminModel.js`
+Handles database-wide administrative tasks.
+* **Purpose**: Provides functions for the Admin Dashboard, such as reading the SQL schema file (`smb.sql`) to truncate all tables. It also contains helper functions for creating/finding cities, cinemas, and halls, and for checking show scheduling conflicts.
 
-## 📦 OTP Model (`otpModel.js`)
+### `bookingModel.js`
+Manages the entire booking life-cycle and transaction logic.
+* **Purpose**: Provides functions to create a new booking, place a temporary "hold" on seats (`holdSeats`), finalize the booking after payment (`finalizeSeatsAfterPayment`), and release seats if a booking fails (`releaseSeats`). It also fetches details for the booking summary page (`getShowDetails`, `getSeatDetails`) and retrieves a user's complete order history (`getUserBookings`).
 
-The OTP table stores a one-time code sent to the user's **phone/email** for authentication and verification purposes.
+### `movieModel.js`
+Handles fetching movie-related data for public discovery.
+* **Purpose**: Provides functions to get the details of a single movie (`getMovieDetails`), find all movies playing in a specific city (`getMoviesByCity`), or find movies playing at a specific theater on a given date (`getMoviesByTheaterAndDate`).
 
-### 📌 Table Structure: `OTP`
+### `otpModel.js`
+Manages the One-Time Password (OTP) system for verification.
+* **Purpose**: Responsible for creating, storing, retrieving, and validating OTPs (`createOrUpdateOTP`, `getOTP`). It tracks verification status (`isVerified`, `markAsVerified`) and handles expired OTPs.
 
-| Column       | Type         | Description                       |
-|--------------|--------------|-----------------------------------|
-| Identifier   | VARCHAR      | Phone or email (unique)           |
-| OTP_Code     | VARCHAR      | 6-digit OTP                       |
-| Expires_At   | DATETIME     | OTP expiration time               |
-| Verified     | BOOLEAN      | Whether OTP has been verified     |
+### `reviewModel.js`
+Manages user-submitted reviews for movies.
+* **Purpose**: Provides functions to fetch all reviews for a specific movie (`getReviewsByMovie`) and to add a new review to the database (`addReview`).
 
----
+### `seatModel.js`
+Responsible for fetching the detailed seat map for a single show.
+* **Purpose**: Contains the complex query (`fetchSeatsByShowId`) that joins multiple tables (`Movie_Show`, `Cinema_Seat`, `Show_Seat`, etc.) to build the complete seat layout for the frontend, including each seat's type, price, and status (available, booked, or blocked).
 
-### 🔄 `createOrUpdateOTP(identifier, otp, expiresAt, callback)`
+### `showModel.js`
+Fetches showtime (Movie_Show) information.
+* **Purpose**: Finds all available showtimes for a specific movie at a list of theaters (`getShowsByMovieAndTheaters`). This model includes logic to apply advanced filters for format, language, and time of day (e.g., "morning," "evening").
 
-- **Purpose:** Insert a new OTP or update the existing unverified OTP for the same identifier.
-- **SQL :**
-  ```sql
-  INSERT INTO OTP (...)
-  ON DUPLICATE KEY UPDATE ... 
-  ```
+### `theaterModel.js`
+Handles fetching theater (Cinema) data for public discovery.
+* **Purpose**: Provides functions to find all theaters in a specific city (`getTheatersByCity`), get the detailed information for a single theater (`getTheaterDetails`), or find which theaters are playing a specific movie on a given date (`getTheatersByMovieAndDate`).
 
-
-* **UX Guide:**
-
-  * Show spinner while OTP is being generated.
-  * Display toast: `"OTP sent to your phone/email."`
-  * Block repeated submissions using cooldown timer (30s–60s).
-  * Re-enable on backend success/failure.
-
----
-
-### 🔍 `getOTP(identifier, callback)`
-
-* **Purpose:** Fetch the latest unverified and non-expired OTP.
-* **SQL Logic:** Ensures that expired or already verified OTPs are excluded.
-* **UX Guide:**
-
-  * Automatically called before verifying.
-  * If no OTP found, prompt: `"Please request a new OTP."`
-
----
-
-### ✅ `markAsVerified(identifier, callback)`
-
-* **Purpose:** Mark OTP as used after successful verification.
-* **Use Case:** Called after OTP verification on `/verify-otp`.
-* **UX Guide:**
-
-  * After verification, navigate to next step (e.g., dashboard or reset password screen).
-
----
-
-### 🗑️ `deleteOTP(identifier, callback)`
-
-* **Purpose:** Clean up OTPs for an identifier after use or expiry.
-* **UX Guide:**
-
-  * Typically used in backend cleanup, not directly user-facing.
-
----
-
-### 📄 `isVerified(identifier, callback)`
-
-* **Purpose:** Check whether an OTP was successfully verified.
-* **Use Case:** Gate profile updates like phone/email change until verified.
-* **UX Guide:**
-
-  * If not verified, prompt user to complete verification.
-
----
-
-## 👤 User Model (`userModel.js`)
-
-This model handles all **CRUD operations** on the `User` table and password management logic.
-
-### 📌 Table Structure: `User`
-
-| Column         | Type     | Description                     |
-| -------------- | -------- | ------------------------------- |
-| UserID         | INT (PK) | Unique User ID                  |
-| User\_Name     | VARCHAR  | User's display name             |
-| User\_Password | VARCHAR  | Hashed password (bcrypt)        |
-| Email          | VARCHAR  | Unique email                    |
-| Phone          | VARCHAR  | Unique phone number             |
-| IsAdmin        | BOOLEAN  | Admin role indicator (optional) |
-
----
-
-### ➕ `createUser(name, hashedPassword, email, phone, isAdmin, callback)`
-
-* **Purpose:** Register a new user with unique email and phone.
-* **Logic:**
-
-  * Auto-increments `UserID` manually (based on max ID).
-  * Checks for duplicate phone numbers.
-* **UX Guide:**
-
-  * After OTP verification, call this function.
-  * Show error if `DUPLICATE_PHONE` is returned.
-
----
-
-### 🔎 `getByEmail(email, callback)`
-
-* **Purpose:** Check if a user exists by email.
-* **Use Case:** Login validation or registration duplication check.
-
----
-
-### 🔎 `findByPhone(phone, callback)`
-
-* **Purpose:** Find user by phone number.
-* **Use Case:** Used in OTP login, reset password, and updates.
-
----
-
-### 🔍 `findByEmailOrPhone(email, phone, callback)`
-
-* **Purpose:** Check if a user exists using either field.
-* **Use Case:** Prevent duplicate registration or lookup for login.
-
----
-
-### 🔑 `getPasswordById(userId, callback)`
-
-* **Purpose:** Retrieve stored password hash for validation.
-* **Use Case:** Login or current password verification.
-* **UX Guide:**
-
-  * Compare hash in server logic using `bcrypt.compare()`.
-
----
-
-### 👁️ `getUserById(userId, callback)`
-
-* **Purpose:** Fetch user's public profile info.
-* **Used In:** `/users/me` route for dashboard/profile display.
-* **UX Guide:**
-
-  * Use this to pre-fill profile edit forms.
-
----
-
-### 📝 `updateUser(userId, name, phone, email, callback)`
-
-* **Purpose:** Update profile details all at once.
-* **Use Case:** Backend version of profile edit.
-* **UX Guide:**
-
-  * Display toast/alert on success.
-  * Confirm phone/email changes only after OTP verification.
-
----
-
-### 🗑️ `deleteUserById(userId, callback)`
-
-* **Purpose:** Remove user account completely.
-* **UX Guide:**
-
-  * Confirm with user before sending request.
-  * Redirect to farewell page or home after deletion.
-
----
-
-### 🔁 `updatePassword(userId, newHashedPassword, callback)`
-
-* **Purpose:** Change password after login (using current password).
-* **UX Guide:**
-
-  * Confirm new password twice in frontend.
-  * Show success notification.
-
----
-
-### 🔁 `updatePasswordByPhone(phone, hashedPassword, callback)`
-
-* **Purpose:** Reset password using verified phone number.
-* **Use Case:** `/reset-password` route after OTP verification.
-* **UX Guide:**
-
-  * Used when the user forgot the password and verifies phone.
-  * Redirect to login screen after reset.
-
----
-
-### ✏️ `updateName(userId, name, callback)`
-
-* **Purpose:** Update just the user name.
-* **Used In:** `/update-name` route.
-* **UX Guide:**
-
-  * Useful for inline name edit.
-  * Show toast: `"Name updated successfully"`.
-
----
-
-## 🎨 UI/UX Guide – Summary Table
-
-| Feature            | Backend Function                | UI/UX Behavior                                             |
-| ------------------ | ------------------------------- | ---------------------------------------------------------- |
-| Register + OTP     | `createUser`, `createOTP`       | Prompt for OTP after form; proceed only on verified status |
-| Phone/Email Update | `updateUser`, `markAsVerified`  | Require OTP verification before applying update            |
-| Login              | `getByEmail`, `getPasswordById` | Compare password server-side, session on success           |
-| Password Reset     | `updatePasswordByPhone`         | Require OTP + new password input + confirm UI flow         |
-| Profile Fetch      | `getUserById`                   | Load on dashboard/profile page                             |
-| Account Deletion   | `deleteUserById`                | Confirm twice, show goodbye message, clear session         |
-
----
-
-## 🧪 Development & Testing Tips
-
-* Use Postman or bash script with test users to simulate flows (`register → send-otp → verify → createUser`).
-* Log errors from callbacks on both client and server for better traceability.
-* Use `.env` for production DB credentials and session secrets.
-
----
+### `userModel.js`
+Manages all data related to the `User` table.
+* **Purpose**: Handles all user-centric database operations: creating a new user (`createUser`), finding users by ID, email, or phone (`getUserById`, `getByEmail`, `findByPhone`), and updating all parts of a user's profile (password, name, email, phone).
